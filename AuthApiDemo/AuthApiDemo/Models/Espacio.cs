@@ -1,7 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-
-namespace AuthApiDemo.Models
+﻿namespace AuthApiDemo.Models
 {
     public class Espacio
     {
@@ -30,7 +27,7 @@ namespace AuthApiDemo.Models
         {
             Sala nuevaSala = new Sala
             {
-                Id_Sala = ObjectId.GenerateNewId().ToString(),
+                Id_Sala = Guid.NewGuid().ToString(),
                 Nombre = nombre,
                 Descripcion = descripcion,
                 Id_Espacio = this.Id_Espacio,

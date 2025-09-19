@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-namespace AuthApiDemo.Models
+﻿namespace AuthApiDemo.Models
 {
 
     public class UsuarioEspacio
@@ -25,8 +23,8 @@ namespace AuthApiDemo.Models
         public UsuarioEspacio(Usuario usuario, Espacio espacio, bool ausente = false, int karma = 0)
         {
             Id_UsuarioEspacio = Guid.NewGuid().ToString();
-            Usuario = usuario;
-            Espacio = espacio;
+            this.usuario = usuario;
+            this.espacio = espacio;
             Ausente = ausente;
             Karma = karma;
         }

@@ -1,7 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-
-namespace AuthApiDemo.Models
+﻿namespace AuthApiDemo.Models
 {
     public class Tarea
     {
