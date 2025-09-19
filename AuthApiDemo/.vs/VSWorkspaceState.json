@@ -1,0 +1,11 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\AuthApiDemo",
+    "\\AuthApiDemo\\Controllers",
+    "\\AuthApiDemo\\Models",
+    "\\AuthApiDemo\\Services"
+  ],
+  "SelectedNode": "\\AuthApiDemo\\Services\\UserService.cs",
+  "PreviewInSolutionExplorer": false
+}

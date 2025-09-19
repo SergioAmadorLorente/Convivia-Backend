@@ -1,0 +1,29 @@
+[
+  {
+    "nombre": "Paco",
+    "apellido": "Martinez",
+    "contraseña": "paco1234",
+    "correo": "pacom@gmail.com",
+    "fechaDeRegistro": "2025-09-19T00:00:00+02:00",
+    "fotoDePerfil": "foto",
+    "premium": true
+  },
+    {
+        "apellido": "García",
+        "contraseña": "luna2025",
+        "correo": "lgarcia@example.com",
+        "fechaDeRegistro": "2024-05-10T15:30:00+02:00",
+        "fotoDePerfil": "avatar1.png",
+        "nombre": "Lucía",
+        "premium": false
+    },
+    {
+        "apellido": "Fernández",
+        "contraseña": "solYmar88",
+        "correo": "fernandez.juan@example.com",
+        "fechaDeRegistro": "2023-11-02T09:15:00+02:00",
+        "fotoDePerfil": "perfil_juan.jpg",
+        "nombre": "Juan",
+        "premium": true
+    }
+]
