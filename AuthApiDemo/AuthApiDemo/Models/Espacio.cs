@@ -90,7 +90,7 @@
 
         }
 
-        public bool eliminarUsuario(string nomusuario)
+        public bool EliminarUsuario(string nomusuario)
         {
             Usuario usuario = Usuarios.Find(u => u.Nombre == nomusuario);
             if (usuario != null)
