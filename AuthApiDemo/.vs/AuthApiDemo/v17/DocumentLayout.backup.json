@@ -1,37 +1,33 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\",
+  "WorkspaceRootPath": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\convivia\\authapidemo\\authapidemo\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\firebase\\serviceaccount.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\convivia\\authapidemo\\authapidemo\\firebase\\serviceaccount.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\firebase\\serviceaccount.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\firebase\\usuarios1.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\firebase\\usuarios1.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\models\\usuario.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\convivia\\authapidemo\\authapidemo\\models\\usuario.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\models\\usuario.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\models\\firebase.cs||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\convivia\\authapidemo\\authapidemo\\models\\firebase.cs||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\models\\firebase.cs||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\models\\tarea.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\convivia\\authapidemo\\authapidemo\\models\\tarea.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\models\\tarea.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\convivia\\authapidemo\\authapidemo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\conviviarealultim\\conviviabackend\\authapidemo\\authapidemo\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|c:\\users\\jordi.gibert.ext\\desktop\\convivia\\authapidemo\\authapidemo\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6A5C1AD4-E601-4270-95A9-3CD1EF76929F}|AuthApiDemo\\AuthApiDemo.csproj|solutionrelative:authapidemo\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -44,6 +40,19 @@
           "DockedWidth": 278,
           "SelectedChildIndex": 10,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Firebase.cs",
+              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Models\\Firebase.cs",
+              "RelativeDocumentMoniker": "AuthApiDemo\\Models\\Firebase.cs",
+              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Models\\Firebase.cs",
+              "RelativeToolTip": "AuthApiDemo\\Models\\Firebase.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-18T11:41:27.082Z",
+              "IsPinned": true
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
@@ -62,113 +71,75 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Firebase.cs",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Models\\Firebase.cs",
-              "RelativeDocumentMoniker": "AuthApiDemo\\Models\\Firebase.cs",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Models\\Firebase.cs",
-              "RelativeToolTip": "AuthApiDemo\\Models\\Firebase.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAmAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-18T11:41:27.082Z",
-              "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
               "Title": "serviceAccount.json",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Firebase\\serviceAccount.json",
+              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Firebase\\serviceAccount.json",
               "RelativeDocumentMoniker": "AuthApiDemo\\Firebase\\serviceAccount.json",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Firebase\\serviceAccount.json",
+              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Firebase\\serviceAccount.json",
               "RelativeToolTip": "AuthApiDemo\\Firebase\\serviceAccount.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-09-19T07:19:03.033Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-19T07:19:03.033Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "Usuario.cs",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Models\\Usuario.cs",
+              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Models\\Usuario.cs",
               "RelativeDocumentMoniker": "AuthApiDemo\\Models\\Usuario.cs",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Models\\Usuario.cs",
+              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Models\\Usuario.cs",
               "RelativeToolTip": "AuthApiDemo\\Models\\Usuario.cs",
               "ViewState": "AgIAAAMAAAAAAAAAAAAgwBAAAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-19T08:31:35.18Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-19T08:31:35.18Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 4,
               "Title": "Tarea.cs",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Models\\Tarea.cs",
+              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Models\\Tarea.cs",
               "RelativeDocumentMoniker": "AuthApiDemo\\Models\\Tarea.cs",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Models\\Tarea.cs",
+              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Models\\Tarea.cs",
               "RelativeToolTip": "AuthApiDemo\\Models\\Tarea.cs",
               "ViewState": "AgIAABYAAAAAAAAAAAA7wCcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-19T07:50:58.347Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "AuthController.cs",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Controllers\\AuthController.cs",
-              "RelativeDocumentMoniker": "AuthApiDemo\\Controllers\\AuthController.cs",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Controllers\\AuthController.cs",
-              "RelativeToolTip": "AuthApiDemo\\Controllers\\AuthController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAOAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-18T13:06:02.287Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-19T07:50:58.347Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 6,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "AuthApiDemo\\Controllers\\AuthController.cs",
+              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "AuthApiDemo\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-18T13:06:02.287Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
               "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Program.cs",
+              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Program.cs",
               "RelativeDocumentMoniker": "AuthApiDemo\\Program.cs",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Program.cs",
+              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Program.cs",
               "RelativeToolTip": "AuthApiDemo\\Program.cs",
               "ViewState": "AgIAABsAAAAAAAAAAAAAACQAAAAcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-18T13:04:46.43Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-18T13:04:46.43Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "UserService.cs",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Services\\UserService.cs",
+              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Services\\UserService.cs",
               "RelativeDocumentMoniker": "AuthApiDemo\\Services\\UserService.cs",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Services\\UserService.cs",
+              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\Services\\UserService.cs",
               "RelativeToolTip": "AuthApiDemo\\Services\\UserService.cs",
-              "ViewState": "AgIAAAoAAAAAAAAAAADwvxYAAABKAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAzAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-18T11:36:03.899Z",
-              "EditorCaption": ""
-            }
-          ]
-        },
-        {
-          "DockedWidth": 122,
-          "SelectedChildIndex": 0,
-          "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "usuarios1.json",
-              "DocumentMoniker": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Firebase\\usuarios1.json",
-              "RelativeDocumentMoniker": "AuthApiDemo\\Firebase\\usuarios1.json",
-              "ToolTip": "C:\\Users\\jordi.gibert.ext\\Desktop\\CONVIVIAREALULTIM\\ConviviaBackend\\AuthApiDemo\\AuthApiDemo\\Firebase\\usuarios1.json",
-              "RelativeToolTip": "AuthApiDemo\\Firebase\\usuarios1.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-09-19T08:28:01.274Z",
               "EditorCaption": ""
             }
           ]

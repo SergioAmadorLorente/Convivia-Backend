@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\marc.sastre.ext\\Source\\Repos\\Convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj": {}
+    "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj": {}
   },
   "projects": {
-    "C:\\Users\\marc.sastre.ext\\Source\\Repos\\Convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj": {
+    "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\marc.sastre.ext\\Source\\Repos\\Convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj",
+        "projectUniqueName": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj",
         "projectName": "AuthApiDemo",
-        "projectPath": "C:\\Users\\marc.sastre.ext\\Source\\Repos\\Convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj",
-        "packagesPath": "C:\\Users\\marc.sastre.ext\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\marc.sastre.ext\\Source\\Repos\\Convivia\\AuthApiDemo\\AuthApiDemo\\obj\\",
+        "projectPath": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\AuthApiDemo.csproj",
+        "packagesPath": "C:\\Users\\jordi.gibert.ext\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\jordi.gibert.ext\\Desktop\\convivia\\AuthApiDemo\\AuthApiDemo\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\marc.sastre.ext\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\jordi.gibert.ext\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -79,6 +79,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.19, 8.0.19]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -87,7 +105,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

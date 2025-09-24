@@ -1,7 +1,11 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\AuthApiDemo",
+    "\\AuthApiDemo\\AuthApiDemo",
+    "\\AuthApiDemo\\AuthApiDemo\\Models",
+    "\\AuthApiDemo\\AuthApiDemo\\Services"
   ],
-  "SelectedNode": "\\C:\\Users\\jordi.gibert.ext\\Pictures\\conviviabackcoses",
+  "SelectedNode": "\\AuthApiDemo\\AuthApiDemo\\Services\\UserService.cs",
   "PreviewInSolutionExplorer": false
 }

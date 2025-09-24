@@ -13,7 +13,9 @@
 
         public bool Pagado { get; set; }
 
-        public byte[]? Documento { get; set; } // Usamos byte[] para almacenar archivos binarios
+        public byte[]? Documento { get; set; }
+
+        public Tarea tarea { get; set; }
 
         public Factura() {
         

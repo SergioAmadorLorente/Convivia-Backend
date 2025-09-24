@@ -16,6 +16,8 @@
 
         public Usuario usuario { get; set; }
 
+        public List<Tarea> TareasAsignadas { get; set; } = new List<Tarea>();
+
         public UsuarioEspacio()
         {
         }
