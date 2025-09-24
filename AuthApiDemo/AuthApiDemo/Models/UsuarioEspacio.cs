@@ -6,47 +6,102 @@
 
         public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString();
 
-        public bool Ausente { get; set; }
+        public bool ausente { get; set; }
 
-        public int Karma { get; set; }
-
-        public bool Admin { get; set; }
+        public int karma { get; set; }
 
         public Espacio espacio { get; set; }
 
         public Usuario usuario { get; set; }
 
         public List<Tarea> TareasAsignadas { get; set; } = new List<Tarea>();
+        public Permiso permiso { get; set; }
 
         public UsuarioEspacio()
         {
         }
 
-        public UsuarioEspacio(Usuario usuario, Espacio espacio, bool ausente = false, int karma = 0)
+        public UsuarioEspacio(Usuario usuario, Espacio espacio, bool ausente = false, int karma = 0, Permiso permiso)
         {
             Id_UsuarioEspacio = Guid.NewGuid().ToString();
             this.usuario = usuario;
             this.espacio = espacio;
-            Ausente = ausente;
-            Karma = karma;
+            this.ausente = ausente;
+            this.karma = karma;
+            this.permiso = permiso;
         }
 
-
-        public void invitarUsuario(Usuario usuario)
+        public void cambiarPermiso(Permiso permiso)
         {
+            this.permiso = permiso;
+        }
 
-            Invitacion invitacion = new Invitacion
+        public void salirEspacio()
+        {
+            espacio.Usuarios.Remove(this.usuario);
+            this.usuario.UsuariosEspacios.Remove(this);
+        }
+        public void unirseEspacio(Espacio espacio)
+        {
+            if (!espacio.Usuarios.Contains(this.usuario))
             {
-                Id = Guid.NewGuid().ToString(),
-                Espacio = this.espacio,
-                UsuarioSolicitante = this,
-                Fecha = DateTime.UtcNow,
-                Estado = "pendiente"
-            };
+                espacio.Usuarios.Add(this.usuario);
+            }
+            if (!this.usuario.UsuariosEspacios.Contains(this))
+            {
+                this.usuario.UsuariosEspacios.Add(this);
+            }
+        }
+        public void sumKarma(int puntos)
+        {
+            this.karma += puntos;
+        }
 
-            usuario.Invitaciones.Add(invitacion);
-            this.espacio.InvitacionesEnviadas.Add(invitacion);
+        public void sumKarmaAndPassTask(Tarea tarea)
+        {
+            tarea.cambiarEstado(true);
+            karma += tarea.karma;
+        }
 
+        public void creearTarea(Tarea tarea)
+        {
+            this.TareasAsignadas.Add(tarea);
+            tarea.Usuarios.Add(this);
+        }
+        public void crearTareaDePlantilla()
+        {
+            // TODO
+        }
+
+        public void crearPlantilla()
+        {
+            // TODO
+        }
+        public void guardarTarea(Tarea tarea)
+        {
+            tarea.agregarUsuarios(new List<UsuarioEspacio> { this });
+            TareasAsignadas.Add(tarea);
+        }
+        public void reservarSala(Sala sala, DateTime fechaInicio, DateTime fechaFin)
+        {
+            if (sala.crearReserva(fechaInicio, fechaFin, this.usuario))
+            {
+                Console.WriteLine("Reserva creada con éxito.");
+            }
+            else
+            {
+                Console.WriteLine("No se pudo crear la reserva.");
+            }
+        }
+
+        public void cancelarReserva(Sala sala, Reserva r)
+        {
+            sala.eliminarReserva(r.Id_Reserva);
+        }
+
+        public void creaerFacutra(Factura factura)
+        {
+            //
         }
 
     }

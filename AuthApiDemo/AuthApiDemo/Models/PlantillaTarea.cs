@@ -29,6 +29,8 @@ namespace AuthApiDemo.Models
             PuntosKarma = puntosKarma;
             Disponible = disponible;
         }
+        // TODO Cuando hagan plantilla tarea podreis configurar el metodo UsuarioEspacio.crearTareaDePlantilla(PlantillaTarea plantilla) no tengo muy claro que hace ni para que existe plantilla tarea, entonces mee cuesta imaginar el metodo ;-)
+        // Firmado Marc Sastre
 
     }
 }

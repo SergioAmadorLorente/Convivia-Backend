@@ -18,13 +18,14 @@
         public bool Estado { get; set; }
 
         public Factura? Factura { get; set; }
+        public int karma { get; set; } = 10; // Puntos de karma que se otorgan al completar la tarea
 
         public Tarea()
         {
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(List<UsuarioEspacio> usuarios, DateTime fechaRealizacion, DateTime fechaLimite, byte[]? foto = null, DateTime? prorroga = null, bool estado = false)
+        public Tarea(List<UsuarioEspacio> usuarios, DateTime fechaRealizacion, DateTime fechaLimite, byte[]? foto = null, DateTime? prorroga = null, bool estado = false, int karma)
         {
             Usuarios = usuarios;
             FechaRealizacion = fechaRealizacion;
@@ -32,6 +33,7 @@
             Foto = foto;
             Prorroga = prorroga;
             Estado = estado;
+            this.karma = karma;
         }
 
         public void agregarUsuarios(List<UsuarioEspacio> listausuarios)
