@@ -45,6 +45,7 @@ AuthApiDemo/.vs/AuthApiDemo/
 AuthApiDemo/.vs/AuthApiDemo/DesignTimeBuild/
 AuthApiDemo/.vs/AuthApiDemo/v17/
 AuthApiDemo/.vs/ProjectEvaluation/
+AuthApiDemo/AuthApiDemo/.vs/
  
 # Archivos JSON de usuarios (si son solo para pruebas locales)
 AuthApiDemo/Firebase/usuarios1.json
