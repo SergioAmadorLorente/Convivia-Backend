@@ -49,3 +49,4 @@ AuthApiDemo/AuthApiDemo/.vs/
  
 # Archivos JSON de usuarios (si son solo para pruebas locales)
 AuthApiDemo/Firebase/usuarios1.json
+AuthApiDemo/AuthApiDemo/Firebase/serviceAccount.json

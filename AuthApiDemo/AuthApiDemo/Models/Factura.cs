@@ -9,7 +9,7 @@
 
         public int Precio { get; set; }
 
-        public UsuarioEspacio[] Reparto { get; set; }
+        public List<UsuarioEspacio> Reparto { get; set; }
 
         public bool Pagado { get; set; }
 
@@ -17,11 +17,12 @@
 
         public Tarea tarea { get; set; }
 
-        public Factura() {
-        
+        public Factura()
+        {
+
         }
 
-        public Factura(string id_Factura, string nombre, int precio, UsuarioEspacio[] reparto, bool pagado, byte[]? documento)
+        public Factura(string id_Factura, string nombre, int precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento)
         {
             Id_Factura = id_Factura;
             Nombre = nombre;
@@ -30,5 +31,45 @@
             Pagado = pagado;
             Documento = documento;
         }
+
+        public void editarFactura(string nombre, int precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento = null)
+        {
+            Nombre = nombre;
+            Precio = precio;
+            Reparto = reparto;
+            Pagado = pagado;
+            if (documento != null)
+            {
+                Documento = documento;
+            }
+        }
+
+        public void adjuntarDocumento(byte[] documento)
+        {
+            Documento = documento;
+        }
+
+        public void eliminarDocumento()
+        {
+            Documento = null;
+        }
+
+        public void esPagada()
+        {
+            Pagado = true;
+        }
+
+        public void pagar(UsuarioEspacio usuario, int cantidad)
+        {
+
+            Reparto.ToList().Remove(usuario);
+            Precio -= cantidad;
+
+            if (Reparto.Count == 0)
+            {
+                esPagada();
+            }
+        }
+
     }
 }

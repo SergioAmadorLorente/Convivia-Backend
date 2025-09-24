@@ -6,6 +6,8 @@
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         public UsuarioEspacio UsuarioSolicitante { get; set; }
+        
+        public Usuario UsuarioInvitado { get; set; }
 
         public Espacio Espacio { get; set; }
 

@@ -38,7 +38,7 @@
         {
 
             Usuarios.AddRange(listausuarios);
-            for(int i = 0; i < listausuarios.Count; i++)
+            for (int i = 0; i < listausuarios.Count; i++)
             {
                 listausuarios[i].TareasAsignadas.Add(this);
             }
@@ -89,8 +89,9 @@
             }
         }
 
-        public void prorrogarTarea(DateTime fechanueva) { 
-        
+        public void prorrogarTarea(DateTime fechanueva)
+        {
+
             Prorroga = fechanueva;
 
         }

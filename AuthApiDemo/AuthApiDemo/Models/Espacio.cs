@@ -90,6 +90,19 @@
 
         }
 
+        public void invitarUsuario(Usuario usuario)
+        {
+            Invitacion nuevaInvitacion = new Invitacion
+            {
+                Id = Guid.NewGuid().ToString(),
+                Espacio = this,
+                UsuarioInvitado = usuario,
+                Fecha = DateTime.UtcNow
+            };
+            InvitacionesEnviadas.Add(nuevaInvitacion);
+            usuario.Invitaciones.Add(nuevaInvitacion);
+        }
+
         public bool EliminarUsuario(string nomusuario)
         {
             Usuario usuario = Usuarios.Find(u => u.Nombre == nomusuario);

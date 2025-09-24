@@ -65,19 +65,25 @@ public async Task<bool> ProbarConexionAsync()
     }
 }
 
-// Convierte JsonElement a tipos nativos
-private object ConvertJsonElement(JsonElement element)
-{
-    return element.ValueKind switch
+    // Convierte JsonElement a tipos nativos
+    private object ConvertJsonElement(JsonElement element)
     {
-        JsonValueKind.String => element.GetString(),
-        JsonValueKind.Number => element.TryGetInt32(out var i) ? i : element.GetDouble(),
-        JsonValueKind.True => true,
-        JsonValueKind.False => false,
-        JsonValueKind.Null => null,
-        _ => element.ToString()
-    };
-}
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.TryGetInt32(out var i) ? i : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            JsonValueKind.Array => element.EnumerateArray().Select(ConvertJsonElement).ToList(),
+            JsonValueKind.Object => element.EnumerateObject().ToDictionary(
+                prop => prop.Name,
+                prop => ConvertJsonElement(prop.Value)
+            ),
+            _ => element.ToString()
+        };
+    }
+
 
 
 }
