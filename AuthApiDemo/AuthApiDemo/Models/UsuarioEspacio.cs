@@ -16,12 +16,13 @@
 
         public List<Tarea> TareasAsignadas { get; set; } = new List<Tarea>();
         public Permiso permiso { get; set; }
+        public List<Factura> Facturas { get; set; } = new List<Factura>(); // ?
 
         public UsuarioEspacio()
         {
         }
 
-        public UsuarioEspacio(Usuario usuario, Espacio espacio, bool ausente = false, int karma = 0, Permiso permiso)
+        public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, bool ausente = false,  int karma = 0)
         {
             Id_UsuarioEspacio = Guid.NewGuid().ToString();
             this.usuario = usuario;
@@ -97,11 +98,6 @@
         public void cancelarReserva(Sala sala, Reserva r)
         {
             sala.eliminarReserva(r.Id_Reserva);
-        }
-
-        public void creaerFacutra(Factura factura)
-        {
-            //
         }
 
     }

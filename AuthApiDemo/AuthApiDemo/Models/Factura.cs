@@ -7,9 +7,9 @@
 
         public string Nombre { get; set; }
 
-        public int Precio { get; set; }
+        public float Precio { get; set; }
 
-        public List<UsuarioEspacio> Reparto { get; set; }
+        public Dictionary<UsuarioEspacio, float> RepartoMap { get; set; }
 
         public bool Pagado { get; set; }
 
@@ -27,16 +27,54 @@
             Id_Factura = id_Factura;
             Nombre = nombre;
             Precio = precio;
-            Reparto = reparto;
             Pagado = pagado;
             Documento = documento;
+            RepartoMap = new Dictionary<UsuarioEspacio, float>();
+            foreach (var usuario in reparto)
+            {
+                RepartoMap[usuario] = precio / reparto.Count; // Reparto igualitario por defecto
+            }
+        }
+        public Factura(string id_Factura, string nombre, int precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento)
+        {
+            Id_Factura = id_Factura;
+            Nombre = nombre;
+            Precio = precio;
+            Pagado = pagado;
+            Documento = documento;
+            this.RepartoMap = reparto;
         }
 
-        public void editarFactura(string nombre, int precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento = null)
+
+        public Factura(string id_Factura, string nombre, int precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento, Tarea tarea)
+        {
+            Id_Factura = id_Factura;
+            Nombre = nombre;
+            Precio = precio;
+            Pagado = pagado;
+            Documento = documento;
+            RepartoMap = new Dictionary<UsuarioEspacio, float>();
+            this.tarea = tarea;
+            foreach (var usuario in reparto)
+            {
+                RepartoMap[usuario] = precio / reparto.Count; // Reparto igualitario por defecto
+            }
+        }
+        public Factura(string id_Factura, string nombre, int precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento, Tarea tarea)
+        {
+            Id_Factura = id_Factura;
+            Nombre = nombre;
+            Precio = precio;
+            Pagado = pagado;
+            Documento = documento;
+            this.RepartoMap = reparto;
+            this.tarea = tarea;
+        }
+        public void editarFactura(string nombre, int precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento = null)
         {
             Nombre = nombre;
             Precio = precio;
-            Reparto = reparto;
+            RepartoMap = reparto;
             Pagado = pagado;
             if (documento != null)
             {
@@ -59,15 +97,15 @@
             Pagado = true;
         }
 
-        public void pagar(UsuarioEspacio usuario, int cantidad)
+        public void pagar(UsuarioEspacio usuario, float cantidad)
         {
-
-            Reparto.ToList().Remove(usuario);
-            Precio -= cantidad;
-
-            if (Reparto.Count == 0)
+            if(RepartoMap.ContainsKey(usuario))
             {
-                esPagada();
+                RepartoMap[usuario] -= cantidad;
+                if(RepartoMap[usuario] <= 0)
+                {
+                    RepartoMap.Remove(usuario);
+                }
             }
         }
 

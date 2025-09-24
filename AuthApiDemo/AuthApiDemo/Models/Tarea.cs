@@ -25,7 +25,7 @@
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(List<UsuarioEspacio> usuarios, DateTime fechaRealizacion, DateTime fechaLimite, byte[]? foto = null, DateTime? prorroga = null, bool estado = false, int karma)
+        public Tarea(List<UsuarioEspacio> usuarios, DateTime fechaRealizacion, DateTime fechaLimite, int karma, byte[]? foto = null, DateTime? prorroga = null, bool estado = false)
         {
             Usuarios = usuarios;
             FechaRealizacion = fechaRealizacion;
@@ -100,16 +100,25 @@
 
         public void crearFactura(List<UsuarioEspacio> usuariosapagar, int precio)
         {
+            Factura = new Factura(Id_Tarea, "Factura de Tarea " + Id_Tarea, precio, usuariosapagar, false, null, this);
 
-            Factura = new Factura
+            /*Factura = new Factura
             {
+                Id_Factura = Guid.NewGuid().ToString(),
                 Nombre = "Factura de Tarea " + Id_Tarea,
                 Precio = precio,
-                Reparto = usuariosapagar,
+                
                 Pagado = false,
                 Documento = null,
-                tarea = this
-            };
+                tarea = this,
+
+                RepartoMap = new Dictionary<UsuarioEspacio, float>()
+                };
+                foreach (var usuario in usuariosapagar)
+                {
+                    RepartoMap[usuario] = precio / usuariosapagar.Count; // Reparto igualitario por defecto
+                }
+            }*/
 
         }
 

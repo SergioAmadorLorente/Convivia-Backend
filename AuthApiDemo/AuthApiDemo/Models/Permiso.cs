@@ -18,13 +18,13 @@ namespace AuthApiDemo.Models
         }
         public Permiso(
                 string rol,
-                bool crearTarea,
-                bool eliminarTarea,
-                bool editarTarea,
-                bool añadirUsuario,
-                bool eliminarUsuario,
-                bool asignarTarea,
-                bool asignarseTarea)
+                bool crearTarea = false,
+                bool eliminarTarea = false,
+                bool editarTarea = false,
+                bool añadirUsuario = false,
+                bool eliminarUsuario = false,
+                bool asignarTarea = false,
+                bool asignarseTarea = true)
         {
             this.rol = rol;
             this.crearTarea = crearTarea;
@@ -34,20 +34,6 @@ namespace AuthApiDemo.Models
             this.eliminarUsuario = eliminarUsuario;
             this.asignarTarea = asignarTarea;
             this.asignarseTarea = asignarseTarea;
-        }
-        public Permiso(String rol)
-        {
-            this.rol = rol;
-            if(rol == "Admin")
-            {
-                setConfigurarcionAdmin();
-            } else if(rol == "Usuario")
-            {
-                setConfigurarcionUsuario();
-            } else
-            {
-                setConfigurarcionHuesped();
-            }
         }
 
 
