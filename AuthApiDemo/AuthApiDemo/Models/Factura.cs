@@ -1,81 +1,147 @@
 ﻿namespace AuthApiDemo.Models
 {
+    /// <summary>
+    /// Representa una factura con reparto de pago entre usuarios, estado de pago y posible documento/tarea asociada.
+    /// </summary>
     public class Factura
     {
-        // Atributos de la case facutra
-        public string Id_Factura { get; set; } = Guid.NewGuid().ToString();
+        /// <summary>
+        /// Identificador único de la factura.
+        /// </summary>
+        public string Id_Factura { get; } = Guid.NewGuid().ToString();
 
+        /// <summary>
+        /// Nombre o concepto de la factura.
+        /// </summary>
         public string Nombre { get; set; }
 
+        /// <summary>
+        /// Importe total de la factura.
+        /// </summary>
         public float Precio { get; set; }
 
-        // Mapa de reparto: UsuarioEspacio -> cantidad a pagar
-        public Dictionary<UsuarioEspacio, float> RepartoMap { get; set; }
+        /// <summary>
+        /// Mapa de reparto: cada usuario y la cantidad que debe pagar. Solo lectura desde fuera.
+        /// </summary>
+        private Dictionary<UsuarioEspacio, float> _repartoMap = new Dictionary<UsuarioEspacio, float>();
+        public IReadOnlyDictionary<UsuarioEspacio, float> RepartoMap => _repartoMap;
 
+        /// <summary>
+        /// Indica si la factura está pagada completamente.
+        /// </summary>
         public bool Pagado { get; set; }
-        // Imagen o documento asociado a la factura
+
+        /// <summary>
+        /// Documento o imagen asociada a la factura (opcional).
+        /// </summary>
         public byte[]? Documento { get; set; }
 
-        public Tarea tarea { get; set; }
+        /// <summary>
+        /// Tarea asociada a la factura (opcional).
+        /// </summary>
+        public Tarea? Tarea { get; set; }
 
-        public Factura()
-        {
+        /// <summary>
+        /// Constructor por defecto para deserialización o pruebas.
+        /// </summary>
+        public Factura() { }
 
-        }
-        // Hay 4 constructores posibles, con o sin tarea asociada y con reparto como lista o como diccionario
-        public Factura(string id_Factura, string nombre, int precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento)
+        /// <summary>
+        /// Crea una factura con reparto igualitario entre usuarios.
+        /// </summary>
+        public Factura(string id_Factura, string nombre, float precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento)
         {
+            if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.", nameof(nombre));
+            if (precio <= 0) throw new ArgumentException("El precio debe ser positivo.", nameof(precio));
+            if (reparto == null || reparto.Count == 0) throw new ArgumentException("El reparto no puede estar vacío.", nameof(reparto));
+
             Id_Factura = id_Factura;
             Nombre = nombre;
             Precio = precio;
             Pagado = pagado;
             Documento = documento;
-            RepartoMap = new Dictionary<UsuarioEspacio, float>();
             foreach (var usuario in reparto)
             {
-                RepartoMap[usuario] = precio / reparto.Count; // Reparto igualitario por defecto
+                    _repartoMap[usuario] = precio / reparto.Count;
             }
         }
-        public Factura(string id_Factura, string nombre, int precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento)
+
+        /// <summary>
+        /// Crea una factura con reparto específico entre usuarios.
+        /// </summary>
+        public Factura(string id_Factura, string nombre, float precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento)
         {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre no puede estar vacío.", nameof(nombre));
+            if (precio <= 0)
+                throw new ArgumentException("El precio debe ser positivo.", nameof(precio));
+            if (reparto == null || reparto.Count == 0)
+                throw new ArgumentException("El reparto no puede estar vacío.", nameof(reparto));
+
             Id_Factura = id_Factura;
             Nombre = nombre;
             Precio = precio;
             Pagado = pagado;
             Documento = documento;
-            this.RepartoMap = reparto; // reparto especifico
+            _repartoMap = new Dictionary<UsuarioEspacio, float>(reparto);
         }
 
-
-        public Factura(string id_Factura, string nombre, int precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento, Tarea tarea)
+        /// <summary>
+        /// Crea una factura con reparto igualitario y tarea asociada.
+        /// </summary>
+        public Factura(string id_Factura, string nombre, float precio, List<UsuarioEspacio> reparto, bool pagado, byte[]? documento, Tarea tarea)
         {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre no puede estar vacío.", nameof(nombre));
+            if (precio <= 0)
+                throw new ArgumentException("El precio debe ser positivo.", nameof(precio));
+            if (reparto == null || reparto.Count == 0)
+                throw new ArgumentException("El reparto no puede estar vacío.", nameof(reparto));
+
             Id_Factura = id_Factura;
             Nombre = nombre;
             Precio = precio;
             Pagado = pagado;
             Documento = documento;
-            RepartoMap = new Dictionary<UsuarioEspacio, float>();
-            this.tarea = tarea;
+            Tarea = tarea;
             foreach (var usuario in reparto)
             {
-                RepartoMap[usuario] = precio / reparto.Count; // Reparto igualitario por defecto
+                _repartoMap[usuario] = precio / reparto.Count;
             }
         }
-        public Factura(string id_Factura, string nombre, int precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento, Tarea tarea)
+
+        /// <summary>
+        /// Crea una factura con reparto específico y tarea asociada.
+        /// </summary>
+        public Factura(string id_Factura, string nombre, float precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento, Tarea tarea)
         {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre no puede estar vacío.", nameof(nombre));
+            if (precio <= 0)
+                throw new ArgumentException("El precio debe ser positivo.", nameof(precio));
+            if (reparto == null || reparto.Count == 0)
+                throw new ArgumentException("El reparto no puede estar vacío.", nameof(reparto));
+
             Id_Factura = id_Factura;
             Nombre = nombre;
             Precio = precio;
             Pagado = pagado;
             Documento = documento;
-            this.RepartoMap = reparto; // reparto especifico
-            this.tarea = tarea;
+            _repartoMap = new Dictionary<UsuarioEspacio, float>(reparto);
+            Tarea = tarea;
         }
-        public void editarFactura(string nombre, int precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento = null)
+
+        /// <summary>
+        /// Edita los datos principales de la factura y su reparto.
+        /// </summary>
+        public void EditarFactura(string nombre, float precio, Dictionary<UsuarioEspacio, float> reparto, bool pagado, byte[]? documento = null)
         {
+            if (Pagado)
+                throw new InvalidOperationException("No se puede editar una factura ya pagada.");
+
             Nombre = nombre;
             Precio = precio;
-            RepartoMap = reparto;
+            _repartoMap = reparto;
             Pagado = pagado;
             if (documento != null)
             {
@@ -83,32 +149,44 @@
             }
         }
 
-        public void adjuntarDocumento(byte[] documento)
+        /// <summary>
+        /// Adjunta un documento o imagen a la factura.
+        /// </summary>
+        public void AdjuntarDocumento(byte[] documento)
         {
             Documento = documento;
         }
 
-        public void eliminarDocumento()
+        /// <summary>
+        /// Elimina el documento asociado a la factura.
+        /// </summary>
+        public void EliminarDocumento()
         {
             Documento = null;
         }
 
-        public void esPagada()
+        /// <summary>
+        /// Marca la factura como pagada.
+        /// </summary>
+        public void EsPagada() { Documento = null; }
         {
             Pagado = true;
         }
-        // Cuanto un usuario paga, se le descuenta de su deuda en el mapa de reparto, cuando no tiene deuda se elimina del mapa
-        public void pagar(UsuarioEspacio usuario, float cantidad)
-        {
-            if(RepartoMap.ContainsKey(usuario))
-            {
-                RepartoMap[usuario] -= cantidad;
-                if(RepartoMap[usuario] <= 0)
-                {
-                    RepartoMap.Remove(usuario);
-                }
-            }
-        }
 
+        /// <summary>
+        /// Realiza un pago parcial de un usuario. Si la deuda queda saldada, se elimina del reparto.
+        /// </summary>
+        public bool Pagar(UsuarioEspacio usuario, float cantidad)
+        {
+            if (!_repartoMap.ContainsKey(usuario))
+                return false;
+            if (cantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser positiva.", nameof(cantidad));
+
+            _repartoMap[usuario] -= cantidad;
+            if (_repartoMap[usuario] <= 0)
+                _repartoMap.Remove(usuario);
+            return true;
+        }
     }
 }
