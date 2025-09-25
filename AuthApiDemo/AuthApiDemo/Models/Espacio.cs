@@ -13,6 +13,9 @@
 
         public Espacio(string name, string? direccion = null)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("El nombre del espacio no puede estar vacío.");
+
             Nombre = name;
             Direccion = direccion;
         }
