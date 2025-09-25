@@ -50,10 +50,22 @@ namespace AuthApiDemo.Models
             
             if (invitacion != null && peticion != null)
             {
-                /*if (!espacio.UsuariosEspacios.Contains(this.UsuariosEspacios.FirstOrDefault(u => u.))
+                if (!espacio.UsuariosEspacios.Contains(this.UsuariosEspacios.FirstOrDefault(u => u.Usuario.Id == this.Id)))
                 {
-                    espacio.Usuarios.Add(this);
-                }*/
+                    UsuarioEspacio usuarioEspacio = new UsuarioEspacio
+                    {
+                        Id_UsuarioEspacio = Guid.NewGuid().ToString(),
+                        Usuario = this,
+                        Espacio = espacio,
+                        Permiso = Permiso.Usuario,
+                        Ausente = false,
+                        Karma = 0
+                    };
+
+
+
+                    espacio.UsuariosEspacios.Add(usuarioEspacio);
+                }
 
                 espacio.Peticiones.Remove(peticion);
                 this.Invitaciones.Remove(invitacion);

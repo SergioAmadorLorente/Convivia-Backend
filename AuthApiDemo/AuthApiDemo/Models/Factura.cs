@@ -168,7 +168,7 @@
         /// <summary>
         /// Marca la factura como pagada.
         /// </summary>
-        public void EsPagada() { Documento = null; }
+        public void EsPagada()
         {
             Pagado = true;
         }

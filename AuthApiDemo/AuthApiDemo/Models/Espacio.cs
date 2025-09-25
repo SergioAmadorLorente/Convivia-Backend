@@ -1,7 +1,7 @@
 ﻿namespace AuthApiDemo.Models
 {
     /// <summary>
-    /// Representa un espacio que puede contener salas, usuarios, peticiones e invitaciones.
+    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones e invitaciones.
     /// </summary>
     public class Espacio
     {
@@ -44,9 +44,9 @@
         public List<Sala> Salas { get; set; } = new List<Sala>();
 
         /// <summary>
-        /// Colección de usuarios que pertenecen al espacio.
+        /// Colección de UsuariosEspacios que pertenecen al espacio.
         /// </summary>
-        public List<Usuario> Usuarios { get; set; } = new List<Usuario>();
+        public List<UsuarioEspacio> UsuariosEspacios { get; set; } = new List<UsuarioEspacio>();
 
         /// <summary>
         /// Colección de peticiones de acceso al espacio.
@@ -118,13 +118,23 @@
             if (usuario == null)
                 throw new ArgumentNullException(nameof(usuario));
 
-            if (Usuarios.Any(u => u.Id == usuario.Id))
+            if (UsuariosEspacios.Any(u => u.Usuario.Id == usuario.Id))
                 throw new InvalidOperationException("El usuario ya está admitido en el espacio.");
 
             if (!Peticiones.Any(p => p.Solicitante == usuario))
                 throw new InvalidOperationException("No existe una petición para este usuario.");
 
-            Usuarios.Add(usuario);
+            UsuarioEspacio usuarioEspacio = new UsuarioEspacio
+            {
+                Id_UsuarioEspacio = Guid.NewGuid().ToString(),
+                Usuario = usuario,
+                Espacio = this,
+                Permiso = Permiso.Usuario,
+                Ausente = false,
+                Karma = 0
+            };
+
+            UsuariosEspacios.Add(usuarioEspacio);
             Peticiones.RemoveAll(p => p.Solicitante == usuario);
             return true;
         }
@@ -151,17 +161,17 @@
         /// <summary>
         /// Elimina un usuario del espacio por su nombre.
         /// </summary>
-        public bool EliminarUsuario(string nomusuario)
+        public bool EliminarUsuario(UsuarioEspacio usuariodelespacio)
         {
-            if (string.IsNullOrWhiteSpace(nomusuario))
-                throw new ArgumentException("El nombre del usuario no puede estar vacío.");
 
-            Usuario usuario = Usuarios.Find(u => u.Nombre == nomusuario);
-            if (usuario != null)
+            var usuariocomprobado = this.UsuariosEspacios.Find(u => u.Usuario.Nombre == usuariodelespacio.Usuario.Nombre);
+
+            if (usuariodelespacio != null)
             {
-                Usuarios.Remove(usuario);
+                UsuariosEspacios.Remove(usuariodelespacio);
                 return true;
             }
+
             return false;
         }
     }

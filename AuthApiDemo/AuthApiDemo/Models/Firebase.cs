@@ -38,6 +38,4 @@ public static class FirebaseConfig
     }
 }
 
-FirebaseConfig.InitializeFirebase();
 
-FirestoreDb _db = FirestoreDb.Create("convivia-862f2");
