@@ -1,13 +1,9 @@
 using Google.Cloud.Firestore;
 using System.Threading.Tasks;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-using System;
 using AuthApiDemo.Models;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-
 
 public class UserService
 {
@@ -17,15 +13,9 @@ public class UserService
     public UserService(ILogger<UserService> logger)
     {
         _logger = logger;
-
-        Environment.SetEnvironmentVariable(
-            "GOOGLE_APPLICATION_CREDENTIALS",
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase/serviceAccount.json")
-        );
-
+        // FirebaseConfig.InitializeFirebase(); // Solo necesario si no se inicializa globalmente
         _db = FirestoreDb.Create("convivia-862f2");
     }
-
 
     public async Task<bool> ProbarConexionAsync()
     {
@@ -120,7 +110,4 @@ public class UserService
             _ => element.ToString()
         };
     }
-
-
-
 }
