@@ -1,9 +1,16 @@
 using Google.Cloud.Firestore;
 using System.Threading.Tasks;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using System;
 using AuthApiDemo.Models;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+
+
+using AuthApiDemo.Models;
+using Google.Cloud.Firestore;
 
 public class UserService
 {
@@ -13,11 +20,38 @@ public class UserService
     public UserService(ILogger<UserService> logger)
     {
         _logger = logger;
-        // FirebaseConfig.InitializeFirebase(); // Solo necesario si no se inicializa globalmente
+
+        Environment.SetEnvironmentVariable(
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase/serviceAccount.json")
+        );
+
         _db = FirestoreDb.Create("convivia-862f2");
     }
 
-    public async Task<bool> ProbarConexionAsync()
+    public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
+    {
+        var docRef = _db.Collection("espacios").Document(espacioId);
+        var snapshot = await docRef.GetSnapshotAsync();
+
+        return snapshot.Exists ? snapshot.ConvertTo<Espacio>() : null;
+    }
+
+    public async Task<List<UsuarioEspacio>> GetUsuariosDelEspacioAsync(string espacioId)
+    {
+        var espacio = await GetEspacioByIdAsync(espacioId);
+        return espacio?.UsuariosEspacios ?? new List<UsuarioEspacio>();
+    }
+
+    public async Task<List<Sala>> GetSalasDelEspacioAsync(string espacioId)
+    {
+        var espacio = await GetEspacioByIdAsync(espacioId);
+        return espacio?.Salas ?? new List<Sala>();
+    }
+
+    //provar connexió
+
+public async Task<bool> ProbarConexionAsync()
     {
         try
         {
@@ -110,4 +144,7 @@ public class UserService
             _ => element.ToString()
         };
     }
+
+
+
 }

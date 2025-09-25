@@ -1,23 +1,38 @@
-﻿namespace AuthApiDemo.Models
+﻿using Google.Cloud.Firestore;
+namespace AuthApiDemo.Models
 {
 
+    [FirestoreData]
     public class UsuarioEspacio
     {
-
+        [FirestoreProperty]
         public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString();
 
-        public bool ausente { get; set; }
+        [FirestoreProperty]
+        public bool Ausente { get; set; }
 
-        public int karma { get; set; }
-        public string rol { get; set; }
+        [FirestoreProperty]
+        public int Karma { get; set; }
 
-        public Espacio espacio { get; set; }
+        [FirestoreProperty]
+        public string Rol { get; set; }
 
-        public Usuario usuario { get; set; }
+        [FirestoreProperty]
+        public Espacio Espacio { get; set; }
 
-        public List<Tarea> TareasAsignadas { get; set; } = new List<Tarea>();
-        public Permiso permiso { get; set; }
-        public List<Factura> Facturas { get; set; } = new List<Factura>(); // ?
+        [FirestoreProperty]
+        public Usuario Usuario { get; set; }
+
+        [FirestoreProperty]
+        public List<Tarea> TareasAsignadas { get; set; } = new();
+
+        [FirestoreProperty]
+        public Permiso Permiso { get; set; }
+
+        [FirestoreProperty]
+        public List<Factura> Facturas { get; set; } = new();
+
+ // ?
 
         // Constructor por defecto vacio para pruebas
         public UsuarioEspacio()
@@ -25,25 +40,25 @@
         }
 
         // Constructor que asigna el permiso según el rol proporcionado
-        public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, bool ausente = false, int karma = 0, string rol)
+        public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, string rol, bool ausente = false, int karma = 0)
         {
             Id_UsuarioEspacio = Guid.NewGuid().ToString();
-            this.usuario = usuario;
-            this.espacio = espacio;
-            this.ausente = ausente;
-            this.karma = karma;
+            this.Usuario = usuario;
+            this.Espacio = espacio;
+            this.Ausente = ausente;
+            this.Karma = karma;
 
             if (rol == "admin")
             {
-                this.permiso = Permiso.Admin;
+                this.Permiso = Permiso.Admin;
             }
             else if (rol == "usuario")
             {
-                this.permiso = Permiso.Usuario;
+                this.Permiso = Permiso.Usuario;
             }
             else
             {
-                this.permiso = Permiso.Huesped;
+                this.Permiso = Permiso.Huesped;
             }
         }
 
@@ -51,11 +66,11 @@
         public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, bool ausente = false, int karma = 0)
         {
             Id_UsuarioEspacio = Guid.NewGuid().ToString();
-            this.usuario = usuario;
-            this.espacio = espacio;
-            this.ausente = ausente;
-            this.karma = karma;
-            this.permiso = permiso;
+            this.Usuario = usuario;
+            this.Espacio = espacio;
+            this.Ausente = ausente;
+            this.Karma = karma;
+            this.Permiso = permiso;
         }
 
         // Métodos
@@ -63,40 +78,40 @@
         // Cambia el permiso del usuario en el espacio
         public void cambiarPermiso(Permiso permiso)
         {
-            this.permiso = permiso;
+            this.Permiso = permiso;
         }
 
         // Marca al usuario como ausente
         public void salirEspacio()
         {
-            espacio.Usuarios.Remove(this.usuario);
-            this.usuario.UsuariosEspacios.Remove(this);
+            Espacio.UsuariosEspacios.Remove(this);
+            this.Usuario.UsuariosEspacios.Remove(this);
         }
 
         // Marca al usuario como presente
         public void unirseEspacio(Espacio espacio)
         {
-            if (!espacio.Usuarios.Contains(this.usuario))
+            if (!espacio.UsuariosEspacios.Contains(this))
             {
-                espacio.Usuarios.Add(this.usuario);
+                espacio.UsuariosEspacios.Add(this);
             }
-            if (!this.usuario.UsuariosEspacios.Contains(this))
+            if (!this.Usuario.UsuariosEspacios.Contains(this))
             {
-                this.usuario.UsuariosEspacios.Add(this);
+                this.Usuario.UsuariosEspacios.Add(this);
             }
         }
 
         // Suma puntos de karma al usuario
         public void sumKarma(int puntos)
         {
-            this.karma += puntos;
+            this.Karma += puntos;
         }
 
         // Suma puntos de karma y marca la tarea como completada
         public void sumKarmaAndPassTask(Tarea tarea)
         {
             tarea.cambiarEstado(true);
-            karma += tarea.karma;
+            Karma += tarea.karma;
         }
 
         // Resta puntos de karma al usuario
@@ -127,7 +142,7 @@
         // Elimina una tarea asignada al usuarios
         public void reservarSala(Sala sala, DateTime fechaInicio, DateTime fechaFin)
         {
-            if (sala.crearReserva(fechaInicio, fechaFin, this.usuario))
+            if (sala.crearReserva(fechaInicio, fechaFin, this.Usuario))
             {
                 Console.WriteLine("Reserva creada con éxito.");
             }

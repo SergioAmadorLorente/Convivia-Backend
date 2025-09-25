@@ -40,5 +40,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapEspacioEndpoints();
+//app.MapTareaEndpoints();
 
 app.Run();

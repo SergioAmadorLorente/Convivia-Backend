@@ -17,6 +17,8 @@
 
         public bool Estado { get; set; }
 
+        public Espacio espacio { get; set; }
+
         public Factura? Factura { get; set; }
         public int karma { get; set; } = 10; // Puntos de karma que se otorgan al completar la tarea
 
@@ -100,25 +102,13 @@
 
         public void crearFactura(List<UsuarioEspacio> usuariosapagar, int precio)
         {
-            Factura = new Factura(Id_Tarea, "Factura de Tarea " + Id_Tarea, precio, usuariosapagar, false, null, this);
-
-            /*Factura = new Factura
-            {
-                Id_Factura = Guid.NewGuid().ToString(),
-                Nombre = "Factura de Tarea " + Id_Tarea,
-                Precio = precio,
-                
-                Pagado = false,
-                Documento = null,
-                tarea = this,
-
-                RepartoMap = new Dictionary<UsuarioEspacio, float>()
-                };
-                foreach (var usuario in usuariosapagar)
-                {
-                    RepartoMap[usuario] = precio / usuariosapagar.Count; // Reparto igualitario por defecto
-                }
-            }*/
+            Factura = new Factura(Id_Tarea,
+                "Factura de Tarea " + Id_Tarea,
+                precio,
+                usuariosapagar,
+                false,
+                null,
+                this);
 
         }
 

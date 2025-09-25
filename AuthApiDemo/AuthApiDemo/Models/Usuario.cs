@@ -50,11 +50,11 @@ namespace AuthApiDemo.Models
             
             if (invitacion != null && peticion != null)
             {
-                if (!espacio.Usuarios.Contains(this))
+                /*if (!espacio.UsuariosEspacios.Contains(this.UsuariosEspacios.FirstOrDefault(u => u.))
                 {
                     espacio.Usuarios.Add(this);
-                }
-                
+                }*/
+
                 espacio.Peticiones.Remove(peticion);
                 this.Invitaciones.Remove(invitacion);
                 return;
@@ -98,7 +98,11 @@ namespace AuthApiDemo.Models
 
             };
 
-            nuevoEspacio.Usuarios.Add(this);
+            nuevoEspacio.UsuariosEspacios.Add(
+
+                new UsuarioEspacio(this, nuevoEspacio, Permiso.Admin, "admin", false, 0)
+
+                );
             
         }
 
