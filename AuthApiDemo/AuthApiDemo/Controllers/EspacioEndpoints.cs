@@ -33,7 +33,7 @@ public static class EspacioEndpoints
             }
         };
         
-        app.MapPost("/espacio/salas", (EspacioRequest request) =>
+        app.MapPost("/espacio/salas", (string request) =>
         {
             var espacio = espacios.FirstOrDefault(e => e.Id_Espacio == request.EspacioId);
             if (espacio == null)
@@ -49,7 +49,7 @@ public static class EspacioEndpoints
             return Results.Ok(espacio.Salas);
         });
 
-        app.MapPost("/espacio/usuarios", (EspacioRequest request) =>
+        app.MapPost("/espacio/usuarios", (string request) =>
         {
             var espacio = espacios.FirstOrDefault(e => e.Id_Espacio == request.EspacioId);
             if (espacio == null)
