@@ -11,6 +11,9 @@ namespace AuthApiDemo.Models
         public bool eliminarUsuario { get; set; }
         public bool asignarTarea { get; set; }
         public bool asignarseTarea { get; set; }
+        public static Permiso Huesped = new Permiso("Huesped", false, false, false, false, false, false, true);
+        public static Permiso Usuario = new Permiso("Usuario", true, false, true, false, false, false, true);
+        public static Permiso Admin = new Permiso("Admin", true, true, true, true, true, true, true);
 
         public Permiso()
         {
@@ -70,6 +73,7 @@ namespace AuthApiDemo.Models
             this.asignarTarea = true;
             this.asignarseTarea = true;
         }
+
     }
 
 }
