@@ -7,10 +7,53 @@ namespace AuthApiDemo.Endpoints;
 
 public static class UsuarioEspacioEndpoints
 {
-    /*public static void MapTareaEndpoints(this IEndpointRouteBuilder app)
+
+    // Datos de ejemplo
+
+    private static List<UsuarioEspacio> usuariosespacios = new List<UsuarioEspacio>();
+    private static Espacio espacio = new Espacio
     {
 
+        Nombre = "Espacio de Ejemplo",
+        UsuariosEspacios = usuariosespacios,
         
+    };
+
+    private static UsuarioEspacio usuarioespacio = new UsuarioEspacio
+    {
+
+        Usuario = new Usuario { Nombre = "Usuario 1", Email = "jgibert06@gmail.com", Password = "password1" },
+        Espacio = espacio,
+        Permiso = Permiso.Admin,
+        Rol = "admin",
+        Ausente = false,
+        Karma = 100,
+        TareasAsignadas = new List<Tarea>
+        {
+            new Tarea
+            {
+                Id_Tarea = "tarea1",
+                FechaRealizacion = DateTime.Now,
+                FechaLimite = DateTime.Now.AddDays(7),
+                Estado = false,
+                karma = 10,
+                Usuarios = usuariosespacios
+            },
+            new Tarea
+            {
+                Id_Tarea = "tarea2",
+                FechaRealizacion = DateTime.Now,
+                FechaLimite = DateTime.Now.AddDays(3),
+                Estado = true,
+                karma = 15,
+                Usuarios = usuariosespacios
+            }
+        }
+
+    };
+
+    public static void MapTareaEndpoints(this IEndpointRouteBuilder app)
+    {
 
         app.MapPost("/usuario/tareas", (UsuarioEspacio requestu) =>
         {
@@ -25,10 +68,10 @@ public static class UsuarioEspacioEndpoints
             if (tarea == null)
                 return Results.NotFound(new { message = "El usuario no tiene tareas asignadas" });
 
-            List<Tarea> tareasUsuario = espacio.Tareas.Where(t => t.Usuarios.Contains(usuarioespacio)).ToList();
+            List<Tarea> tareasUsuario = usuarioespacio.TareasAsignadas;
 
             return Results.Ok(tareasUsuario);
         });
 
-    }*/
+    }
 }

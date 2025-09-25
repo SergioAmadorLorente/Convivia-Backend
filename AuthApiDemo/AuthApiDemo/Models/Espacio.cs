@@ -126,7 +126,6 @@
 
             UsuarioEspacio usuarioEspacio = new UsuarioEspacio
             {
-                Id_UsuarioEspacio = Guid.NewGuid().ToString(),
                 Usuario = usuario,
                 Espacio = this,
                 Permiso = Permiso.Usuario,

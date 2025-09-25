@@ -6,7 +6,7 @@ namespace AuthApiDemo.Models
     public class UsuarioEspacio
     {
         [FirestoreProperty]
-        public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString();
+        public string Id_UsuarioEspacio { get; } = Guid.NewGuid().ToString();
 
         [FirestoreProperty]
         public bool Ausente { get; set; }
@@ -32,7 +32,10 @@ namespace AuthApiDemo.Models
         [FirestoreProperty]
         public List<Factura> Facturas { get; set; } = new();
 
- // ?
+        [FirestoreProperty]
+        public List<Tarea> Tareas { get; set; } = new();
+
+        // ?
 
         // Constructor por defecto vacio para pruebas
         public UsuarioEspacio()

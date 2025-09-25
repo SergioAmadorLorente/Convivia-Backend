@@ -54,7 +54,6 @@ namespace AuthApiDemo.Models
                 {
                     UsuarioEspacio usuarioEspacio = new UsuarioEspacio
                     {
-                        Id_UsuarioEspacio = Guid.NewGuid().ToString(),
                         Usuario = this,
                         Espacio = espacio,
                         Permiso = Permiso.Usuario,
