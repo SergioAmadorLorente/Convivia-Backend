@@ -16,10 +16,10 @@ builder.Services.AddScoped<UserService>();
 
 var app = builder.Build();
 
-FirebaseApp.Create(new AppOptions()
+/*FirebaseApp.Create(new AppOptions()
 {
     Credential = GoogleCredential.FromFile("Firebase/serviceAccount.json")
-});
+});*/
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

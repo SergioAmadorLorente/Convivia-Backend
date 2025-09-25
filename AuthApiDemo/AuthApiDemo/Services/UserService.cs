@@ -27,43 +27,80 @@ public class UserService
     }
 
 
-public async Task<bool> ProbarConexionAsync()
-{
-    try
+    public async Task<bool> ProbarConexionAsync()
     {
-        string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase/usuarios1.json");
-        string jsonContent = await File.ReadAllTextAsync(jsonPath);
-
-        // Deserializar como JsonDocument
-        using var document = JsonDocument.Parse(jsonContent);
-        var root = document.RootElement;
-
-        if (root.ValueKind != JsonValueKind.Array)
-            throw new Exception("El JSON debe ser un array de objetos.");
-
-        CollectionReference usuariosRef = _db.Collection("Usuarios");
-
-        foreach (var element in root.EnumerateArray())
+        try
         {
-            var usuario = new Dictionary<string, object>();
+            string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase/base1.json");
+            string jsonContent = await File.ReadAllTextAsync(jsonPath);
 
-            foreach (var property in element.EnumerateObject())
+            using var document = JsonDocument.Parse(jsonContent);
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object)
+                throw new Exception("El JSON debe ser un objeto con colecciones como propiedades.");
+
+            foreach (var coleccion in root.EnumerateObject())
             {
-                usuario[property.Name] = ConvertJsonElement(property.Value);
+                string nombreColeccion = coleccion.Name;
+                var documentos = coleccion.Value;
+
+                if (documentos.ValueKind != JsonValueKind.Object)
+                {
+                    _logger.LogWarning($"La colección '{nombreColeccion}' no tiene formato válido.");
+                    continue;
+                }
+
+                CollectionReference coleccionRef = _db.Collection(nombreColeccion);
+
+                foreach (var documento in documentos.EnumerateObject())
+                {
+                    string idDocumento = documento.Name;
+                    var contenido = ConvertJsonElement(documento.Value);
+
+                    // Convertir referencias tipo "Coleccion/id" en DocumentReference
+                    var contenidoFinal = ConvertReferences(contenido);
+
+                    DocumentReference docRef = coleccionRef.Document(idDocumento);
+                    await docRef.SetAsync(contenidoFinal);
+                    Console.WriteLine($"Insertado documento '{idDocumento}' en colección '{nombreColeccion}'.");
+                }
             }
 
-            DocumentReference nuevoDoc = await usuariosRef.AddAsync(usuario);
-            Console.WriteLine("Documento creado con ID: " + nuevoDoc.Id);
+            return true;
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error al insertar datos en Firestore: {ex.Message}");
+            return false;
+        }
+    }
 
-        return true;
-    }
-    catch (Exception ex)
+    private object ConvertReferences(object data)
     {
-        _logger.LogError(ex, $"Error al insertar usuarios: {ex.Message}");
-        return false;
+        if (data is Dictionary<string, object> dict)
+        {
+            var result = new Dictionary<string, object>();
+            foreach (var kvp in dict)
+            {
+                result[kvp.Key] = ConvertReferences(kvp.Value);
+            }
+            return result;
+        }
+        else if (data is List<object> list)
+        {
+            return list.Select(ConvertReferences).ToList();
+        }
+        else if (data is string str && str.Contains("/") && str.Split('/').Length == 2)
+        {
+            var parts = str.Split('/');
+            return _db.Collection(parts[0]).Document(parts[1]);
+        }
+        else
+        {
+            return data;
+        }
     }
-}
 
     // Convierte JsonElement a tipos nativos
     private object ConvertJsonElement(JsonElement element)
