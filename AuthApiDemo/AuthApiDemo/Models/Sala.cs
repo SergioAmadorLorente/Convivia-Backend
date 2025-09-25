@@ -21,13 +21,15 @@ namespace AuthApiDemo.Models
         {
             
         }
-
+        
         public Sala(string nombre, string id_Espacio, string? descripcion = null)
         {
             Nombre = nombre;
             Descripcion = descripcion;
             Id_Espacio = id_Espacio;
         }
+
+
         public void listarReservas()
         {
             foreach (var reserva in reservas)
@@ -35,7 +37,7 @@ namespace AuthApiDemo.Models
                 Console.WriteLine($"Reserva ID: {reserva.Id_Reserva}, Fecha Inicial: {reserva.FechaInicial}, Fecha Final: {reserva.FechaFinal}, Usuario: {reserva.usuario.Nombre}");
             }
         }
-
+        // Verifica si la sala está disponible en el rango de fechas dado, comparando tanto las fechas de inicio como las de fin.
         public bool esDisponible(DateTime fechaInicio, DateTime fechaFin)
         {
             foreach (var reserva in reservas)
@@ -48,6 +50,7 @@ namespace AuthApiDemo.Models
             }
             return true;
         }
+        // comprueva si la fecha esta disponible y si lo esta crea la reserva
         public bool crearReserva(DateTime fechaInicio, DateTime fechaFin, Usuario usuario)
         {
             if (esDisponible(fechaInicio, fechaFin))
@@ -69,7 +72,7 @@ namespace AuthApiDemo.Models
                 return false;
             }
         }
-
+        // busca la reserva y la elimina
         public bool eliminarReserva(string idReserva)
         {
             var reserva = reservas.FirstOrDefault(r => r.Id_Reserva == idReserva);
@@ -84,6 +87,7 @@ namespace AuthApiDemo.Models
                 return false;
             }
         }
+
         public bool eliminarReserva(Reserva reserva)
         {
             if (reservas.Contains(reserva))
@@ -97,6 +101,7 @@ namespace AuthApiDemo.Models
                 return false;
             }
         }
+        // busca la reserva con el id
         public Reserva buscarReserva(string idReserva)
         {
             return reservas.FirstOrDefault(r => r.Id_Reserva == idReserva);
