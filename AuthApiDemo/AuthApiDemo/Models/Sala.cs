@@ -57,7 +57,7 @@ namespace AuthApiDemo.Models
                     Id_Reserva = Guid.NewGuid().ToString(),
                     FechaInicial = fechaInicio,
                     FechaFinal = fechaFin,
-                    Id_Sala = this.Id_Sala,
+                    sala = this,
                     usuario = usuario
                 };
                 reservas.Add(nuevaReserva);

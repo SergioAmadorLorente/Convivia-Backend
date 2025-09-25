@@ -9,7 +9,7 @@
 
         public DateTime FechaFinal { get; set; }
 
-        public string Id_Sala { get; set; }
+        public Sala sala { get; set; }
         public Usuario usuario { get; set; }
 
         public Reserva()
@@ -17,12 +17,25 @@
             // Constructor vacío necesario para la deserialización
         }
 
-        public Reserva(DateTime fechaInicial, DateTime fechaFinal, string id_Sala)
+        public Reserva(DateTime fechaInicial, DateTime fechaFinal, Sala sala)
         {
             FechaInicial = fechaInicial;
             FechaFinal = fechaFinal;
-            Id_Sala = id_Sala;
+            sala = sala;
         }
 
+        public bool reprogramarFecha(DateTime fechaInicial, DateTime fechaFinal)
+        {
+            if (sala.esDisponible(fechaInicial, fechaFinal))
+            {
+                FechaInicial = fechaInicial;
+                FechaFinal = fechaFinal;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }
