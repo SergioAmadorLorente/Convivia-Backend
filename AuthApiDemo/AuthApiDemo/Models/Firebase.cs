@@ -11,6 +11,7 @@ namespace AuthApiDemo.Models
         /// Inicializa la instancia de FirebaseApp si no existe.
         /// También establece GOOGLE_APPLICATION_CREDENTIALS para ADC.
         /// </summary>
+        /// 
         public static void InitializeFirebase()
         {
             if (FirebaseApp.DefaultInstance == null)

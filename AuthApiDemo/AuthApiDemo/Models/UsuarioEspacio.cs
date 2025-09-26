@@ -2,6 +2,7 @@
 namespace AuthApiDemo.Models
 {
 
+
     [FirestoreData]
     public class UsuarioEspacio
     {
@@ -17,23 +18,47 @@ namespace AuthApiDemo.Models
         [FirestoreProperty]
         public string Rol { get; set; }
 
+
         [FirestoreProperty]
+        public DocumentReference EspacioRef { get; set; }
+
         public Espacio Espacio { get; set; }
 
+
         [FirestoreProperty]
+        public DocumentReference UsuarioRef { get; set; }
+
+
         public Usuario Usuario { get; set; }
 
+
         [FirestoreProperty]
+        public List<DocumentReference> TareasAsignadasRefs { get; set; } = new();
+
         public List<Tarea> TareasAsignadas { get; set; } = new();
 
+
         [FirestoreProperty]
+        public DocumentReference PermisoRef { get; set; }
+
+
         public Permiso Permiso { get; set; }
 
-        [FirestoreProperty]
-        public List<Factura> Facturas { get; set; } = new();
 
         [FirestoreProperty]
+        public List<DocumentReference> FacturasRefs { get; set; } = new();
+
+
+
+        public List<Factura> Facturas { get; set; } = new();
+
+
+        [FirestoreProperty]
+        public List<DocumentReference> TareasRefs { get; set; } = new();
+
+
         public List<Tarea> Tareas { get; set; } = new();
+
 
         // ?
 

@@ -1,22 +1,23 @@
 {
   "espacios": {
     "e1": {
-      "nombre": "Piso Centro",
-      "direccion": "Calle Mayor 10",
-      "salas": {
-        "sala1": { "idSala": "Salas/s1" },
-        "sala2": { "idSala": "Salas/s2" }
-      },
-      "usuarioEspacios": {
-        "usuarioEspacio1": { "idUsuarioEspacio": "UsuarioEspacios/ue1" },
-        "usuarioEspacio2": { "idUsuarioEspacio": "UsuarioEspacios/ue2" }
-      },
-      "peticiones": {
-        "peticion1": { "idPeticion": "Peticiones/p1" }
-      },
-      "invitacionesEnviadas": {
-        "invitacion1": { "idInvitacion": "Invitaciones/i1" }
-      }
+      "Id_Espacio": "e1",
+      "Nombre": "Piso Centro",
+      "Direccion": "Calle Mayor 10",
+      "Salas": [
+        "Salas/s1",
+        "Salas/s2"
+      ],
+      "usuarioEspacios": [
+        "usuarioEspacios/ue1",
+        "usuarioEspacios/ue2"
+      ],
+      "Peticiones": [
+        "Peticiones/p1"
+      ],
+      "InvitacionesEnviadas": [
+        "Invitaciones/i1"
+      ]
     }
   },
   "salas": {
@@ -61,23 +62,36 @@
   },
   "usuarioEspacios": {
     "ue1": {
-      "ausente": false,
-      "karma": 10,
-      "admin": true,
-      "idEspacio": "Espacios/e1",
-      "idUsuario": "Usuarios/u1",
-      "tareasAsignadas": [
+      "Id_UsuarioEspacio": "ue1",
+      "Ausente": false,
+      "Karma": 10,
+      "Rol": "Administrador",
+      "Espacio": "espacios/e1",
+      "Usuario": "usuarios/u1",
+      "TareasAsignadas": [
+        "Tareas/t1",
+        "Tareas/t2"
+      ],
+      "Permiso": "Permisos/perm1",
+      "Facturas": [],
+      "Tareas": [
         "Tareas/t1",
         "Tareas/t2"
       ]
     },
     "ue2": {
-      "ausente": false,
-      "karma": 5,
-      "admin": false,
-      "idEspacio": "Espacios/e1",
-      "idUsuario": "Usuarios/u2",
-      "tareasAsignadas": [
+      "Id_UsuarioEspacio": "ue2",
+      "Ausente": false,
+      "Karma": 5,
+      "Rol": "Usuario",
+      "Espacio": "Espacios/e1",
+      "Usuario": "Usuarios/u2",
+      "TareasAsignadas": [
+        "Tareas/t2"
+      ],
+      "Permiso": "Permisos/perm2",
+      "Facturas": [],
+      "Tareas": [
         "Tareas/t2"
       ]
     }
@@ -85,7 +99,9 @@
   "tareas": {
     "t1": {
       "usuarios": {
-        "usuarioEspacio1": { "idUsuarioEspacio": "UsuarioEspacios/ue1" }
+        "usuarioEspacio1": {
+          "idUsuarioEspacio": "UsuarioEspacios/ue1"
+        }
       },
       "fechaRealizacion": "2024-09-25T10:00:00Z",
       "fechaLimite": "2024-09-30T23:59:59Z",
@@ -98,8 +114,12 @@
     },
     "t2": {
       "usuarios": {
-        "usuarioEspacio1": { "idUsuarioEspacio": "UsuarioEspacios/ue1" },
-        "usuarioEspacio2": { "idUsuarioEspacio": "UsuarioEspacios/ue2" }
+        "usuarioEspacio1": {
+          "idUsuarioEspacio": "UsuarioEspacios/ue1"
+        },
+        "usuarioEspacio2": {
+          "idUsuarioEspacio": "UsuarioEspacios/ue2"
+        }
       },
       "fechaRealizacion": "2024-09-20T09:00:00Z",
       "fechaLimite": "2024-09-27T23:59:59Z",
@@ -116,7 +136,9 @@
       "nombre": "Luz marzo",
       "precio": 50,
       "reparto": {
-        "usuarioEspacio1": { "idUsuarioEspacio": "UsuarioEspacios/ue1" }
+        "usuarioEspacio1": {
+          "idUsuarioEspacio": "UsuarioEspacios/ue1"
+        }
       },
       "pagado": false,
       "documento": "U29tZUJhc2U2NERvY3VtZW50",
@@ -128,8 +150,12 @@
       "nombre": "Agua marzo",
       "precio": 30,
       "reparto": {
-        "usuarioEspacio1": { "idUsuarioEspacio": "UsuarioEspacios/ue1" },
-        "usuarioEspacio2": { "idUsuarioEspacio": "UsuarioEspacios/ue2" }
+        "usuarioEspacio1": {
+          "idUsuarioEspacio": "UsuarioEspacios/ue1"
+        },
+        "usuarioEspacio2": {
+          "idUsuarioEspacio": "UsuarioEspacios/ue2"
+        }
       },
       "pagado": true,
       "documento": null,

@@ -11,25 +11,22 @@ using System.Threading.Tasks;
 /// </summary>
 public class UserService
 {
-    private readonly FirestoreDb _db;
     private readonly ILogger<UserService> _logger;
+    private readonly FirestoreDb _db;
 
-    /// <summary>
-    /// Inicializa el servicio de usuario con la instancia de Firestore y el logger.
-    /// </summary>
-    /// <param name="logger">Logger para registrar información y errores.</param>
-    public UserService()
+    // Único constructor: recibe Logger y FirestoreDb del contenedor DI
+    public UserService(ILogger<UserService> logger, FirestoreDb db)
     {
-        _db = FirestoreDb.Create("convivia-862f2");
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _db = db ?? throw new ArgumentNullException(nameof(db));
     }
 
-
-    /// <summary>
-    /// Obtiene un espacio por su identificador.
-    /// </summary>
-    /// <param name="espacioId">Identificador del espacio.</param>
-    /// <returns>Instancia de <see cref="Espacio"/> si existe, o null si no se encuentra.</returns>
-    public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
+/// <summary>
+/// Obtiene un espacio por su identificador.
+/// </summary>
+/// <param name="espacioId">Identificador del espacio.</param>
+/// <returns>Instancia de <see cref="Espacio"/> si existe, o null si no se encuentra.</returns>
+public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
     {
         var docRef = _db.Collection("espacios").Document(espacioId);
         var snapshot = await docRef.GetSnapshotAsync();
