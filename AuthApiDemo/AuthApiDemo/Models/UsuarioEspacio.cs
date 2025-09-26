@@ -87,20 +87,20 @@ namespace AuthApiDemo.Models
         // Marca al usuario como ausente
         public void salirEspacio()
         {
-            Espacio.UsuariosEspacios.Remove(this);
-            this.Usuario.UsuariosEspacios.Remove(this);
+            Espacio.UsuarioEspacios.Remove(this);
+            this.Usuario.UsuarioEspacios.Remove(this);
         }
 
         // Marca al usuario como presente
         public void unirseEspacio(Espacio espacio)
         {
-            if (!espacio.UsuariosEspacios.Contains(this))
+            if (!espacio.UsuarioEspacios.Contains(this))
             {
-                espacio.UsuariosEspacios.Add(this);
+                espacio.UsuarioEspacios.Add(this);
             }
-            if (!this.Usuario.UsuariosEspacios.Contains(this))
+            if (!this.Usuario.UsuarioEspacios.Contains(this))
             {
-                this.Usuario.UsuariosEspacios.Add(this);
+                this.Usuario.UsuarioEspacios.Add(this);
             }
         }
 

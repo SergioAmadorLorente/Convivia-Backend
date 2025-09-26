@@ -3,38 +3,51 @@ using Google.Apis.Auth.OAuth2;
 using System;
 using System.IO;
 
-/// <summary>
-/// Configuración y inicialización de la conexión con Firebase.
-/// </summary>
-public static class FirebaseConfig
+namespace AuthApiDemo.Models
 {
-    /// <summary>
-    /// Inicializa la instancia de FirebaseApp si no existe.
-    /// La ruta del archivo de credenciales debe configurarse correctamente.
-    /// </summary>
-    public static void InitializeFirebase()
+    public static class FirebaseConfig
     {
-        if (FirebaseApp.DefaultInstance == null)
+        /// <summary>
+        /// Inicializa la instancia de FirebaseApp si no existe.
+        /// También establece GOOGLE_APPLICATION_CREDENTIALS para ADC.
+        /// </summary>
+        public static void InitializeFirebase()
         {
-            try
+            if (FirebaseApp.DefaultInstance == null)
             {
-                var credPath = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_PATH")
-                    ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase", "serviceAccount.json");
-
-                if (!File.Exists(credPath))
-                    throw new FileNotFoundException($"No se encontró el archivo de credenciales: {credPath}");
-
-                FirebaseApp.Create(new AppOptions()
+                try
                 {
-                    Credential = GoogleCredential.FromFile(credPath)
-                });
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Error al inicializar Firebase.", ex);
+                    // 1. Determinar ruta de credenciales
+                    var credPath = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_PATH")
+                        ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase", "serviceAccount.json");
+
+                    // 2. Log de depuración: ruta que se está usando
+                    Console.WriteLine($"[FirebaseConfig] Buscando credenciales en: {credPath}");
+
+                    // 3. Verificar existencia
+                    if (!File.Exists(credPath))
+                        throw new FileNotFoundException($"No se encontró el archivo de credenciales: {credPath}");
+
+                    // 4. Crear instancia de FirebaseApp
+                    FirebaseApp.Create(new AppOptions
+                    {
+                        Credential = GoogleCredential.FromFile(credPath)
+                    });
+                    Console.WriteLine("[FirebaseConfig] FirebaseApp inicializado correctamente.");
+
+                    // 5. Establecer variable de entorno para Application Default Credentials
+                    Environment.SetEnvironmentVariable(
+                        "GOOGLE_APPLICATION_CREDENTIALS",
+                        credPath,
+                        EnvironmentVariableTarget.Process
+                    );
+                    Console.WriteLine("[FirebaseConfig] Variable GOOGLE_APPLICATION_CREDENTIALS establecida en el proceso.");
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException("Error al inicializar Firebase.", ex);
+                }
             }
         }
     }
 }
-
-

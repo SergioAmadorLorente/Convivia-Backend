@@ -1,23 +1,28 @@
-﻿namespace AuthApiDemo.Models
+﻿using Google.Cloud.Firestore;
+namespace AuthApiDemo.Models
 {
     /// <summary>
     /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones e invitaciones.
     /// </summary>
+    [FirestoreData]
     public class Espacio
     {
         /// <summary>
         /// Identificador único del espacio.
         /// </summary>
+        [FirestoreProperty]
         public string Id_Espacio { get; } = Guid.NewGuid().ToString();
 
         /// <summary>
         /// Nombre del espacio.
         /// </summary>
+        [FirestoreProperty]
         public string Nombre { get; set; }
 
         /// <summary>
         /// Dirección del espacio (opcional).
         /// </summary>
+        [FirestoreProperty]
         public string? Direccion { get; set; }
 
         /// <summary>
@@ -41,21 +46,25 @@
         /// <summary>
         /// Colección de salas asociadas al espacio.
         /// </summary>
+        [FirestoreProperty]
         public List<Sala> Salas { get; set; } = new List<Sala>();
 
         /// <summary>
         /// Colección de UsuariosEspacios que pertenecen al espacio.
         /// </summary>
-        public List<UsuarioEspacio> UsuariosEspacios { get; set; } = new List<UsuarioEspacio>();
+        [FirestoreProperty]
+        public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
 
         /// <summary>
         /// Colección de peticiones de acceso al espacio.
         /// </summary>
+        [FirestoreProperty]
         public List<Peticion> Peticiones { get; set; } = new List<Peticion>();
 
         /// <summary>
         /// Colección de invitaciones enviadas desde el espacio.
         /// </summary>
+        [FirestoreProperty]
         public List<Invitacion> InvitacionesEnviadas { get; set; } = new List<Invitacion>();
 
         /// <summary>
@@ -118,7 +127,7 @@
             if (usuario == null)
                 throw new ArgumentNullException(nameof(usuario));
 
-            if (UsuariosEspacios.Any(u => u.Usuario.Id == usuario.Id))
+            if (UsuarioEspacios.Any(u => u.Usuario.Id == usuario.Id))
                 throw new InvalidOperationException("El usuario ya está admitido en el espacio.");
 
             if (!Peticiones.Any(p => p.Solicitante == usuario))
@@ -133,7 +142,7 @@
                 Karma = 0
             };
 
-            UsuariosEspacios.Add(usuarioEspacio);
+            UsuarioEspacios.Add(usuarioEspacio);
             Peticiones.RemoveAll(p => p.Solicitante == usuario);
             return true;
         }
@@ -163,11 +172,11 @@
         public bool EliminarUsuario(UsuarioEspacio usuariodelespacio)
         {
 
-            var usuariocomprobado = this.UsuariosEspacios.Find(u => u.Usuario.Nombre == usuariodelespacio.Usuario.Nombre);
+            var usuariocomprobado = this.UsuarioEspacios.Find(u => u.Usuario.Nombre == usuariodelespacio.Usuario.Nombre);
 
             if (usuariodelespacio != null)
             {
-                UsuariosEspacios.Remove(usuariodelespacio);
+                UsuarioEspacios.Remove(usuariodelespacio);
                 return true;
             }
 

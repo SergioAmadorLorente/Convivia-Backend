@@ -1,6 +1,7 @@
 using AuthApiDemo.Endpoints;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using AuthApiDemo.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+FirebaseConfig.InitializeFirebase();
 builder.Services.AddScoped<UserService>();
+
 
 
 var app = builder.Build();

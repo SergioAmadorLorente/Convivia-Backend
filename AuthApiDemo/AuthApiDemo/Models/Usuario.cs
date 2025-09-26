@@ -18,7 +18,7 @@ namespace AuthApiDemo.Models
 
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
-        public List<UsuarioEspacio> UsuariosEspacios { get; set; } = new List<UsuarioEspacio>();
+        public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
 
         public List<Invitacion> Invitaciones { get; set; } = new List<Invitacion>();
 
@@ -50,7 +50,7 @@ namespace AuthApiDemo.Models
             
             if (invitacion != null && peticion != null)
             {
-                if (!espacio.UsuariosEspacios.Contains(this.UsuariosEspacios.FirstOrDefault(u => u.Usuario.Id == this.Id)))
+                if (!espacio.UsuarioEspacios.Contains(this.UsuarioEspacios.FirstOrDefault(u => u.Usuario.Id == this.Id)))
                 {
                     UsuarioEspacio usuarioEspacio = new UsuarioEspacio
                     {
@@ -63,7 +63,7 @@ namespace AuthApiDemo.Models
 
 
 
-                    espacio.UsuariosEspacios.Add(usuarioEspacio);
+                    espacio.UsuarioEspacios.Add(usuarioEspacio);
                 }
 
                 espacio.Peticiones.Remove(peticion);
@@ -109,7 +109,7 @@ namespace AuthApiDemo.Models
 
             };
 
-            nuevoEspacio.UsuariosEspacios.Add(
+            nuevoEspacio.UsuarioEspacios.Add(
 
                 new UsuarioEspacio(this, nuevoEspacio, Permiso.Admin, "admin", false, 0)
 

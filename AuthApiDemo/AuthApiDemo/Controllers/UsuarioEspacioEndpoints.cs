@@ -15,7 +15,7 @@ public static class UsuarioEspacioEndpoints
     {
 
         Nombre = "Espacio de Ejemplo",
-        UsuariosEspacios = usuariosespacios,
+        UsuarioEspacios = usuariosespacios,
         
     };
 

@@ -1,9 +1,10 @@
-using Google.Cloud.Firestore;
-using System.Threading.Tasks;
 using AuthApiDemo.Models;
-using System.IO;
+using FirebaseAdmin;
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.Logging;
+using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Servicio para gestionar operaciones relacionadas con usuarios y espacios en Firestore.
@@ -17,11 +18,11 @@ public class UserService
     /// Inicializa el servicio de usuario con la instancia de Firestore y el logger.
     /// </summary>
     /// <param name="logger">Logger para registrar información y errores.</param>
-    public UserService(ILogger<UserService> logger)
+    public UserService()
     {
-        _logger = logger;
         _db = FirestoreDb.Create("convivia-862f2");
     }
+
 
     /// <summary>
     /// Obtiene un espacio por su identificador.
@@ -43,7 +44,7 @@ public class UserService
     public async Task<List<UsuarioEspacio>> GetUsuariosDelEspacioAsync(string espacioId)
     {
         var espacio = await GetEspacioByIdAsync(espacioId);
-        return espacio?.UsuariosEspacios ?? new List<UsuarioEspacio>();
+        return espacio?.UsuarioEspacios ?? new List<UsuarioEspacio>();
     }
 
     /// <summary>
@@ -164,4 +165,36 @@ public class UserService
             _ => element.ToString()
         };
     }
+
+    // conseguir usuarios por espacio id
+    public async Task<List<UsuarioEspacio>?> ObtenerUsuariosPorEspacioId(string espacioId)
+    {
+        if (string.IsNullOrWhiteSpace(espacioId))
+            return null;
+        espacioId = espacioId.Trim().Trim('\"');
+
+        var espacioSnap = await _db
+            .Collection("espacios")
+            .Document(espacioId)
+            .GetSnapshotAsync();
+        if (!espacioSnap.Exists)
+            return null;
+
+        var referencias = espacioSnap.GetValue<List<DocumentReference>?>("usuarioEspacios");
+        if (referencias == null || referencias.Count == 0)
+            return null;
+
+        var fetchTasks = referencias
+            .Select(r => r.GetSnapshotAsync())
+            .ToList();
+        var userSnaps = await Task.WhenAll(fetchTasks);
+
+        var usuarios = userSnaps
+            .Where(s => s.Exists)
+            .Select(s => s.ConvertTo<UsuarioEspacio>())
+            .ToList();
+
+        return usuarios.Count > 0 ? usuarios : null;
+    }
+
 }

@@ -8,36 +8,22 @@ namespace AuthApiDemo.Endpoints;
 
 public static class EspacioEndpoints
 {
-    private readonly FirestoreDb _db;
-    private readonly ILogger<EspacioEndpoints> _logger;
-
-    public EspacioEndpoints(ILogger<EspacioEndpoints> logger)
-    {
-        _logger = logger;
-
-        Environment.SetEnvironmentVariable(
-            "GOOGLE_APPLICATION_CREDENTIALS",
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase/serviceAccount.json")
-        );
-
-        _db = FirestoreDb.Create("convivia-862f2");
-    }
-
-
     public static void MapEspacioEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/espacio/usuarios", async (HttpRequest httpRequest, UserService userService) =>
+        app.MapPost("/espacio/usuarios", async (string request, UserService userService) =>
         {
-            using var reader = new StreamReader(httpRequest.Body);
-            var espacioId = await reader.ReadToEndAsync();
 
-            var usuarios = await userService.ObtenerUsuariosPorEspacioId(espacioId);
+            if (string.IsNullOrWhiteSpace(request))
+                return Results.BadRequest(new { message = "EspacioId no proporcionado" });
 
-            if (usuarios == null)
+            var usuarios = await userService.ObtenerUsuariosPorEspacioId(request);
+
+            if (usuarios == null || usuarios.Count == 0)
                 return Results.NotFound(new { message = "Espacio no encontrado o sin usuarios" });
 
             return Results.Ok(usuarios);
         });
+
     }
 
 }
