@@ -31,7 +31,6 @@ public static class FirebaseConfig
             }
             catch (Exception ex)
             {
-                // Aquí puedes loguear el error o relanzar la excepción
                 throw new InvalidOperationException("Error al inicializar Firebase.", ex);
             }
         }

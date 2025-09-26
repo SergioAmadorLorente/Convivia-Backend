@@ -1,57 +1,68 @@
 using Google.Cloud.Firestore;
 using System.Threading.Tasks;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-using System;
 using AuthApiDemo.Models;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-
-using AuthApiDemo.Models;
-using Google.Cloud.Firestore;
-
+/// <summary>
+/// Servicio para gestionar operaciones relacionadas con usuarios y espacios en Firestore.
+/// </summary>
 public class UserService
 {
     private readonly FirestoreDb _db;
     private readonly ILogger<UserService> _logger;
 
+    /// <summary>
+    /// Inicializa el servicio de usuario con la instancia de Firestore y el logger.
+    /// </summary>
+    /// <param name="logger">Logger para registrar información y errores.</param>
     public UserService(ILogger<UserService> logger)
     {
         _logger = logger;
-
-        Environment.SetEnvironmentVariable(
-            "GOOGLE_APPLICATION_CREDENTIALS",
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase/serviceAccount.json")
-        );
-
         _db = FirestoreDb.Create("convivia-862f2");
     }
 
+    /// <summary>
+    /// Obtiene un espacio por su identificador.
+    /// </summary>
+    /// <param name="espacioId">Identificador del espacio.</param>
+    /// <returns>Instancia de <see cref="Espacio"/> si existe, o null si no se encuentra.</returns>
     public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
     {
         var docRef = _db.Collection("espacios").Document(espacioId);
         var snapshot = await docRef.GetSnapshotAsync();
-
         return snapshot.Exists ? snapshot.ConvertTo<Espacio>() : null;
     }
 
+    /// <summary>
+    /// Obtiene la lista de usuarios asociados a un espacio.
+    /// </summary>
+    /// <param name="espacioId">Identificador del espacio.</param>
+    /// <returns>Lista de <see cref="UsuarioEspacio"/> asociados al espacio.</returns>
     public async Task<List<UsuarioEspacio>> GetUsuariosDelEspacioAsync(string espacioId)
     {
         var espacio = await GetEspacioByIdAsync(espacioId);
         return espacio?.UsuariosEspacios ?? new List<UsuarioEspacio>();
     }
 
+    /// <summary>
+    /// Obtiene la lista de salas asociadas a un espacio.
+    /// </summary>
+    /// <param name="espacioId">Identificador del espacio.</param>
+    /// <returns>Lista de <see cref="Sala"/> asociadas al espacio.</returns>
     public async Task<List<Sala>> GetSalasDelEspacioAsync(string espacioId)
     {
         var espacio = await GetEspacioByIdAsync(espacioId);
         return espacio?.Salas ?? new List<Sala>();
     }
 
-    //provar connexió
-
-public async Task<bool> ProbarConexionAsync()
+    /// <summary>
+    /// Inserta datos de prueba en Firestore a partir de un archivo JSON.
+    /// El JSON debe tener colecciones como propiedades y documentos como objetos.
+    /// </summary>
+    /// <returns>True si la inserción fue exitosa, false si hubo errores.</returns>
+    public async Task<bool> ProbarConexionAsync()
     {
         try
         {
@@ -82,7 +93,7 @@ public async Task<bool> ProbarConexionAsync()
                     string idDocumento = documento.Name;
                     var contenido = ConvertJsonElement(documento.Value);
 
-                    // Convertir referencias tipo "Coleccion/id" en DocumentReference
+                    // Convierte referencias tipo "Coleccion/id" en DocumentReference
                     var contenidoFinal = ConvertReferences(contenido);
 
                     DocumentReference docRef = coleccionRef.Document(idDocumento);
@@ -100,6 +111,11 @@ public async Task<bool> ProbarConexionAsync()
         }
     }
 
+    /// <summary>
+    /// Convierte referencias en los datos a instancias de DocumentReference si corresponde.
+    /// </summary>
+    /// <param name="data">Datos a convertir.</param>
+    /// <returns>Datos convertidos con referencias de Firestore.</returns>
     private object ConvertReferences(object data)
     {
         if (data is Dictionary<string, object> dict)
@@ -126,7 +142,11 @@ public async Task<bool> ProbarConexionAsync()
         }
     }
 
-    // Convierte JsonElement a tipos nativos
+    /// <summary>
+    /// Convierte un elemento JSON a tipos nativos de C#.
+    /// </summary>
+    /// <param name="element">Elemento JSON a convertir.</param>
+    /// <returns>Objeto nativo equivalente.</returns>
     private object ConvertJsonElement(JsonElement element)
     {
         return element.ValueKind switch
@@ -144,7 +164,4 @@ public async Task<bool> ProbarConexionAsync()
             _ => element.ToString()
         };
     }
-
-
-
 }
