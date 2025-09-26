@@ -1,31 +1,43 @@
-﻿using Microsoft.AspNetCore.Routing;
+﻿using AuthApiDemo.Models;
+using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using AuthApiDemo.Models;
+using Microsoft.AspNetCore.Routing;
 
 namespace AuthApiDemo.Endpoints;
 
 public static class EspacioEndpoints
 {
+    private readonly FirestoreDb _db;
+    private readonly ILogger<EspacioEndpoints> _logger;
+
+    public EspacioEndpoints(ILogger<EspacioEndpoints> logger)
+    {
+        _logger = logger;
+
+        Environment.SetEnvironmentVariable(
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Firebase/serviceAccount.json")
+        );
+
+        _db = FirestoreDb.Create("convivia-862f2");
+    }
+
+
     public static void MapEspacioEndpoints(this IEndpointRouteBuilder app)
     {
-
-        // per quan volguem provar amb dades reals
-
-        /*app.MapPost("/espacio/usuarios", (string request) =>
+        app.MapPost("/espacio/usuarios", async (HttpRequest httpRequest, UserService userService) =>
         {
-            var espacio = espacios.FirstOrDefault(e => e.Id_Espacio == request.EspacioId);
-            if (espacio == null)
-                return Results.NotFound(new { message = "Espacio no encontrado" });
+            using var reader = new StreamReader(httpRequest.Body);
+            var espacioId = await reader.ReadToEndAsync();
 
-            Console.WriteLine("EspacioId recibido: " + request.EspacioId);
+            var usuarios = await userService.ObtenerUsuariosPorEspacioId(espacioId);
 
-            var usuario = espacio.Usuarios.FirstOrDefault();
+            if (usuarios == null)
+                return Results.NotFound(new { message = "Espacio no encontrado o sin usuarios" });
 
-            if (usuario == null)
-                return Results.NotFound(new { message = "El espacio no contiene usuarios" });
-
-            return Results.Ok(espacio.Usuarios);
-        });*/
+            return Results.Ok(usuarios);
+        });
     }
+
 }
