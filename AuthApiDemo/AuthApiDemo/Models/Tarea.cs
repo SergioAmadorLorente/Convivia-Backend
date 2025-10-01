@@ -44,7 +44,7 @@
             Usuarios.AddRange(listausuarios);
             for (int i = 0; i < listausuarios.Count; i++)
             {
-                listausuarios[i].TareasAsignadas.Add(this);
+                listausuarios[i].tareas.Add(this);
             }
 
         }
@@ -52,7 +52,7 @@
         public void quitarUsuario(UsuarioEspacio usuario)
         {
             Usuarios.Remove(usuario);
-            usuario.TareasAsignadas.Remove(this);
+            usuario.tareas.Remove(this);
         }
 
         public void editarTarea(DateTime nuevaFechaLimite, byte[]? nuevaFoto = null, DateTime? nuevaProrroga = null, bool nuevoEstado = false)
@@ -70,7 +70,7 @@
         {
             foreach (var usuario in Usuarios)
             {
-                usuario.TareasAsignadas.Remove(this);
+                usuario.tareas.Remove(this);
             }
             Usuarios.Clear();
         }

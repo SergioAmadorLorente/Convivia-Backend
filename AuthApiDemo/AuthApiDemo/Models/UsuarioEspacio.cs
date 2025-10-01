@@ -7,7 +7,7 @@ namespace AuthApiDemo.Models
     public class UsuarioEspacio
     {
         [FirestoreProperty]
-        public string Id_UsuarioEspacio { get; } = Guid.NewGuid().ToString();
+        public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString();
 
         [FirestoreProperty]
         public bool Ausente { get; set; }
@@ -17,7 +17,6 @@ namespace AuthApiDemo.Models
 
         [FirestoreProperty]
         public string Rol { get; set; }
-
 
         [FirestoreProperty]
         public DocumentReference EspacioRef { get; set; }
@@ -32,10 +31,10 @@ namespace AuthApiDemo.Models
         public Usuario Usuario { get; set; }
 
 
-        [FirestoreProperty]
-        public List<DocumentReference> TareasAsignadasRefs { get; set; } = new();
+        [FirestoreProperty("tareas")]
+        public List<DocumentReference> tareasRefs { get; set; } = new();
 
-        public List<Tarea> TareasAsignadas { get; set; } = new();
+        public List<Tarea> tareas { get; set; } = new();
 
 
         [FirestoreProperty]
@@ -48,16 +47,7 @@ namespace AuthApiDemo.Models
         [FirestoreProperty]
         public List<DocumentReference> FacturasRefs { get; set; } = new();
 
-
-
         public List<Factura> Facturas { get; set; } = new();
-
-
-        [FirestoreProperty]
-        public List<DocumentReference> TareasRefs { get; set; } = new();
-
-
-        public List<Tarea> Tareas { get; set; } = new();
 
 
         // ?
@@ -89,6 +79,25 @@ namespace AuthApiDemo.Models
                 this.Permiso = Permiso.Huesped;
             }
         }
+
+        // JSON
+
+        public UsuarioEspacioResponse ToResponse()
+        {
+            return new UsuarioEspacioResponse
+            {
+                Id_UsuarioEspacio = this.Id_UsuarioEspacio,
+                Ausente = this.Ausente,
+                Karma = this.Karma,
+                Rol = this.Rol,
+                UsuarioId = UsuarioRef?.Id,
+                EspacioId = EspacioRef?.Id,
+                PermisoId = PermisoRef?.Id,
+                tareas = tareasRefs?.Select(r => r.Id).ToList() ?? new(),
+                Facturas = FacturasRefs?.Select(r => r.Id).ToList() ?? new()
+            };
+        }
+
 
         // Constructor que recibe un objeto Permiso directamente
         public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, bool ausente = false, int karma = 0)
@@ -145,7 +154,7 @@ namespace AuthApiDemo.Models
         // Resta puntos de karma al usuario
         public void creearTarea(Tarea tarea)
         {
-            this.TareasAsignadas.Add(tarea);
+            this.tareas.Add(tarea);
             tarea.Usuarios.Add(this);
         }
 
@@ -164,7 +173,7 @@ namespace AuthApiDemo.Models
         public void guardarTarea(Tarea tarea)
         {
             tarea.agregarUsuarios(new List<UsuarioEspacio> { this });
-            TareasAsignadas.Add(tarea);
+            tareas.Add(tarea);
         }
 
         // Elimina una tarea asignada al usuarios

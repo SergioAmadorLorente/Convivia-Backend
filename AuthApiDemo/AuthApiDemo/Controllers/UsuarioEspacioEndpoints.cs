@@ -28,7 +28,7 @@ public static class UsuarioEspacioEndpoints
         Rol = "admin",
         Ausente = false,
         Karma = 100,
-        TareasAsignadas = new List<Tarea>
+        tareas = new List<Tarea>
         {
             new Tarea
             {
@@ -63,12 +63,12 @@ public static class UsuarioEspacioEndpoints
             if (usuarioespacio == null)
                 return Results.NotFound(new { message = "Usuario no encontrado" });
 
-            var tarea = usuarioespacio.Tareas.FirstOrDefault(t => t.Usuarios.Contains(usuarioespacio));
+            var tarea = usuarioespacio.tareas.FirstOrDefault(t => t.Usuarios.Contains(usuarioespacio));
 
             if (tarea == null)
                 return Results.NotFound(new { message = "El usuario no tiene tareas asignadas" });
 
-            List<Tarea> tareasUsuario = usuarioespacio.TareasAsignadas;
+            List<Tarea> tareasUsuario = usuarioespacio.tareas;
 
             return Results.Ok(tareasUsuario);
         });

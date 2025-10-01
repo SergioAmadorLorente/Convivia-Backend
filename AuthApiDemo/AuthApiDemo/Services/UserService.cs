@@ -164,16 +164,18 @@ public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
     }
 
     // conseguir usuarios por espacio id
-    public async Task<List<UsuarioEspacio>?> ObtenerUsuariosPorEspacioId(string espacioId)
+    public async Task<List<UsuarioEspacioResponse>?> ObtenerUsuariosPorEspacioId(string espacioId)
     {
         if (string.IsNullOrWhiteSpace(espacioId))
             return null;
+
         espacioId = espacioId.Trim().Trim('\"');
 
         var espacioSnap = await _db
             .Collection("espacios")
             .Document(espacioId)
             .GetSnapshotAsync();
+
         if (!espacioSnap.Exists)
             return null;
 
@@ -184,11 +186,13 @@ public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
         var fetchTasks = referencias
             .Select(r => r.GetSnapshotAsync())
             .ToList();
+
         var userSnaps = await Task.WhenAll(fetchTasks);
 
         var usuarios = userSnaps
             .Where(s => s.Exists)
             .Select(s => s.ConvertTo<UsuarioEspacio>())
+            .Select(u => u.ToResponse())
             .ToList();
 
         return usuarios.Count > 0 ? usuarios : null;
