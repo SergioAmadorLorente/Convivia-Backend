@@ -1,10 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace AuthApiDemo.Models
 {
     public class Peticion
     {
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
-
+        [JsonIgnore]
         public Usuario Solicitante { get; set; }
 
         public string Mensaje { get; set; }
