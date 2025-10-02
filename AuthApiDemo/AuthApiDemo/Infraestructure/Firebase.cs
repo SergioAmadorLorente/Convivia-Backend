@@ -3,7 +3,7 @@ using Google.Apis.Auth.OAuth2;
 using System;
 using System.IO;
 
-namespace AuthApiDemo.Models
+namespace AuthApiDemo.Infraestructure
 {
     public static class FirebaseConfig
     {
