@@ -21,8 +21,9 @@ builder.Services.AddSingleton(provider =>
 // Add services to the container.
 
 FirebaseConfig.InitializeFirebase();
-builder.Services.AddScoped<IFirebaseService,  FirebaseService>();
+builder.Services.AddScoped<IFirebaseService, FirebaseService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<TareaService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -46,7 +47,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapEspacioEndpoints();
-//app.MapTareaEndpoints();
+app.MapTareaEndpoints();
 app.MapPeticionEndpoints();
 
 app.Run();

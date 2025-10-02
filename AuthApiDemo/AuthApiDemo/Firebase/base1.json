@@ -4,197 +4,177 @@
       "Id_Espacio": "e1",
       "Nombre": "Piso Centro",
       "Direccion": "Calle Mayor 10",
-      "salas": [
-        "salas/s1",
-        "salas/s2"
+      "Salas": [
+        {
+          "Id_Sala": "s1",
+          "Nombre": "Salón",
+          "Descripcion": "Sala principal",
+          "Id_Espacio": "e1"
+        },
+        {
+          "Id_Sala": "s2",
+          "Nombre": "Cocina",
+          "Descripcion": "Cocina equipada",
+          "Id_Espacio": "e1"
+        }
       ],
-      "usuarioEspacios": [
-        "usuarioEspacios/ue1",
-        "usuarioEspacios/ue2"
-      ],
-      "peticiones": [
-        "peticiones/p1"
-      ],
-      "invitacionesenviadas": [
-        "invitaciones/i1"
-      ]
-    }
-  },
-  "salas": {
-    "s1": {
-      "nombre": "Salón",
-      "descripcion": "Sala principal",
-      "idespacio": "espacios/e1"
-    },
-    "s2": {
-      "nombre": "Cocina",
-      "descripcion": "Cocina equipada",
-      "idespacio": "espacios/e1"
+      "UsuarioEspacios": ["ue1", "ue2"],
+      "Peticiones": ["p1"],
+      "InvitacionesEnviadas": ["i1"]
     }
   },
   "usuarios": {
     "u1": {
-      "nombre": "Ana",
-      "email": "ana@email.com",
-      "password": "hashed1",
-      "telefono": "600111222",
-      "premium": true,
-      "fecharegistro": "2024-01-01T10:00:00Z",
-      "usuarioEspacios": [
-        "usuarioEspacios/ue1"
-      ],
-      "invitaciones": [
-        "invitaciones/i1"
-      ]
+      "Id": "u1",
+      "Nombre": "Ana",
+      "Email": "ana@email.com",
+      "Password": "hashed1",
+      "Telefono": "600111222",
+      "Premium": true,
+      "FechaRegistro": "2024-01-01T10:00:00Z",
+      "UsuarioEspacios": ["ue1"],
+      "Invitaciones": ["i1"]
     },
     "u2": {
-      "nombre": "Luis",
-      "email": "luis@email.com",
-      "password": "hashed2",
-      "telefono": "600333444",
-      "premium": false,
-      "fecharegistro": "2024-01-02T10:00:00Z",
-      "usuarioEspacios": [
-        "usuarioEspacios/ue2"
-      ],
-      "invitaciones": []
+      "Id": "u2",
+      "Nombre": "Luis",
+      "Email": "luis@email.com",
+      "Password": "hashed2",
+      "Telefono": "600333444",
+      "Premium": false,
+      "FechaRegistro": "2024-01-02T10:00:00Z",
+      "UsuarioEspacios": ["ue2"],
+      "Invitaciones": []
     }
   },
   "usuarioEspacios": {
     "ue1": {
-      "id_usuarioespacio": "ue1",
+      "Id_UsuarioEspacio": "ue1",
       "Ausente": false,
       "Karma": 10,
       "Rol": "Administrador",
-      "Espacio": "espacios/e1",
-      "Usuario": "usuarios/u1",
-      "tareas": [
-        "tareas/t1",
-        "tareas/t2"
-      ],
-      "permiso": "permisos/perm1",
-      "facturas": []
+      "EspacioRef": "e1",
+      "UsuarioRef": "u1",
+      "tareas": ["t1", "t2"],
+      "PermisoRef": "perm1",
+      "FacturasRefs": []
     },
     "ue2": {
-      "id_usuarioespacio": "ue2",
-      "ausente": false,
-      "karma": 5,
-      "rol": "Usuario",
-      "espacio": "espacios/e1",
-      "usuario": "usuarios/u2",
-      "tareas": [
-        "tareas/t2"
-      ],
-      "permiso": "permisos/perm2",
-      "facturas": []
+      "Id_UsuarioEspacio": "ue2",
+      "Ausente": false,
+      "Karma": 5,
+      "Rol": "Usuario",
+      "EspacioRef": "e1",
+      "UsuarioRef": "u2",
+      "tareas": ["t2"],
+      "PermisoRef": "perm2",
+      "FacturasRefs": []
     }
   },
   "tareas": {
     "t1": {
-      "usuarios": [
-        "usuarioespacios/ue1"
-      ],
-      "fecharealizacion": "2024-09-25T10:00:00Z",
-      "fechalimite": "2024-09-30T23:59:59Z",
-      "foto": "aW1hZ2VuQmFzZTY0",
-      "prorroga": null,
-      "estado": true,
-      "factura": "facturas/f1"
+      "IdTarea": "t1",
+      "Nombre": "Tarea 1",
+      "fechaLimite": "2024-09-30T23:59:59Z",
+      "Descripcion": "Descripción tarea 1",
+      "UsuarioEspacioIds": ["ue1"],
+      "Karma": 10,
+      "Foto": null,
+      "Prorroga": null,
+      "Estado": true,
+      "FechaRealizacion": "2024-09-25T10:00:00Z"
     },
     "t2": {
-      "usuarios": [
-        "usuarioespacios/ue1",
-        "usuarioespacios/ue2"
-      ],
-      "fecharealizacion": "2024-09-20T09:00:00Z",
-      "fechalimite": "2024-09-27T23:59:59Z",
-      "foto": null,
-      "prorroga": "2024-10-02T23:59:59Z",
-      "estado": false,
-      "factura": "facturas/f2"
+      "IdTarea": "t2",
+      "Nombre": "Tarea 2",
+      "fechaLimite": "2024-09-27T23:59:59Z",
+      "Descripcion": "Descripción tarea 2",
+      "UsuarioEspacioIds": ["ue1", "ue2"],
+      "Karma": 5,
+      "Foto": null,
+      "Prorroga": "2024-10-02T23:59:59Z",
+      "Estado": false,
+      "FechaRealizacion": "2024-09-20T09:00:00Z"
     }
   },
   "facturas": {
     "f1": {
-      "nombre": "Luz marzo",
-      "precio": 50,
-      "reparto": [
-        "usuarioespacios/ue1"
-      ],
-      "pagado": false,
-      "documento": "U29tZUJhc2U2NERvY3VtZW50",
-      "tarea": "tareas/t1"
+      "Id_Factura": "f1",
+      "Nombre": "Luz marzo",
+      "Precio": 50,
+      "Pagado": false,
+      "Documento": "U29tZUJhc2U2NERvY3VtZW50",
+      "Tarea": "t1"
     },
     "f2": {
-      "nombre": "Agua marzo",
-      "precio": 30,
-      "reparto": [
-        "usuarioespacios/ue1",
-        "usuarioespacios/ue2"
-      ],
-      "pagado": true,
-      "documento": null,
-      "tarea": "tareas/t2"
+      "Id_Factura": "f2",
+      "Nombre": "Agua marzo",
+      "Precio": 30,
+      "Pagado": true,
+      "Documento": null,
+      "Tarea": "t2"
     }
   },
   "peticiones": {
     "p1": {
-      "idpeticion": "p1",
-      "solicitante": "usuarios/u2",
-      "mensaje": "Quiero unirme al espacio",
-      "fecha": "2024-09-20T12:00:00Z",
-      "estado": "pendiente"
+      "Id": "p1",
+      "Mensaje": "Quiero unirme al espacio",
+      "Fecha": "2024-09-20T12:00:00Z",
+      "Estado": "pendiente"
     }
   },
   "invitaciones": {
     "i1": {
-      "idinvitacion": "i1",
-      "usuariosolicitante": "usuarioespacios/ue1",
-      "espacio": "espacios/e1",
-      "mensaje": "Te invito a Piso Centro",
-      "fecha": "2024-09-19T12:00:00Z",
-      "estado": "pendiente"
+      "Id": "i1",
+      "UsuarioSolicitante": "ue1",
+      "UsuarioInvitado": "u1",
+      "Espacio": "e1",
+      "Mensaje": "Te invito a Piso Centro",
+      "Fecha": "2024-09-19T12:00:00Z",
+      "Estado": "pendiente"
     }
   },
-  "plantillastarea": {
+  "plantillaTarea": {
     "pt1": {
-      "idplantillatarea": "pt1",
-      "nombre": "Limpiar cocina",
-      "repeticion": 1,
-      "fechacreacion": "2024-01-10T12:00:00Z",
-      "puntoskarma": 2,
-      "disponible": true
+      "Id_PlantillaTarea": "pt1",
+      "Nombre": "Limpiar cocina",
+      "Repeticion": 1,
+      "FechaCreacion": "2024-01-10T12:00:00Z",
+      "PuntosKarma": 2,
+      "Disponible": true
     }
   },
   "permisos": {
     "perm1": {
+      "id_Reserva": "perm1",
       "rol": "Administrador",
-      "creartarea": true,
-      "eliminartarea": true,
-      "editartarea": true,
-      "invitarusuario": true,
-      "expulsarusuario": true,
-      "asignartarea": true,
-      "asignarsetarea": true
+      "crearTarea": true,
+      "eliminarTarea": true,
+      "editarTarea": true,
+      "añadirUsuario": true,
+      "eliminarUsuario": true,
+      "asignarTarea": true,
+      "asignarseTarea": true
     },
     "perm2": {
+      "id_Reserva": "perm2",
       "rol": "Usuario",
-      "creartarea": true,
-      "eliminartarea": false,
-      "editartarea": false,
-      "invitarusuario": false,
-      "expulsarusuario": false,
-      "asignartarea": false,
-      "asignarsetarea": true
+      "crearTarea": true,
+      "eliminarTarea": false,
+      "editarTarea": false,
+      "añadirUsuario": false,
+      "eliminarUsuario": false,
+      "asignarTarea": false,
+      "asignarseTarea": true
     }
   },
   "reservas": {
     "r1": {
-      "idreserva": "r1",
-      "fechainicial": "2024-09-26T18:00:00Z",
-      "fechafinal": "2024-09-26T20:00:00Z",
-      "idsala": "salas/s1",
-      "usuario": "usuarios/u1"
+      "Id_Reserva": "r1",
+      "FechaInicial": "2024-09-26T18:00:00Z",
+      "FechaFinal": "2024-09-26T20:00:00Z",
+      "sala": "s1",
+      "usuario": "u1"
     }
   }
 }

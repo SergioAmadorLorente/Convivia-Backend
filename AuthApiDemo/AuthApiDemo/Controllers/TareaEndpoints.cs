@@ -34,26 +34,6 @@ public static class TareaEndpoints
         .Produces(404)
         .Produces(500);
 
-        // Listar todas las tareas
-        group.MapGet("/", async (TareaService service) =>
-        {
-            var tareas = await service.GetAllAsync();
-            return Results.Ok(tareas);
-        })
-        .Produces<List<TareaDto>>(200)
-        .Produces(500);
-
-        // Actualizar tarea
-        group.MapPut("/{id}", async (string id, CreateTareaDto dto, TareaService service) =>
-        {
-            var tareaDto = await service.UpdateAsync(id, dto);
-            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
-        })
-        .Produces<TareaDto>(200)
-        .Produces(400)
-        .Produces(404)
-        .Produces(500);
-
         // Eliminar tarea
         group.MapDelete("/{id}", async (string id, TareaService service) =>
         {
@@ -61,6 +41,17 @@ public static class TareaEndpoints
             return deleted ? Results.NoContent() : Results.NotFound();
         })
         .Produces(204)
+        .Produces(404)
+        .Produces(500);
+
+        // PATCH: Actualización parcial de tarea
+        group.MapPatch("/{id}", async (string id, UpdateTareaDto dto, TareaService service) =>
+        {
+            var tareaDto = await service.PatchAsync(id, dto);
+            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
+        })
+        .Produces<TareaDto>(200)
+        .Produces(400)
         .Produces(404)
         .Produces(500);
     }

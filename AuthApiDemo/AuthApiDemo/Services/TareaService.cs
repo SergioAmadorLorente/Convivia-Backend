@@ -10,9 +10,9 @@ namespace AuthApiDemo.Services
     public class TareaService
     {
         public const string COLLECTION = "tareas";
-        private readonly FirebaseService _firebase;
+        private readonly IFirebaseService _firebase;
 
-        public TareaService(FirebaseService firebase)
+        public TareaService(IFirebaseService firebase)
         {
             _firebase = firebase;
         }
@@ -63,12 +63,33 @@ namespace AuthApiDemo.Services
                 return null;
 
             persist.Nombre = dto.Nombre;
-            persist.FechaLimite = dto.FechaLimite;
+            persist.fechaLimite = dto.FechaLimite;
             persist.Descripcion = dto.Descripcion;
             persist.UsuarioEspacioIds = dto.UsuarioEspacioIds ?? new List<string>();
             persist.Karma = dto.Karma;
             persist.Foto = dto.Foto;
             persist.Prorroga = dto.Prorroga;
+
+            await _firebase.UpdateAsync(COLLECTION, id, persist);
+            return TareaMapper.ToDto(persist);
+        }
+
+        // PATCH: Actualización parcial de tarea
+        public async Task<TareaDto?> PatchAsync(string id, UpdateTareaDto dto)
+        {
+            var persist = await _firebase.GetAsync<TareaPersist>(COLLECTION, id);
+            if (persist == null)
+                return null;
+
+            if (dto.Nombre != null) persist.Nombre = dto.Nombre;
+            if (dto.FechaLimite.HasValue) persist.fechaLimite = dto.FechaLimite.Value;
+            if (dto.Descripcion != null) persist.Descripcion = dto.Descripcion;
+            if (dto.UsuarioEspacioIds != null) persist.UsuarioEspacioIds = dto.UsuarioEspacioIds;
+            if (dto.Karma.HasValue) persist.Karma = dto.Karma.Value;
+            if (dto.Foto != null) persist.Foto = dto.Foto;
+            if (dto.Prorroga.HasValue) persist.Prorroga = dto.Prorroga;
+            if (dto.Estado.HasValue) persist.Estado = dto.Estado.Value;
+            if (dto.FechaRealizacion.HasValue) persist.FechaRealizacion = dto.FechaRealizacion;
 
             await _firebase.UpdateAsync(COLLECTION, id, persist);
             return TareaMapper.ToDto(persist);

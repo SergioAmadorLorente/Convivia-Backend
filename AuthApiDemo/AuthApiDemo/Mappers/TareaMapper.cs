@@ -13,7 +13,7 @@ namespace AuthApiDemo.Mappers
             {
                 IdTarea = idTarea,
                 Nombre = dto.Nombre,
-                FechaLimite = dto.FechaLimite,
+                fechaLimite = dto.FechaLimite,
                 Descripcion = dto.Descripcion,
                 UsuarioEspacioIds = dto.UsuarioEspacioIds ?? new List<string>(),
                 Karma = dto.Karma,
@@ -31,7 +31,7 @@ namespace AuthApiDemo.Mappers
             {
                 IdTarea = persist.IdTarea,
                 Nombre = persist.Nombre,
-                FechaLimite = persist.FechaLimite,
+                FechaLimite = persist.fechaLimite,
                 Descripcion = persist.Descripcion,
                 UsuarioEspacioIds = persist.UsuarioEspacioIds ?? new List<string>(),
                 Karma = persist.Karma,

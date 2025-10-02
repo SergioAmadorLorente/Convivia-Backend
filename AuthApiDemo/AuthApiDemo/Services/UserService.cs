@@ -21,12 +21,12 @@ public class UserService
         _db = db ?? throw new ArgumentNullException(nameof(db));
     }
 
-/// <summary>
-/// Obtiene un espacio por su identificador.
-/// </summary>
-/// <param name="espacioId">Identificador del espacio.</param>
-/// <returns>Instancia de <see cref="Espacio"/> si existe, o null si no se encuentra.</returns>
-public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
+    /// <summary>
+    /// Obtiene un espacio por su identificador.
+    /// </summary>
+    /// <param name="espacioId">Identificador del espacio.</param>
+    /// <returns>Instancia de <see cref="Espacio"/> si existe, o null si no se encuentra.</returns>
+    public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
     {
         var docRef = _db.Collection("espacios").Document(espacioId);
         var snapshot = await docRef.GetSnapshotAsync();
@@ -147,20 +147,60 @@ public async Task<Espacio?> GetEspacioByIdAsync(string espacioId)
     /// <returns>Objeto nativo equivalente.</returns>
     private object ConvertJsonElement(JsonElement element)
     {
-        return element.ValueKind switch
+        if (element.ValueKind == JsonValueKind.String)
         {
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt32(out var i) ? i : element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Null => null,
-            JsonValueKind.Array => element.EnumerateArray().Select(ConvertJsonElement).ToList(),
-            JsonValueKind.Object => element.EnumerateObject().ToDictionary(
+            var str = element.GetString();
+            // Detecta si el string es una fecha ISO 8601 y la convierte a DateTime
+            if (!string.IsNullOrEmpty(str) && str.Length >= 19 && str[4] == '-' && str[7] == '-' && (str[10] == 'T' || str[10] == ' '))
+            {
+                if (DateTime.TryParse(str, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt))
+                    return dt;
+            }
+            // Detecta si el string es base64 y lo convierte a byte[] para campos como Foto o Documento
+            if (!string.IsNullOrEmpty(str) && (str.Length % 4 == 0) && str.All(c => char.IsLetterOrDigit(c) || c == '+' || c == '/' || c == '='))
+            {
+                try
+                {
+                    var bytes = Convert.FromBase64String(str);
+                    // Si la conversión es válida y el array no es vacío, lo devolvemos
+                    if (bytes.Length > 0)
+                        return bytes;
+                }
+                catch { /* No es base64 válido, lo dejamos como string */ }
+            }
+            return str;
+        }
+        else if (element.ValueKind == JsonValueKind.Number)
+        {
+            return element.TryGetInt32(out var i) ? i : element.GetDouble();
+        }
+        else if (element.ValueKind == JsonValueKind.True)
+        {
+            return true;
+        }
+        else if (element.ValueKind == JsonValueKind.False)
+        {
+            return false;
+        }
+        else if (element.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            return element.EnumerateArray().Select(ConvertJsonElement).ToList();
+        }
+        else if (element.ValueKind == JsonValueKind.Object)
+        {
+            return element.EnumerateObject().ToDictionary(
                 prop => prop.Name,
                 prop => ConvertJsonElement(prop.Value)
-            ),
-            _ => element.ToString()
-        };
+            );
+        }
+        else
+        {
+            return element.ToString();
+        }
     }
 
     // conseguir usuarios por espacio id
