@@ -44,32 +44,4 @@ namespace AuthApiDemo.Models
         }
 
     }
-
-    public bool validarEstado()
-    {
-        var estadosValidos = new List<string> { "pendiente", "aceptada", "rechazada", "cancelada" };
-        return estadosValidos.Contains(Estado);
-        }
-    }
-
-    public void aceptar()
-    {
-        Estado = "aceptada";
-        
-    }
-
-    public void rechazar()
-    {
-        Estado = "rechazada";
-        
-    }
-
-    public void pendiente()
-    {
-        Estado = "pendiente";   
-    }
-
-    public void cancelar()
-    {
-        Estado = "cancelada";   
-    }
+}

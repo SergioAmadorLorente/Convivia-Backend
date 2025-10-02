@@ -2,91 +2,66 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using AuthApiDemo.Models;
+using AuthApiDemo.DTOs;
+using AuthApiDemo.Services;
 
 namespace AuthApiDemo.Endpoints;
 
 public static class TareaEndpoints
-{/*
+{
     public static void MapTareaEndpoints(this IEndpointRouteBuilder app)
     {
+        var group = app.MapGroup("/api/tareas").WithTags("Tareas");
 
-        var espacios = new List<Espacio>
+        // Crear tarea
+        group.MapPost("/", async (CreateTareaDto dto, TareaService service) =>
         {
-            new Espacio
-            {
-                Id_Espacio = "abc123",
-                Nombre = "Casa Madrid",
-                Salas = new List<Sala>
-                {
-                    new Sala { Nombre = "Cocina", Id_Espacio = "abc123", Descripcion = "sala para cocinar", },
-                    new Sala { Nombre = "Salón", Descripcion = "sala para estar", Id_Espacio = "abc123" }
-                    // new Sala {"Salón", "sala para estar", "abc123"}
-                }
-            },
-            new Espacio
-            {
-                Id_Espacio = "xyz789",
-                Nombre = "Casa Barcelona",
-                Salas = new List<Sala>
-                {
-                    //new Sala { Nombre = "Terraza", Id_Espacio = "xyz789", Descripcion = "sala para estar fuera"}
-                }
-            }
-        };
+            var tareaDto = await service.AddAsync(dto);
+            return Results.Created($"/api/tareas/{tareaDto.IdTarea}", tareaDto);
+        })
+        .Produces<TareaDto>(201)
+        .Produces(400)
+        .Produces(409)
+        .Produces(500);
 
-        var Tareas = new List<Tarea>
+        // Obtener tarea por id
+        group.MapGet("/{id}", async (string id, TareaService service) =>
         {
-            new Tarea
-            {
-                Id_Tarea = "abc123",
-                Usuarios = new List<UsuarioEspacio>(),
-                FechaRealizacion = DateTime.Now,
-                FechaLimite = DateTime.Now.AddDays(7),
-                Estado = false,
-                karma = 10
-            },
+            var tareaDto = await service.GetAsync(id);
+            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
+        })
+        .Produces<TareaDto>(200)
+        .Produces(404)
+        .Produces(500);
 
-            new Tarea
-            {
-
-                Id_Tarea = "def456",
-                Usuarios = new List<UsuarioEspacio>(),
-                FechaRealizacion = DateTime.Now,
-                FechaLimite = DateTime.Now.AddDays(3),
-                Estado = true,
-                karma = 15
-
-            },
-
-            new Tarea
-            {
-                Id_Tarea = "ghi789",
-                Usuarios = new List<UsuarioEspacio>(),
-                FechaRealizacion = DateTime.Now,
-                FechaLimite = DateTime.Now.AddDays(5),
-                Estado = false,
-                karma = 20
-            }
-
-        };  
-
-        app.MapPost("/usuario/tareas", (UsuarioEspacio requestu) =>
+        // Listar todas las tareas
+        group.MapGet("/", async (TareaService service) =>
         {
+            var tareas = await service.GetAllAsync();
+            return Results.Ok(tareas);
+        })
+        .Produces<List<TareaDto>>(200)
+        .Produces(500);
 
-            var usuarioespacio = usuariosespacios.FirstOrDefault(u => u.Id_UsuarioEspacio == requestu.Id_UsuarioEspacio);
+        // Actualizar tarea
+        group.MapPut("/{id}", async (string id, CreateTareaDto dto, TareaService service) =>
+        {
+            var tareaDto = await service.UpdateAsync(id, dto);
+            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
+        })
+        .Produces<TareaDto>(200)
+        .Produces(400)
+        .Produces(404)
+        .Produces(500);
 
-            if (usuarioespacio == null)
-                return Results.NotFound(new { message = "Usuario no encontrado" });
-
-            var tarea = usuarioespacio.Tareas.FirstOrDefault(t => t.Usuarios.Contains(usuarioespacio));
-
-            if (tarea == null)
-                return Results.NotFound(new { message = "El usuario no tiene tareas asignadas" });
-
-            List<Tarea> tareasUsuario = espacio.Tareas.Where(t => t.Usuarios.Contains(usuarioespacio)).ToList();
-
-            return Results.Ok(tareasUsuario);
-        });
-
-    }*/
+        // Eliminar tarea
+        group.MapDelete("/{id}", async (string id, TareaService service) =>
+        {
+            var deleted = await service.DeleteAsync(id);
+            return deleted ? Results.NoContent() : Results.NotFound();
+        })
+        .Produces(204)
+        .Produces(404)
+        .Produces(500);
+    }
 }
