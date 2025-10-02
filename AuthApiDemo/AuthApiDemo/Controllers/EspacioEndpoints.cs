@@ -24,7 +24,7 @@ public static class EspacioEndpoints
             return Results.Ok(usuarios);
         });
 
-        app.MapGet("/espacio/usuarios/{id}", async (string id, UserService userService) =>
+        /*app.MapGet("/espacio/usuarios/{id}", async (string id, UserService userService) =>
         {
             if (string.IsNullOrWhiteSpace(id))
                 return Results.BadRequest(new { message = "EspacioId no proporcionado" });
@@ -182,7 +182,7 @@ public static class EspacioEndpoints
             if (!eliminado) return Results.BadRequest();
             await userService.ActualizarEspacioAsync(espacio);
             return Results.NoContent();
-        });
+        });*/
 
     }
 

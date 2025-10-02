@@ -26,10 +26,9 @@ namespace AuthApiDemo.Services
             var idTarea = Guid.NewGuid().ToString();
             var persist = TareaMapper.ToPersist(dto, idTarea);
 
-            // Regla: evitar duplicados por nombre y fecha límite
             var existing = await _firebase.QueryMultipleConditionsAsync<TareaPersist>(
                 COLLECTION,
-                new Dictionary<string, object> { { "Nombre", dto.Nombre }, { "FechaLimite", dto.FechaLimite } }
+                new (string field, object val)[] { ("Nombre", dto.Nombre), ("FechaLimite", dto.FechaLimite) }
             );
             if (existing.Count > 0)
                 throw new InvalidOperationException("Ya existe una tarea con ese nombre y fecha límite.");
@@ -48,7 +47,8 @@ namespace AuthApiDemo.Services
         // Listar todas las tareas
         public async Task<List<TareaDto>> GetAllAsync()
         {
-            var list = await _firebase.QueryAsync<TareaPersist>(COLLECTION);
+
+            var list = await _firebase.QueryAsync<TareaPersist>(COLLECTION, "IdTarea", null);
             var result = new List<TareaDto>();
             foreach (var item in list)
                 result.Add(TareaMapper.ToDto(item));
