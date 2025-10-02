@@ -8,7 +8,7 @@ namespace AuthApiDemo.DTOs
         public string UsuarioSolicitanteId { get; set; } = default;
 
         [Required]
-        public string UsuariosInvitadoId { get; set; } = default;
+        public string UsuarioInvitadoId { get; set; } = default;
 
         [Required]
         public string EspacioId { get; set; } = default;
