@@ -24,6 +24,7 @@ FirebaseConfig.InitializeFirebase();
 builder.Services.AddScoped<IFirebaseService, FirebaseService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TareaService>();
+builder.Services.AddScoped<EspacioService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -20,7 +20,8 @@ namespace AuthApiDemo.Mappers
                 Foto = dto.Foto,
                 Prorroga = dto.Prorroga,
                 Estado = false,
-                FechaRealizacion = null
+                FechaRealizacion = null,
+                FacturaId = dto.FacturaId // Mapeo de FacturaId
             };
         }
 
@@ -38,7 +39,8 @@ namespace AuthApiDemo.Mappers
                 Foto = persist.Foto,
                 Prorroga = persist.Prorroga,
                 Estado = persist.Estado,
-                FechaRealizacion = persist.FechaRealizacion
+                FechaRealizacion = persist.FechaRealizacion,
+                FacturaId = persist.FacturaId // Mapeo de FacturaId
             };
         }
     }

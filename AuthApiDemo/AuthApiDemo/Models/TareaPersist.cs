@@ -27,5 +27,7 @@ namespace AuthApiDemo.Models
         public bool Estado { get; set; } = false;
         [FirestoreProperty]
         public DateTime? FechaRealizacion { get; set; }
+        [FirestoreProperty]
+        public string? FacturaId { get; set; } // Referencia a la factura asociada
     }
 }

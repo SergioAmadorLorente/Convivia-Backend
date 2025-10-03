@@ -82,7 +82,8 @@
       "Foto": null,
       "Prorroga": null,
       "Estado": true,
-      "FechaRealizacion": "2024-09-25T10:00:00Z"
+      "FechaRealizacion": "2024-09-25T10:00:00Z",
+      "FacturaId": "f1"
     },
     "t2": {
       "IdTarea": "t2",
@@ -94,7 +95,8 @@
       "Foto": null,
       "Prorroga": "2024-10-02T23:59:59Z",
       "Estado": false,
-      "FechaRealizacion": "2024-09-20T09:00:00Z"
+      "FechaRealizacion": "2024-09-20T09:00:00Z",
+      "FacturaId": "f2"
     }
   },
   "facturas": {
@@ -104,7 +106,7 @@
       "Precio": 50,
       "Pagado": false,
       "Documento": "U29tZUJhc2U2NERvY3VtZW50",
-      "Tarea": "t1"
+      "TareaId": "t1"
     },
     "f2": {
       "Id_Factura": "f2",
@@ -112,7 +114,7 @@
       "Precio": 30,
       "Pagado": true,
       "Documento": null,
-      "Tarea": "t2"
+      "TareaId": "t2"
     }
   },
   "peticiones": {

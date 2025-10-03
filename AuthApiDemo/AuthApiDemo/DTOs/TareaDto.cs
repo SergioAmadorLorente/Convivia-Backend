@@ -15,5 +15,6 @@ namespace AuthApiDemo.DTOs
         public DateTime? Prorroga { get; set; }
         public bool Estado { get; set; }
         public DateTime? FechaRealizacion { get; set; }
+        public string? FacturaId { get; set; } // Referencia a la factura asociada
     }
 }

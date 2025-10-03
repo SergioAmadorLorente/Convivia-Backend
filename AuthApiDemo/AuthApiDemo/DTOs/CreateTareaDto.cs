@@ -21,5 +21,7 @@ namespace AuthApiDemo.DTOs
         public byte[]? Foto { get; set; }
 
         public DateTime? Prorroga { get; set; }
+
+        public string? FacturaId { get; set; } // Referencia a la factura asociada
     }
 }
