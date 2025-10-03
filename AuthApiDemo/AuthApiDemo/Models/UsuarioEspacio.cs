@@ -1,4 +1,5 @@
 ﻿using Google.Cloud.Firestore;
+using System.Text.Json.Serialization;
 namespace AuthApiDemo.Models
 {
 
@@ -21,6 +22,7 @@ namespace AuthApiDemo.Models
         [FirestoreProperty]
         public DocumentReference EspacioRef { get; set; }
 
+        [JsonIgnore]
         public Espacio Espacio { get; set; }
 
 
@@ -28,12 +30,14 @@ namespace AuthApiDemo.Models
         public DocumentReference UsuarioRef { get; set; }
 
 
+        [JsonIgnore]
         public Usuario Usuario { get; set; }
 
 
         [FirestoreProperty("tareas")]
         public List<DocumentReference> tareasRefs { get; set; } = new();
 
+        [JsonIgnore]
         public List<Tarea> tareas { get; set; } = new();
 
 
@@ -41,12 +45,14 @@ namespace AuthApiDemo.Models
         public DocumentReference PermisoRef { get; set; }
 
 
+        [JsonIgnore]
         public Permiso Permiso { get; set; }
 
 
         [FirestoreProperty]
         public List<DocumentReference> FacturasRefs { get; set; } = new();
 
+        [JsonIgnore]
         public List<Factura> Facturas { get; set; } = new();
 
 

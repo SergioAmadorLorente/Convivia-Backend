@@ -1,16 +1,21 @@
-﻿using System.Text.Json.Serialization;
+﻿using Google.Cloud.Firestore;
+using System.Text.Json.Serialization;
 
 namespace AuthApiDemo.Models
 {
+    [FirestoreData]
     public class Sala
     {
-
+        [FirestoreProperty]
         public string Id_Sala { get; set; } = Guid.NewGuid().ToString();
 
+        [FirestoreProperty]
         public string Nombre { get; set; }
 
+        [FirestoreProperty]
         public string? Descripcion { get; set; } // Puede ser null
 
+        [FirestoreProperty]
         public string Id_Espacio { get; set; } // Solo el ID
 
         private List<Reserva> reservas = new List<Reserva>();

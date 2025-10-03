@@ -1,44 +1,57 @@
-﻿namespace AuthApiDemo.Models
+﻿using Google.Cloud.Firestore;
+using System.Text.Json.Serialization;
+
+namespace AuthApiDemo.Models
 {
     /// <summary>
     /// Representa una factura con reparto de pago entre usuarios, estado de pago y posible documento/tarea asociada.
     /// </summary>
+    [FirestoreData]
     public class Factura
     {
         /// <summary>
         /// Identificador único de la factura.
         /// </summary>
-        public string Id_Factura { get; } = Guid.NewGuid().ToString();
+        [FirestoreProperty]
+        public string Id_Factura { get; set; } = Guid.NewGuid().ToString();
 
         /// <summary>
         /// Nombre o concepto de la factura.
         /// </summary>
+        [FirestoreProperty]
         public string Nombre { get; set; }
 
         /// <summary>
         /// Importe total de la factura.
         /// </summary>
+        [FirestoreProperty]
         public float Precio { get; set; }
 
         /// <summary>
         /// Mapa de reparto: cada usuario y la cantidad que debe pagar. Solo lectura desde fuera.
         /// </summary>
+        // No serializar el reparto como objeto complejo
+        [JsonIgnore]
         private Dictionary<UsuarioEspacio, float> _repartoMap = new Dictionary<UsuarioEspacio, float>();
+        [JsonIgnore]
         public IReadOnlyDictionary<UsuarioEspacio, float> RepartoMap => _repartoMap;
 
         /// <summary>
         /// Indica si la factura está pagada completamente.
         /// </summary>
+        [FirestoreProperty]
         public bool Pagado { get; set; }
 
         /// <summary>
         /// Documento o imagen asociada a la factura (opcional).
         /// </summary>
+        [FirestoreProperty]
         public byte[]? Documento { get; set; }
 
         /// <summary>
         /// Tarea asociada a la factura (opcional).
         /// </summary>
+        [JsonIgnore]
         public Tarea? Tarea { get; set; }
 
         /// <summary>

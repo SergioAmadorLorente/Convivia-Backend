@@ -1,4 +1,6 @@
 ﻿using Google.Cloud.Firestore;
+using System.Text.Json.Serialization;
+
 namespace AuthApiDemo.Models
 {
     /// <summary>
@@ -26,6 +28,30 @@ namespace AuthApiDemo.Models
         public string? Direccion { get; set; }
 
         /// <summary>
+        /// Colección de salas asociadas al espacio.
+        /// </summary>
+        [JsonIgnore]
+        public List<Sala> Salas { get; set; } = new List<Sala>();
+
+        /// <summary>
+        /// Colección de UsuariosEspacios que pertenecen al espacio.
+        /// </summary>
+        [JsonIgnore]
+        public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
+
+        /// <summary>
+        /// Colección de peticiones de acceso al espacio.
+        /// </summary>
+        [JsonIgnore]
+        public List<Peticion> Peticiones { get; set; } = new List<Peticion>();
+
+        /// <summary>
+        /// Colección de invitaciones enviadas desde el espacio.
+        /// </summary>
+        [JsonIgnore]
+        public List<Invitacion> InvitacionesEnviadas { get; set; } = new List<Invitacion>();
+
+        /// <summary>
         /// Constructor por defecto, útil para pruebas o deserialización.
         /// </summary>
         public Espacio() { }
@@ -42,30 +68,6 @@ namespace AuthApiDemo.Models
             Nombre = name;
             Direccion = direccion;
         }
-
-        /// <summary>
-        /// Colección de salas asociadas al espacio.
-        /// </summary>
-        [FirestoreProperty]
-        public List<Sala> Salas { get; set; } = new List<Sala>();
-
-        /// <summary>
-        /// Colección de UsuariosEspacios que pertenecen al espacio.
-        /// </summary>
-        [FirestoreProperty]
-        public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
-
-        /// <summary>
-        /// Colección de peticiones de acceso al espacio.
-        /// </summary>
-        [FirestoreProperty]
-        public List<Peticion> Peticiones { get; set; } = new List<Peticion>();
-
-        /// <summary>
-        /// Colección de invitaciones enviadas desde el espacio.
-        /// </summary>
-        [FirestoreProperty]
-        public List<Invitacion> InvitacionesEnviadas { get; set; } = new List<Invitacion>();
 
         /// <summary>
         /// Crea una nueva sala en el espacio, validando el nombre y evitando duplicados.

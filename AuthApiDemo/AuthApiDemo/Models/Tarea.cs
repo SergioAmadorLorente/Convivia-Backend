@@ -1,25 +1,38 @@
-﻿namespace AuthApiDemo.Models
+﻿using Google.Cloud.Firestore;
+using System.Text.Json.Serialization;
+
+namespace AuthApiDemo.Models
 {
+    [FirestoreData]
     public class Tarea
     {
-
+        [FirestoreProperty]
         public string Id_Tarea { get; set; } = Guid.NewGuid().ToString();
 
+        [JsonIgnore]
         public List<UsuarioEspacio> Usuarios { get; set; }
 
+        [FirestoreProperty]
         public DateTime FechaRealizacion { get; set; }
 
+        [FirestoreProperty]
         public DateTime FechaLimite { get; set; }
 
+        [FirestoreProperty]
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
 
+        [FirestoreProperty]
         public DateTime? Prorroga { get; set; } // Puede ser null
 
+        [FirestoreProperty]
         public bool Estado { get; set; }
 
+        [JsonIgnore]
         public Espacio espacio { get; set; }
 
+        [JsonIgnore]
         public Factura? Factura { get; set; }
+        [FirestoreProperty]
         public int karma { get; set; } = 10; // Puntos de karma que se otorgan al completar la tarea
 
         public Tarea()

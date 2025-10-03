@@ -1,18 +1,24 @@
+using Google.Cloud.Firestore;
 using System.Text.Json.Serialization;
 
 namespace AuthApiDemo.Models
 {
+    [FirestoreData]
     public class Peticion
     {
+        [FirestoreProperty]
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [JsonIgnore]
         public Usuario Solicitante { get; set; }
 
+        [FirestoreProperty]
         public string Mensaje { get; set; }
 
+        [FirestoreProperty]
         public DateTime Fecha { get; set; } = DateTime.UtcNow;
 
+        [FirestoreProperty]
         public string Estado { get; set; } = "pendiente";
 
         public bool ValidarEstado()
