@@ -27,7 +27,6 @@ namespace AuthApiDemo.Endpoints
                 catch (InvalidOperationException ex) { return Results.Conflict(new { message = ex.Message }); }
                 catch (Exception ex)
                 {
-                    // logging si queréis: (ILogger) se puede inyectar en la lambda si hace falta
                     return Results.Problem(title: "Error interno", detail: ex.Message);
                 }
             })
@@ -59,9 +58,7 @@ namespace AuthApiDemo.Endpoints
                 {
                     if (!string.IsNullOrWhiteSpace(espacioId))
                     {
-                        // si quieres, añade un método GetPorEspacio en el service; por ahora usamos GetAll y filtramos
-                        var all = await service.GetAllInvitacionesAsync();
-                        var filtered = all.FindAll(i => string.Equals(i.EspacioId, espacioId, StringComparison.OrdinalIgnoreCase));
+                        var filtered = await service.GetInvitacionesPorEspacioAsync(espacioId);
                         return Results.Ok(filtered);
                     }
 
@@ -80,7 +77,9 @@ namespace AuthApiDemo.Endpoints
                 try
                 {
                     var ok = await service.CambiarEstadoAsync(id, payload);
-                    return ok ? Results.NoContent() : Results.NotFound();
+                    if (!ok)
+                        return Results.NotFound(new { message = $"No se pudo actualizar la invitación con id {id}. Verifica el estado y los datos." });
+                    return Results.NoContent();
                 }
                 catch (ArgumentException ex) { return Results.BadRequest(new { message = ex.Message }); }
                 catch (InvalidOperationException ex) { return Results.BadRequest(new { message = ex.Message }); }

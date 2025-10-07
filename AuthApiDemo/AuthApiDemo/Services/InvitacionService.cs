@@ -82,55 +82,19 @@ namespace AuthApiDemo.Services
 
                 throw new ArgumentException("UsuarioSolicitanteId y EspacioId son requeridos.");
 
-            // Evitar duplicados (la persistencia usa campo "espacio" y "usuariosolicitante")
+            // Crear directamente el objeto de persistencia, igual que en EspacioService
 
-            var posibles = await _firebase.QueryMultipleConditionsAsync<InvitacionPersist>(COLLECTION,
-                new (string field, object val)[] {
-                    ("Espacio", dto.EspacioId),
-                    ("UsuarioSolicitante", dto.UsuarioSolicitanteId)
-                });
-
-            var existePendiente = posibles.Any(p => string.Equals(p.Estado, "pendiente", StringComparison.OrdinalIgnoreCase));
-
-            if (existePendiente)
-
-                throw new InvalidOperationException("Ya existe una invitación pendiente para este solicitante y espacio.");
-
-            // Resolver solicitante (puede venir como "usuarioespacios/ue1" o "ue1")
-
-            var solicitante = await ResolveRefAsync<UsuarioEspacio>(dto.UsuarioSolicitanteId, "usuarioespacios")
-
-                             ?? throw new ArgumentException("UsuarioSolicitante no encontrado.");
-
-            Usuario? invitado = null;
-
-            if (!string.IsNullOrWhiteSpace(dto.UsuarioInvitadoId))
-
-            {
-
-                invitado = await ResolveRefAsync<Usuario>(dto.UsuarioInvitadoId, "usuarios")
-
-                          ?? throw new ArgumentException("UsuarioInvitado no encontrado.");
-
-            }
-
-            var espacio = await ResolveRefAsync<Espacio>(dto.EspacioId, "espacios")
-
-                        ?? throw new ArgumentException("Espacio no encontrado.");
-
-            // Construir modelo
-
-            var invitacion = new Invitacion
+            var persist = new InvitacionPersist
 
             {
 
                 Id = Guid.NewGuid().ToString(),
 
-                UsuarioSolicitante = solicitante,
+                UsuarioSolicitante = dto.UsuarioSolicitanteId,
 
-                UsuarioInvitado = invitado,
+                UsuarioInvitado = dto.UsuarioInvitadoId ?? string.Empty,
 
-                Espacio = espacio,
+                Espacio = dto.EspacioId,
 
                 Mensaje = dto.Mensaje ?? string.Empty,
 
@@ -140,13 +104,15 @@ namespace AuthApiDemo.Services
 
             };
 
-            // Mapear a persistencia y guardar (los nombres de campo están anotados en InvitacionPersist)
 
-            var persist = InvitacionMapper.ToPersist(invitacion);
 
             await _firebase.AddAsync(COLLECTION, persist.Id, persist);
 
-            return InvitacionMapper.ToDto(invitacion);
+
+
+            // Si quieres devolver el DTO con los datos completos, puedes mapearlo así:
+
+            return InvitacionMapper.ToDto(persist);
 
         }
 
@@ -159,7 +125,7 @@ namespace AuthApiDemo.Services
             var persist = await _firebase.GetAsync<InvitacionPersist>(COLLECTION, id);
             if (persist == null) return null;
 
-            var solicitante = await ResolveRefAsync<UsuarioEspacio>(persist.UsuarioSolicitante, "usuarioespacios");
+            var solicitante = await ResolveRefAsync<UsuarioEspacio>(persist.UsuarioSolicitante, "usuarioEspacios");
             var invitado = await ResolveRefAsync<Usuario>(persist.UsuarioInvitado, "usuarios");
             var espacio = await ResolveRefAsync<Espacio>(persist.Espacio, "espacios");
 
@@ -168,7 +134,6 @@ namespace AuthApiDemo.Services
         }
 
         public async Task<List<InvitacionDto>> GetAllInvitacionesAsync()
-
         {
 
             var persistList = await _firebase.QueryAsync<InvitacionPersist>(COLLECTION, "estado", "pendiente");
@@ -179,7 +144,35 @@ namespace AuthApiDemo.Services
 
             {
 
-                var solicitante = await ResolveRefAsync<UsuarioEspacio>(persist.UsuarioSolicitante, "usuarioespacios");
+                var solicitante = await ResolveRefAsync<UsuarioEspacio>(persist.UsuarioSolicitante, "usuarioEspacios");
+
+                var invitado = await ResolveRefAsync<Usuario>(persist.UsuarioInvitado, "usuarios");
+
+                var espacio = await ResolveRefAsync<Espacio>(persist.Espacio, "espacios");
+
+                var modelo = InvitacionMapper.ToModel(persist, solicitante, invitado, espacio);
+
+                result.Add(InvitacionMapper.ToDto(modelo));
+
+            }
+
+            return result;
+
+        }
+
+        public async Task<List<InvitacionDto>> GetInvitacionesPorEspacioAsync(string espacioId)
+
+        {
+
+            var persistList = await _firebase.QueryAsync<InvitacionPersist>(COLLECTION, "Espacio", espacioId);
+
+            var result = new List<InvitacionDto>(persistList.Count);
+
+            foreach (var persist in persistList)
+
+            {
+
+                var solicitante = await ResolveRefAsync<UsuarioEspacio>(persist.UsuarioSolicitante, "usuarioEspacios");
 
                 var invitado = await ResolveRefAsync<Usuario>(persist.UsuarioInvitado, "usuarios");
 
@@ -207,29 +200,37 @@ namespace AuthApiDemo.Services
 
             if (persist == null) return false;
 
-            // Usar las propiedades correctas de InvitacionPersist
-            var solicitante = await ResolveRefAsync<UsuarioEspacio>(persist.UsuarioSolicitante, "usuarioespacios");
-            var invitado = await ResolveRefAsync<Usuario>(persist.UsuarioInvitado, "usuarios");
-            var espacio = await ResolveRefAsync<Espacio>(persist.Espacio, "espacios");
 
-            // Comprobar nulos para evitar advertencias CS8604
-            if (solicitante == null || espacio == null)
-                return false; // O lanza una excepción si lo prefieres
 
-            var model = InvitacionMapper.ToModel(persist, solicitante, invitado, espacio);
 
             var nuevo = dto.NuevoEstado.Trim().ToLowerInvariant();
+
             switch (nuevo)
+
             {
-                case "aceptada": model.Aceptar(); break;
-                case "rechazada": model.Rechazar(); break;
-                case "pendiente": model.Pendiente(); break;
-                case "cancelada": model.Cancelar(); break;
-                default: throw new ArgumentException("Estado no válido.");
+
+                case "aceptada":
+
+                case "rechazada":
+
+                case "pendiente":
+
+                case "cancelada":
+
+                    persist.Estado = nuevo;
+
+                    break;
+
+                default:
+
+                    throw new ArgumentException("Estado no válido.");
+
             }
 
-            var updatedPersist = InvitacionMapper.ToPersist(model);
-            await _firebase.UpdateAsync(COLLECTION, updatedPersist.Id, updatedPersist);
+
+
+            await _firebase.UpdateAsync(COLLECTION, persist.Id, persist);
+
             return true;
 
         }
@@ -253,6 +254,11 @@ namespace AuthApiDemo.Services
     }
 
 }
+
+
+
+
+
 
 
 

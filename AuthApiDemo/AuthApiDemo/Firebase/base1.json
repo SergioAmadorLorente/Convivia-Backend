@@ -1,182 +1,396 @@
 {
   "espacios": {
-    "e1": {
-      "Id_Espacio": "e1",
-      "Nombre": "Piso Centro",
-      "Direccion": "Calle Mayor 10",
+    "e2": {
+      "Id_Espacio": "e2",
+      "Nombre": "Casa Playa",
+      "Direccion": "Paseo Marítimo 5",
       "Salas": [
         {
-          "Id_Sala": "s1",
-          "Nombre": "Salón",
-          "Descripcion": "Sala principal",
-          "Id_Espacio": "e1"
+          "Id_Sala": "s3",
+          "Nombre": "Cocina",
+          "Descripcion": "Cocina abierta",
+          "Id_Espacio": "e2"
         },
         {
-          "Id_Sala": "s2",
-          "Nombre": "Cocina",
-          "Descripcion": "Cocina equipada",
-          "Id_Espacio": "e1"
+          "Id_Sala": "s4",
+          "Nombre": "Terraza",
+          "Descripcion": "Terraza con vistas",
+          "Id_Espacio": "e2"
         }
       ],
-      "UsuarioEspacios": ["ue1", "ue2"],
-      "Peticiones": ["p1"],
-      "InvitacionesEnviadas": ["i1"]
+      "UsuarioEspacios": [ "ue3", "ue4" ],
+      "Peticiones": [ "p2" ],
+      "InvitacionesEnviadas": [ "i2" ]
+    },
+    "e3": {
+      "Id_Espacio": "e3",
+      "Nombre": "Oficina Centro",
+      "Direccion": "Avenida Diagonal 200",
+      "Salas": [
+        {
+          "Id_Sala": "s5",
+          "Nombre": "Sala Reuniones",
+          "Descripcion": "Capacidad 8 personas",
+          "Id_Espacio": "e3"
+        },
+        {
+          "Id_Sala": "s6",
+          "Nombre": "Open Space",
+          "Descripcion": "Zona común de trabajo",
+          "Id_Espacio": "e3"
+        }
+      ],
+      "UsuarioEspacios": [ "ue5", "ue6" ],
+      "Peticiones": [ "p3" ],
+      "InvitacionesEnviadas": [ "i3", "i4" ]
     }
   },
   "usuarios": {
-    "u1": {
-      "Id": "u1",
-      "Nombre": "Ana",
-      "Email": "ana@email.com",
-      "Password": "hashed1",
-      "Telefono": "600111222",
+    "u3": {
+      "Id": "u3",
+      "Nombre": "Marta",
+      "Email": "marta@email.com",
+      "Password": "hashed3",
+      "Telefono": "600555666",
       "Premium": true,
-      "FechaRegistro": "2024-01-01T10:00:00Z",
-      "UsuarioEspacios": ["ue1"],
-      "Invitaciones": ["i1"]
-    },
-    "u2": {
-      "Id": "u2",
-      "Nombre": "Luis",
-      "Email": "luis@email.com",
-      "Password": "hashed2",
-      "Telefono": "600333444",
-      "Premium": false,
-      "FechaRegistro": "2024-01-02T10:00:00Z",
-      "UsuarioEspacios": ["ue2"],
+      "FechaRegistro": "2025-01-15T09:30:00Z",
+      "UsuarioEspacios": [ "ue3" ],
       "Invitaciones": []
+    },
+    "u4": {
+      "Id": "u4",
+      "Nombre": "Diego",
+      "Email": "diego@email.com",
+      "Password": "hashed4",
+      "Telefono": "600777888",
+      "Premium": false,
+      "FechaRegistro": "2025-02-10T11:00:00Z",
+      "UsuarioEspacios": [ "ue4" ],
+      "Invitaciones": [ "i4" ]
+    },
+    "u5": {
+      "Id": "u5",
+      "Nombre": "Clara",
+      "Email": "clara@email.com",
+      "Password": "hashed5",
+      "Telefono": "600999000",
+      "Premium": false,
+      "FechaRegistro": "2025-03-05T08:45:00Z",
+      "UsuarioEspacios": [ "ue5" ],
+      "Invitaciones": []
+    },
+    "u6": {
+      "Id": "u6",
+      "Nombre": "Pablo",
+      "Email": "pablo@email.com",
+      "Password": "hashed6",
+      "Telefono": "700123456",
+      "Premium": true,
+      "FechaRegistro": "2025-04-01T10:15:00Z",
+      "UsuarioEspacios": [ "ue6" ],
+      "Invitaciones": [ "i3" ]
+    },
+    "u7": {
+      "Id": "u7",
+      "Nombre": "Sofía",
+      "Email": "sofia@email.com",
+      "Password": "hashed7",
+      "Telefono": "700654321",
+      "Premium": false,
+      "FechaRegistro": "2025-05-20T14:20:00Z",
+      "UsuarioEspacios": [],
+      "Invitaciones": [ "i2" ]
     }
   },
   "usuarioEspacios": {
-    "ue1": {
-      "Id_UsuarioEspacio": "ue1",
+    "ue3": {
+      "Id_UsuarioEspacio": "ue3",
       "Ausente": false,
-      "Karma": 10,
+      "Karma": 12,
       "Rol": "Administrador",
-      "EspacioRef": "e1",
-      "UsuarioRef": "u1",
-      "tareas": ["t1", "t2"],
+      "EspacioRef": "e2",
+      "UsuarioRef": "u3",
+      "tareas": [ "t3", "t4", "t7" ],
       "PermisoRef": "perm1",
-      "FacturasRefs": []
+      "FacturasRefs": [ "f6", "f3" ]
     },
-    "ue2": {
-      "Id_UsuarioEspacio": "ue2",
+    "ue4": {
+      "Id_UsuarioEspacio": "ue4",
+      "Ausente": true,
+      "Karma": 3,
+      "Rol": "Moderador",
+      "EspacioRef": "e2",
+      "UsuarioRef": "u4",
+      "tareas": [ "t4" ],
+      "PermisoRef": "perm4",
+      "FacturasRefs": [ "f3" ]
+    },
+    "ue5": {
+      "Id_UsuarioEspacio": "ue5",
       "Ausente": false,
-      "Karma": 5,
+      "Karma": 20,
+      "Rol": "Administrador",
+      "EspacioRef": "e3",
+      "UsuarioRef": "u5",
+      "tareas": [ "t5", "t8" ],
+      "PermisoRef": "perm1",
+      "FacturasRefs": [ "f4", "f7" ]
+    },
+    "ue6": {
+      "Id_UsuarioEspacio": "ue6",
+      "Ausente": false,
+      "Karma": 0,
       "Rol": "Usuario",
-      "EspacioRef": "e1",
-      "UsuarioRef": "u2",
-      "tareas": ["t2"],
+      "EspacioRef": "e3",
+      "UsuarioRef": "u6",
+      "tareas": [ "t6" ],
       "PermisoRef": "perm2",
-      "FacturasRefs": []
+      "FacturasRefs": [ "f5" ]
     }
   },
   "tareas": {
-    "t1": {
-      "IdTarea": "t1",
-      "Nombre": "Tarea 1",
-      "fechaLimite": "2024-09-30T23:59:59Z",
-      "Descripcion": "Descripción tarea 1",
-      "UsuarioEspacioIds": ["ue1"],
-      "Karma": 10,
+    "t3": {
+      "IdTarea": "t3",
+      "Nombre": "Limpiar terraza",
+      "fechaLimite": "2025-07-10T23:59:59Z",
+      "Descripcion": "Barrer y fregar la terraza",
+      "UsuarioEspacioIds": [ "ue3" ],
+      "Karma": 4,
       "Foto": null,
       "Prorroga": null,
       "Estado": true,
-      "FechaRealizacion": "2024-09-25T10:00:00Z",
-      "FacturaId": "f1"
+      "FechaRealizacion": "2025-07-09T18:00:00Z",
+      "FacturaId": null
     },
-    "t2": {
-      "IdTarea": "t2",
-      "Nombre": "Tarea 2",
-      "fechaLimite": "2024-09-27T23:59:59Z",
-      "Descripcion": "Descripción tarea 2",
-      "UsuarioEspacioIds": ["ue1", "ue2"],
+    "t4": {
+      "IdTarea": "t4",
+      "Nombre": "Compra de productos de limpieza",
+      "fechaLimite": "2025-07-15T23:59:59Z",
+      "Descripcion": "Lejía, bayetas y jabón",
+      "UsuarioEspacioIds": [ "ue3", "ue4" ],
+      "Karma": 6,
+      "Foto": null,
+      "Prorroga": "2025-07-20T23:59:59Z",
+      "Estado": false,
+      "FechaRealizacion": null,
+      "FacturaId": "f3"
+    },
+    "t5": {
+      "IdTarea": "t5",
+      "Nombre": "Reunión mensual con equipo",
+      "fechaLimite": "2025-08-01T14:00:00Z",
+      "Descripcion": "Revisión de objetivos del mes",
+      "UsuarioEspacioIds": [ "ue5", "ue6" ],
+      "Karma": 2,
+      "Foto": null,
+      "Prorroga": null,
+      "Estado": true,
+      "FechaRealizacion": "2025-08-01T16:00:00Z",
+      "FacturaId": "f4"
+    },
+    "t6": {
+      "IdTarea": "t6",
+      "Nombre": "Comprar café y té",
+      "fechaLimite": "2025-08-05T23:59:59Z",
+      "Descripcion": "Reposición para la oficina",
+      "UsuarioEspacioIds": [ "ue6" ],
+      "Karma": 3,
+      "Foto": null,
+      "Prorroga": "2025-08-07T23:59:59Z",
+      "Estado": false,
+      "FechaRealizacion": null,
+      "FacturaId": "f5"
+    },
+    "t7": {
+      "IdTarea": "t7",
+      "Nombre": "Pago electricidad julio",
+      "fechaLimite": "2025-07-31T23:59:59Z",
+      "Descripcion": "Abonar la factura de luz del mes",
+      "UsuarioEspacioIds": [ "ue3" ],
       "Karma": 5,
       "Foto": null,
-      "Prorroga": "2024-10-02T23:59:59Z",
-      "Estado": false,
-      "FechaRealizacion": "2024-09-20T09:00:00Z",
-      "FacturaId": "f2"
+      "Prorroga": null,
+      "Estado": true,
+      "FechaRealizacion": "2025-07-30T10:00:00Z",
+      "FacturaId": "f6"
+    },
+    "t8": {
+      "IdTarea": "t8",
+      "Nombre": "Mantenimiento impresora",
+      "fechaLimite": "2025-09-10T23:59:59Z",
+      "Descripcion": "Revisión general y cambio de piezas",
+      "UsuarioEspacioIds": [ "ue5" ],
+      "Karma": 4,
+      "Foto": null,
+      "Prorroga": null,
+      "Estado": true,
+      "FechaRealizacion": "2025-09-09T09:30:00Z",
+      "FacturaId": "f7"
     }
   },
   "facturas": {
-    "f1": {
-      "Id_Factura": "f1",
-      "Nombre": "Luz marzo",
-      "Precio": 50,
+    "f3": {
+      "Id_Factura": "f3",
+      "Nombre": "Productos limpieza julio",
+      "Precio": 25.5,
       "Pagado": false,
-      "Documento": "U29tZUJhc2U2NERvY3VtZW50",
-      "TareaId": "t1"
+      "Documento": "UEZERF9mYWN0dXJhX2ZpY3RpY2lh",
+      "TareaId": "t4"
     },
-    "f2": {
-      "Id_Factura": "f2",
-      "Nombre": "Agua marzo",
-      "Precio": 30,
+    "f4": {
+      "Id_Factura": "f4",
+      "Nombre": "Alquiler sala agosto",
+      "Precio": 100,
       "Pagado": true,
       "Documento": null,
-      "TareaId": "t2"
+      "TareaId": "t5"
+    },
+    "f5": {
+      "Id_Factura": "f5",
+      "Nombre": "Café y té",
+      "Precio": 35,
+      "Pagado": false,
+      "Documento": "Qm9sZXRhIGRlIGNvbXByYQ==",
+      "TareaId": "t6"
+    },
+    "f6": {
+      "Id_Factura": "f6",
+      "Nombre": "Luz julio",
+      "Precio": 72,
+      "Pagado": true,
+      "Documento": "TGl6IGp1bGlvIHBkZg==",
+      "TareaId": "t7"
+    },
+    "f7": {
+      "Id_Factura": "f7",
+      "Nombre": "Servicio técnico impresora",
+      "Precio": 120,
+      "Pagado": true,
+      "Documento": null,
+      "TareaId": "t8"
     }
   },
   "peticiones": {
-    "p1": {
-      "Id": "p1",
+    "p2": {
+      "Id": "p2",
       "Mensaje": "Quiero unirme al espacio",
-      "Fecha": "2024-09-20T12:00:00Z",
+      "Fecha": "2025-07-09T10:00:00Z",
       "Estado": "pendiente"
+    },
+    "p3": {
+      "Id": "p3",
+      "Mensaje": "Solicito acceso por proyecto",
+      "Fecha": "2025-07-25T10:00:00Z",
+      "Estado": "aprobada"
     }
   },
   "invitaciones": {
-    "i1": {
-      "Id": "i1",
-      "UsuarioSolicitante": "ue1",
-      "UsuarioInvitado": "u1",
-      "Espacio": "e1",
-      "Mensaje": "Te invito a Piso Centro",
-      "Fecha": "2024-09-19T12:00:00Z",
+    "i2": {
+      "Id": "i2",
+      "UsuarioSolicitante": "ue3",
+      "UsuarioInvitado": "u7",
+      "Espacio": "e2",
+      "Mensaje": "Te invito a Casa Playa",
+      "Fecha": "2025-07-10T12:00:00Z",
       "Estado": "pendiente"
+    },
+    "i3": {
+      "Id": "i3",
+      "UsuarioSolicitante": "ue5",
+      "UsuarioInvitado": "u6",
+      "Espacio": "e3",
+      "Mensaje": "Únete a Oficina Centro",
+      "Fecha": "2025-07-28T09:00:00Z",
+      "Estado": "aceptada"
+    },
+    "i4": {
+      "Id": "i4",
+      "UsuarioSolicitante": "ue5",
+      "UsuarioInvitado": "u4",
+      "Espacio": "e3",
+      "Mensaje": "Te invito a Oficina Centro",
+      "Fecha": "2025-07-29T09:00:00Z",
+      "Estado": "rechazada"
     }
   },
   "plantillaTarea": {
-    "pt1": {
-      "Id_PlantillaTarea": "pt1",
-      "Nombre": "Limpiar cocina",
+    "pt2": {
+      "Id_PlantillaTarea": "pt2",
+      "Nombre": "Sacar la basura",
       "Repeticion": 1,
-      "FechaCreacion": "2024-01-10T12:00:00Z",
-      "PuntosKarma": 2,
+      "FechaCreacion": "2025-01-12T12:00:00Z",
+      "PuntosKarma": 1,
+      "Disponible": true
+    },
+    "pt3": {
+      "Id_PlantillaTarea": "pt3",
+      "Nombre": "Reponer papel higiénico",
+      "Repeticion": 2,
+      "FechaCreacion": "2025-02-01T09:00:00Z",
+      "PuntosKarma": 1,
+      "Disponible": true
+    },
+    "pt4": {
+      "Id_PlantillaTarea": "pt4",
+      "Nombre": "Regar plantas",
+      "Repeticion": 3,
+      "FechaCreacion": "2025-02-15T09:00:00Z",
+      "PuntosKarma": 1,
       "Disponible": true
     }
   },
   "permisos": {
-    "perm1": {
-      "id_Reserva": "perm1",
-      "rol": "Administrador",
-      "crearTarea": true,
-      "eliminarTarea": true,
-      "editarTarea": true,
-      "añadirUsuario": true,
-      "eliminarUsuario": true,
-      "asignarTarea": true,
-      "asignarseTarea": true
-    },
-    "perm2": {
-      "id_Reserva": "perm2",
-      "rol": "Usuario",
-      "crearTarea": true,
+    "perm3": {
+      "id_Reserva": "perm3",
+      "rol": "Invitado",
+      "crearTarea": false,
       "eliminarTarea": false,
       "editarTarea": false,
       "añadirUsuario": false,
       "eliminarUsuario": false,
       "asignarTarea": false,
+      "asignarseTarea": false
+    },
+    "perm4": {
+      "id_Reserva": "perm4",
+      "rol": "Moderador",
+      "crearTarea": true,
+      "eliminarTarea": false,
+      "editarTarea": true,
+      "añadirUsuario": false,
+      "eliminarUsuario": false,
+      "asignarTarea": true,
       "asignarseTarea": true
     }
   },
   "reservas": {
-    "r1": {
-      "Id_Reserva": "r1",
-      "FechaInicial": "2024-09-26T18:00:00Z",
-      "FechaFinal": "2024-09-26T20:00:00Z",
-      "sala": "s1",
-      "usuario": "u1"
+    "r2": {
+      "Id_Reserva": "r2",
+      "FechaInicial": "2025-07-12T10:00:00Z",
+      "FechaFinal": "2025-07-12T12:00:00Z",
+      "sala": "s3",
+      "usuario": "u3"
+    },
+    "r3": {
+      "Id_Reserva": "r3",
+      "FechaInicial": "2025-08-01T15:00:00Z",
+      "FechaFinal": "2025-08-01T16:00:00Z",
+      "sala": "s5",
+      "usuario": "u5"
+    },
+    "r4": {
+      "Id_Reserva": "r4",
+      "FechaInicial": "2025-08-05T09:00:00Z",
+      "FechaFinal": "2025-08-05T09:30:00Z",
+      "sala": "s6",
+      "usuario": "u6"
+    },
+    "r5": {
+      "Id_Reserva": "r5",
+      "FechaInicial": "2025-07-16T19:00:00Z",
+      "FechaFinal": "2025-07-16T20:30:00Z",
+      "sala": "s4",
+      "usuario": "u4"
     }
   }
 }
