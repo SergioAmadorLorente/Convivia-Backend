@@ -98,5 +98,20 @@ public static class TareaEndpoints
         .Produces<List<TareaDto>>(200)
         .Produces(500);
 
+        group.MapGet("/filtrarfechaunica", async (string fecha, TareaServcuperaice service) =>
+        {
+
+            var fechafinal = DateTime.Parse(fecha, null, System.Globalization.DateTimeStyles.RoundtripKind);
+
+            var tareas = await service.GetByFechaUnicaAsync(fechafinal);
+
+            if (tareas.Count() != 0)
+                return Results.Ok(tareas);
+            else
+                return Results.NotFound();
+        })
+        .Produces<List<TareaDto>>(200)
+        .Produces(500);
+
     }
 }

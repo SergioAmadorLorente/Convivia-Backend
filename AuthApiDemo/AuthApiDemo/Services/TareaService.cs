@@ -83,6 +83,15 @@ namespace AuthApiDemo.Services
             return result;
         }
 
+        public async Task<List<TareaDto>> GetByFechaUnicaAsync(DateTime fecha)
+        {
+            var list = await _firebase.QueryAsync<TareaPersist>(COLLECTION, "FechaLimite", fecha);
+            var result = new List<TareaDto>();
+            foreach (var item in list)
+                result.Add(TareaMapper.ToDto(item));
+            return result;
+        }
+
         // Actualizar tarea
         public async Task<TareaDto?> UpdateAsync(string id, CreateTareaDto dto)
         {

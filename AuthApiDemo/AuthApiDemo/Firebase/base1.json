@@ -4,19 +4,19 @@
       "Id_Espacio": "e2",
       "Nombre": "Casa Playa",
       "Direccion": "Paseo Marítimo 5",
-      "Salas": ["s3", "s4"],
-      "UsuarioEspacios": [ "ue3", "ue4" ],
-      "Peticiones": [ "p2" ],
-      "InvitacionesEnviadas": [ "i2" ]
+      "SalaIds": [ "s3", "s4" ],
+      "UsuarioEspacioIds": [ "ue3", "ue4" ],
+      "PeticionIds": [ "p2" ],
+      "InvitacionIds": [ "i2" ]
     },
     "e3": {
       "Id_Espacio": "e3",
       "Nombre": "Oficina Centro",
       "Direccion": "Avenida Diagonal 200",
-      "Salas": ["s5", "s6"],
-      "UsuarioEspacios": [ "ue5", "ue6" ],
-      "Peticiones": [ "p3" ],
-      "InvitacionesEnviadas": [ "i3", "i4" ]
+      "SalaIds": [ "s5", "s6" ],
+      "UsuarioEspacioIds": [ "ue5", "ue6" ],
+      "PeticionIds": [ "p3" ],
+      "InvitacionIds": [ "i3", "i4" ]
     }
   },
   "usuarios": {
