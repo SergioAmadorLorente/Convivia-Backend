@@ -32,7 +32,6 @@ namespace AuthApiDemo.Mappers
 
             return new Invitacion
             {
-                Id = persist.Id,
                 UsuarioSolicitante = solicitante!,
                 UsuarioInvitado = invitado!,
                 Espacio = espacio!,
