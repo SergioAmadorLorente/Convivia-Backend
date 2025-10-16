@@ -2,7 +2,7 @@
 {
     public class PlantillaTarea
     {
-        public string Id_PlantillaTarea { get; set; }
+        public string PlantillaId { get; set; }
 
         public string Nombre { get; set; }
 
@@ -24,7 +24,7 @@
             if (repeticion < 0) throw new ArgumentException("La repetición debe ser positiva.");
             if (puntosKarma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
 
-            Id_PlantillaTarea = id_PlantillaTarea;
+            PlantillaId = id_PlantillaTarea;
             Nombre = nombre;
             Repeticion = repeticion;
             FechaCreacion = fechaCreacion;

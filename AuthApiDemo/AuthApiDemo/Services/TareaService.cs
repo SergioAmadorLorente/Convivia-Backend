@@ -106,6 +106,8 @@ namespace AuthApiDemo.Services
             persist.Karma = dto.Karma;
             persist.Foto = dto.Foto;
             persist.Prorroga = dto.Prorroga;
+            persist.PlantillaId = dto.PlantillaId;
+            persist.DiasRepeticion = dto.DiasRepeticion ?? new List<DayOfWeek>();
 
             await _firebase.UpdateAsync(COLLECTION, id, persist);
             return TareaMapper.ToDto(persist);
@@ -127,9 +129,43 @@ namespace AuthApiDemo.Services
             if (dto.Prorroga.HasValue) persist.Prorroga = dto.Prorroga;
             if (dto.Estado.HasValue) persist.Estado = dto.Estado.Value;
             if (dto.FechaRealizacion.HasValue) persist.FechaRealizacion = dto.FechaRealizacion;
+            if (dto.PlantillaId != null) persist.PlantillaId = dto.PlantillaId;
+            if (dto.DiasRepeticion != null) persist.DiasRepeticion = dto.DiasRepeticion;
 
             await _firebase.UpdateAsync(COLLECTION, id, persist);
             return TareaMapper.ToDto(persist);
+        }
+
+        // Reemplaza el tipo de retorno del método PatchAsyncVarias de TareaDto? a List<TareaDto>
+        public async Task<List<TareaDto>> PatchVariasAsync(List<string> id, UpdateTareaDto dto)
+        {
+            List<TareaDto> tareasDTO = new List<TareaDto>();
+
+            foreach (string idt in id)
+            {
+                var persist = await _firebase.GetAsync<TareaPersist>(COLLECTION, idt);
+                if (persist == null)
+                    continue;
+
+                if (dto.Nombre != null) persist.Nombre = dto.Nombre;
+                if (dto.FechaLimite.HasValue) persist.FechaLimite = dto.FechaLimite.Value;
+                if (dto.Descripcion != null) persist.Descripcion = dto.Descripcion;
+                if (dto.UsuarioEspacioIds != null) persist.UsuarioEspacioIds = dto.UsuarioEspacioIds;
+                if (dto.Karma.HasValue) persist.Karma = dto.Karma.Value;
+                if (dto.Foto != null) persist.Foto = dto.Foto;
+                if (dto.Prorroga.HasValue) persist.Prorroga = dto.Prorroga;
+                if (dto.Estado.HasValue) persist.Estado = dto.Estado.Value;
+                if (dto.FechaRealizacion.HasValue) persist.FechaRealizacion = dto.FechaRealizacion;
+                if (dto.PlantillaId != null) persist.PlantillaId = dto.PlantillaId;
+                if (dto.DiasRepeticion != null) persist.DiasRepeticion = dto.DiasRepeticion;
+
+                await _firebase.UpdateAsync(COLLECTION, idt, persist);
+
+                var tareadto = TareaMapper.ToDto(persist);
+                tareasDTO.Add(tareadto);
+            }
+
+            return tareasDTO;
         }
 
         // Eliminar tarea

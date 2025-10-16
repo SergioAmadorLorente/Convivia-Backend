@@ -29,5 +29,9 @@ namespace AuthApiDemo.Models
         public DateTime? FechaRealizacion { get; set; }
         [FirestoreProperty]
         public string? FacturaId { get; set; } // Referencia a la factura asociada
+        [FirestoreProperty]
+        public string? PlantillaId { get; set; }
+        [FirestoreProperty]
+        public List<DayOfWeek> DiasRepeticion { get; set; } = new();
     }
 }

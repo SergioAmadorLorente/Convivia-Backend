@@ -98,19 +98,14 @@ public static class TareaEndpoints
         .Produces<List<TareaDto>>(200)
         .Produces(500);
 
-        group.MapGet("/filtrarfechaunica", async (string fecha, TareaServcuperaice service) =>
+        group.MapPatch("/completarvariastareas", async (PatchVariasTareasDto data, TareaService service) =>
         {
-
-            var fechafinal = DateTime.Parse(fecha, null, System.Globalization.DateTimeStyles.RoundtripKind);
-
-            var tareas = await service.GetByFechaUnicaAsync(fechafinal);
-
-            if (tareas.Count() != 0)
-                return Results.Ok(tareas);
-            else
-                return Results.NotFound();
+            var tareaDto = await service.PatchVariasAsync(data.ListaIds, data.Dto);
+            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
         })
-        .Produces<List<TareaDto>>(200)
+        .Produces<TareaDto>(200)
+        .Produces(400)
+        .Produces(404)
         .Produces(500);
 
     }

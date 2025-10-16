@@ -16,5 +16,9 @@ namespace AuthApiDemo.DTOs
         public bool Estado { get; set; }
         public DateTime? FechaRealizacion { get; set; }
         public string? FacturaId { get; set; } // Referencia a la factura asociada
+        public string? PlantillaId { get; set; }
+
+        public List<DayOfWeek> DiasRepeticion { get; set; } = new();
+
     }
 }

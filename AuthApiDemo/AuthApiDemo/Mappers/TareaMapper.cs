@@ -21,7 +21,9 @@ namespace AuthApiDemo.Mappers
                 Prorroga = dto.Prorroga,
                 Estado = false,
                 FechaRealizacion = null,
-                FacturaId = dto.FacturaId // Mapeo de FacturaId
+                FacturaId = dto.FacturaId, // Mapeo de FacturaId
+                PlantillaId = dto.PlantillaId,
+                DiasRepeticion = dto.DiasRepeticion ?? new List<DayOfWeek>()
             };
         }
 
@@ -40,7 +42,9 @@ namespace AuthApiDemo.Mappers
                 Prorroga = persist.Prorroga,
                 Estado = persist.Estado,
                 FechaRealizacion = persist.FechaRealizacion,
-                FacturaId = persist.FacturaId // Mapeo de FacturaId
+                FacturaId = persist.FacturaId, // Mapeo de FacturaId
+                PlantillaId = persist.PlantillaId,
+                DiasRepeticion = persist.DiasRepeticion ?? new List<DayOfWeek>()
             };
         }
     }
