@@ -4,20 +4,7 @@
       "Id_Espacio": "e2",
       "Nombre": "Casa Playa",
       "Direccion": "Paseo Marítimo 5",
-      "Salas": [
-        {
-          "Id_Sala": "s3",
-          "Nombre": "Cocina",
-          "Descripcion": "Cocina abierta",
-          "Id_Espacio": "e2"
-        },
-        {
-          "Id_Sala": "s4",
-          "Nombre": "Terraza",
-          "Descripcion": "Terraza con vistas",
-          "Id_Espacio": "e2"
-        }
-      ],
+      "Salas": ["s3", "s4"],
       "UsuarioEspacios": [ "ue3", "ue4" ],
       "Peticiones": [ "p2" ],
       "InvitacionesEnviadas": [ "i2" ]
@@ -26,20 +13,7 @@
       "Id_Espacio": "e3",
       "Nombre": "Oficina Centro",
       "Direccion": "Avenida Diagonal 200",
-      "Salas": [
-        {
-          "Id_Sala": "s5",
-          "Nombre": "Sala Reuniones",
-          "Descripcion": "Capacidad 8 personas",
-          "Id_Espacio": "e3"
-        },
-        {
-          "Id_Sala": "s6",
-          "Nombre": "Open Space",
-          "Descripcion": "Zona común de trabajo",
-          "Id_Espacio": "e3"
-        }
-      ],
+      "Salas": ["s5", "s6"],
       "UsuarioEspacios": [ "ue5", "ue6" ],
       "Peticiones": [ "p3" ],
       "InvitacionesEnviadas": [ "i3", "i4" ]
