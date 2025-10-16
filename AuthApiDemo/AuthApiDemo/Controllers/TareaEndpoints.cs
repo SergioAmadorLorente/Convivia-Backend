@@ -34,6 +34,16 @@ public static class TareaEndpoints
         .Produces(404)
         .Produces(500);
 
+        // Obtener tarea por usuario
+        /*app.MapGet("/api/tareasperusuari/{idusuari}", async (string idusuari, TareaService service) =>
+        {
+            var tareaDto = await service.GetAsync(idusuari);
+            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
+        })
+        .Produces<TareaDto>(200)
+        .Produces(404)
+        .Produces(500);*/
+
         // Eliminar tarea
         group.MapDelete("/{id}", async (string id, TareaService service) =>
         {
@@ -54,5 +64,39 @@ public static class TareaEndpoints
         .Produces(400)
         .Produces(404)
         .Produces(500);
+
+        group.MapGet("/", async (TareaService service) =>
+        {
+            var tareas = await service.GetAllAsync();
+            return Results.Ok(tareas);
+        })
+        .Produces<List<TareaDto>>(200)
+        .Produces(500);
+
+        group.MapGet("/filtrarestado", async (bool estado, TareaService service) =>
+        {
+            var tareas = await service.GetByEstadoAsync(estado);
+            return Results.Ok(tareas);
+        })
+        .Produces<List<TareaDto>>(200)
+        .Produces(500);
+
+        group.MapGet("/filtrarfecha", async (string fechainicio, string fechafinal, TareaService service) =>
+        {
+            var inicio = DateTime.Parse(fechainicio, null, System.Globalization.DateTimeStyles.RoundtripKind);
+            var final = DateTime.Parse(fechafinal, null, System.Globalization.DateTimeStyles.RoundtripKind);
+
+            var todas = await service.GetAllAsync();
+
+            var tareasFiltradas = todas.Where(t => t.FechaLimite >= inicio && t.FechaLimite <= final).ToList();
+
+            if (tareasFiltradas.Count() != 0)
+                return Results.Ok(tareasFiltradas);
+            else
+                return Results.NotFound();
+        })
+        .Produces<List<TareaDto>>(200)
+        .Produces(500);
+
     }
 }

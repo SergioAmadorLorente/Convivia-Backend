@@ -12,7 +12,7 @@ namespace AuthApiDemo.Models
         [FirestoreProperty]
         public string Nombre { get; set; } = default!;
         [FirestoreProperty]
-        public DateTime fechaLimite { get; set; }
+        public DateTime FechaLimite { get; set; }
         [FirestoreProperty]
         public string? Descripcion { get; set; }
         [FirestoreProperty]

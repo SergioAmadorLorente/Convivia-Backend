@@ -28,6 +28,8 @@ namespace AuthApiDemo.Services
 
         ) where T : class;
 
+        Task<List<T>> GetAllAsync<T>(string collection) where T : class;
+
     }
 
 }

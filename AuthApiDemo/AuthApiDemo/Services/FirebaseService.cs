@@ -51,5 +51,18 @@ namespace AuthApiDemo.Services
             var snap = await q.GetSnapshotAsync();
             return snap.Documents.Select(d => d.ConvertTo<T>()).ToList();
         }
+
+        public async Task<List<T>> GetAllAsync<T>(string collection) where T : class
+        {
+            var snapshot = await _db.Collection(collection).GetSnapshotAsync();
+            var result = new List<T>();
+            foreach (var doc in snapshot.Documents)
+            {
+                var entity = doc.ConvertTo<T>();
+                if (entity != null)
+                    result.Add(entity);
+            }
+            return result;
+        }
     }
 }

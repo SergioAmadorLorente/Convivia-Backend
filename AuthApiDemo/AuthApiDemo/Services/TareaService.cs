@@ -32,7 +32,6 @@ namespace AuthApiDemo.Services
             );
             if (existing.Count > 0)
                 throw new InvalidOperationException("Ya existe una tarea con ese nombre y fecha límite.");
-
             await _firebase.AddAsync(COLLECTION, idTarea, persist);
             return TareaMapper.ToDto(persist);
         }
@@ -44,11 +43,40 @@ namespace AuthApiDemo.Services
             return persist != null ? TareaMapper.ToDto(persist) : null;
         }
 
+        /*public async Task<List<TareaDto>> GetByUsuarioAsync(string idusuario)
+        {
+
+            var tareaPersist = await _firebase.QueryAsync<TareaPersist>(COLLECTION, "UsuarioEspacioIds", idusuario);
+            var tareaDto = new List<TareaDto>();
+
+            foreach (var tarea in tareaPersist)
+            {
+
+                var tareafinal = TareaMapper.ToDto(tarea);
+                if(tareafinal != null) { 
+                    tareaDto.Add(tareafinal);
+                }
+
+            }
+
+            return tareaDto;
+
+        }*/
+
         // Listar todas las tareas
         public async Task<List<TareaDto>> GetAllAsync()
         {
+            var list = await _firebase.GetAllAsync<TareaPersist>(COLLECTION);
+            var result = new List<TareaDto>();
+            foreach (var item in list)
+                result.Add(TareaMapper.ToDto(item));
+            return result;
+        }
 
-            var list = await _firebase.QueryAsync<TareaPersist>(COLLECTION, "IdTarea", null);
+        // Obtener tareas por estado
+        public async Task<List<TareaDto>> GetByEstadoAsync(bool estado)
+        {
+            var list = await _firebase.QueryAsync<TareaPersist>(COLLECTION, "Estado", estado);
             var result = new List<TareaDto>();
             foreach (var item in list)
                 result.Add(TareaMapper.ToDto(item));
@@ -63,7 +91,7 @@ namespace AuthApiDemo.Services
                 return null;
 
             persist.Nombre = dto.Nombre;
-            persist.fechaLimite = dto.FechaLimite;
+            persist.FechaLimite = dto.FechaLimite;
             persist.Descripcion = dto.Descripcion;
             persist.UsuarioEspacioIds = dto.UsuarioEspacioIds ?? new List<string>();
             persist.Karma = dto.Karma;
@@ -82,7 +110,7 @@ namespace AuthApiDemo.Services
                 return null;
 
             if (dto.Nombre != null) persist.Nombre = dto.Nombre;
-            if (dto.FechaLimite.HasValue) persist.fechaLimite = dto.FechaLimite.Value;
+            if (dto.FechaLimite.HasValue) persist.FechaLimite = dto.FechaLimite.Value;
             if (dto.Descripcion != null) persist.Descripcion = dto.Descripcion;
             if (dto.UsuarioEspacioIds != null) persist.UsuarioEspacioIds = dto.UsuarioEspacioIds;
             if (dto.Karma.HasValue) persist.Karma = dto.Karma.Value;
