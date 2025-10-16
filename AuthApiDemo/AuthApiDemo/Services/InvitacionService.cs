@@ -24,7 +24,7 @@ namespace AuthApiDemo.Services
 
         private readonly IFirebaseService _firebase;
 
-        private const string COLLECTION = "invitaciones"; // coincide con tu JSON
+        private const string COLLECTION = "invitaciones"; 
 
         public InvitacionService(IFirebaseService firebase)
 

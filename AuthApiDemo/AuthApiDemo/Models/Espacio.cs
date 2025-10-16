@@ -159,7 +159,6 @@ namespace AuthApiDemo.Models
 
             Invitacion nuevaInvitacion = new Invitacion
             {
-                Id = Guid.NewGuid().ToString(),
                 Espacio = this,
                 UsuarioInvitado = usuario,
                 Fecha = DateTime.UtcNow
