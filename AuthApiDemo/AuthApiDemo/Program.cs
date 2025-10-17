@@ -25,6 +25,7 @@ builder.Services.AddScoped<IFirebaseService, FirebaseService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TareaService>();
 builder.Services.AddScoped<EspacioService>();
+builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<InvitacionService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -52,6 +53,7 @@ app.MapEspacioEndpoints();
 app.MapTareaEndpoints();
 app.MapPeticionEndpoints();
 app.MapInvitacionEndpoints();
+app.MapUsuarioEndpoints();
 
 // Endpoint para introducir datos de prueba
 app.MapPost("/api/usuarios/importar-datos", async (UserService userService) =>

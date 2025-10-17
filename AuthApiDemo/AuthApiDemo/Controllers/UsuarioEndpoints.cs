@@ -7,7 +7,7 @@ using AuthApiDemo.Services;
 
 namespace AuthApiDemo.Controllers
 {
-    public class UsuarioEndpoints
+    public static class UsuarioEndpoints
     {
         public static void MapUsuarioEndpoints(this IEndpointRouteBuilder app)
         {
@@ -56,6 +56,11 @@ namespace AuthApiDemo.Controllers
                 var count = await service.CountUsuariosAsync();
                 return Results.Ok(new { Count = count });
             })
+            .Produces(200)
+            .Produces(500);
+
+
+
         }
 
     }
