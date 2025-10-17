@@ -6,19 +6,19 @@
 
         public string Nombre { get; set; }
 
-        public int Repeticion { get; set; }
-
         public DateTime FechaCreacion { get; set; }
 
         public int PuntosKarma { get; set; }
 
         public bool Disponible { get; set; }
 
+        public List<DayOfWeek> DiasRepeticion { get; set; }
+
         public PlantillaTarea()
         {
         }
 
-        public PlantillaTarea(string id_PlantillaTarea, string nombre, int repeticion, DateTime fechaCreacion, int puntosKarma, bool disponible)
+        public PlantillaTarea(string id_PlantillaTarea, string nombre, DateTime fechaCreacion, int puntosKarma, bool disponible)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
             if (repeticion < 0) throw new ArgumentException("La repetición debe ser positiva.");
@@ -26,7 +26,6 @@
 
             PlantillaId = id_PlantillaTarea;
             Nombre = nombre;
-            Repeticion = repeticion;
             FechaCreacion = fechaCreacion;
             PuntosKarma = puntosKarma;
             Disponible = disponible;
@@ -42,23 +41,12 @@
             if (puntosKarma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
 
             Nombre = nombre;
-            Repeticion = repeticion;
             PuntosKarma = puntosKarma;
         }
 
         public void cambiarDisponibilidad()
         {
             this.Disponible = !this.Disponible;
-        }
-
-        public void programarRecurrencia(int repeticion)
-        {
-            this.Repeticion = repeticion;
-        }
-
-        public bool Validar()
-        {
-            return !string.IsNullOrWhiteSpace(Nombre) && Repeticion >= 0 && PuntosKarma >= 0;
         }
     }
 }

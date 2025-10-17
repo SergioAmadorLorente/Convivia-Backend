@@ -25,6 +25,5 @@ namespace AuthApiDemo.DTOs
         public string? FacturaId { get; set; } // Referencia a la factura asociada
 
         public string? PlantillaId { get; set; }
-        public List<DayOfWeek> DiasRepeticion { get; set; } = new();
     }
 }

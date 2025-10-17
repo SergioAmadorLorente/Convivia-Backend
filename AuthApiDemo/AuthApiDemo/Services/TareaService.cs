@@ -83,15 +83,6 @@ namespace AuthApiDemo.Services
             return result;
         }
 
-        public async Task<List<TareaDto>> GetByFechaUnicaAsync(DateTime fecha)
-        {
-            var list = await _firebase.QueryAsync<TareaPersist>(COLLECTION, "FechaLimite", fecha);
-            var result = new List<TareaDto>();
-            foreach (var item in list)
-                result.Add(TareaMapper.ToDto(item));
-            return result;
-        }
-
         // Actualizar tarea
         public async Task<TareaDto?> UpdateAsync(string id, CreateTareaDto dto)
         {
@@ -107,7 +98,6 @@ namespace AuthApiDemo.Services
             persist.Foto = dto.Foto;
             persist.Prorroga = dto.Prorroga;
             persist.PlantillaId = dto.PlantillaId;
-            persist.DiasRepeticion = dto.DiasRepeticion ?? new List<DayOfWeek>();
 
             await _firebase.UpdateAsync(COLLECTION, id, persist);
             return TareaMapper.ToDto(persist);
@@ -130,7 +120,6 @@ namespace AuthApiDemo.Services
             if (dto.Estado.HasValue) persist.Estado = dto.Estado.Value;
             if (dto.FechaRealizacion.HasValue) persist.FechaRealizacion = dto.FechaRealizacion;
             if (dto.PlantillaId != null) persist.PlantillaId = dto.PlantillaId;
-            if (dto.DiasRepeticion != null) persist.DiasRepeticion = dto.DiasRepeticion;
 
             await _firebase.UpdateAsync(COLLECTION, id, persist);
             return TareaMapper.ToDto(persist);
@@ -157,7 +146,6 @@ namespace AuthApiDemo.Services
                 if (dto.Estado.HasValue) persist.Estado = dto.Estado.Value;
                 if (dto.FechaRealizacion.HasValue) persist.FechaRealizacion = dto.FechaRealizacion;
                 if (dto.PlantillaId != null) persist.PlantillaId = dto.PlantillaId;
-                if (dto.DiasRepeticion != null) persist.DiasRepeticion = dto.DiasRepeticion;
 
                 await _firebase.UpdateAsync(COLLECTION, idt, persist);
 

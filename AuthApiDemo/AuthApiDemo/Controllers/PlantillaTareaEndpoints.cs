@@ -7,22 +7,36 @@ using AuthApiDemo.Services;
 
 namespace AuthApiDemo.Endpoints;
 
-public static class TareaEndpoints
+public static class PlantillaTareaEndpoints
 {
-    public static void MapTareaEndpoints(this IEndpointRouteBuilder app)
+    public static void MapPlantillaTareaEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/tareas").WithTags("Tareas");
 
         // Crear tarea
-        group.MapPost("/", async (CreateTareaDto dto, TareaService service) =>
+        group.MapPost("/", async (CreateTareaDto dto, TareaService service, PlantillaTareaService plantillaService) =>
         {
+            if (dto.Fechas == null || dto.Fechas.Count == 0)
+                return Results.BadRequest("Debe especificar al menos una fecha.");
+
+            // Si hay más de una fecha, crear plantilla y tareas
+            if (dto.Fechas.Count > 1)
+            {
+                var plantillaDto = await plantillaService.CreateFromTareaDtoAsync(dto);
+                var tareas = await service.CreateFromPlantillaAsync(plantillaDto, dto.Fechas);
+                return Results.Created("/api/tareas", tareas);
+            }
+
+            // Si solo hay una fecha, crear tarea directamente
             var tareaDto = await service.AddAsync(dto);
             return Results.Created($"/api/tareas/{tareaDto.IdTarea}", tareaDto);
         })
+        .Produces<List<TareaDto>>(201)
         .Produces<TareaDto>(201)
         .Produces(400)
         .Produces(409)
         .Produces(500);
+
 
         // Obtener tarea por id
         group.MapGet("/{id}", async (string id, TareaService service) =>
@@ -61,7 +75,7 @@ public static class TareaEndpoints
             return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
         })
         .Produces<TareaDto>(200)
-        .Produces(400)
+        .Produces(400)º
         .Produces(404)
         .Produces(500);
 
