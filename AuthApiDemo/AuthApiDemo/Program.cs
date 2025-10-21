@@ -1,3 +1,4 @@
+using AuthApiDemo.Controllers;
 using AuthApiDemo.Endpoints;
 using AuthApiDemo.Infraestructure;
 using AuthApiDemo.Services;

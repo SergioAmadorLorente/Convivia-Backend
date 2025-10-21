@@ -59,8 +59,6 @@ namespace AuthApiDemo.Controllers
             .Produces(200)
             .Produces(500);
 
-
-
         }
 
     }
