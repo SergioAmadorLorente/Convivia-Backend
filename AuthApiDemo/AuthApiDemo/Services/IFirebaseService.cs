@@ -12,7 +12,7 @@ namespace AuthApiDemo.Services
 
         Task AddAsync<T>(string collection, string id, T entity);
 
-        Task <string> AddAsync(string collection, string id);
+        // Task <string> AddAsync(string collection, string id);
 
         Task<T?> GetAsync<T>(string collection, string id) where T : class;
 

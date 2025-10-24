@@ -51,11 +51,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapEspacioEndpoints();
-app.MapTareaEndpoints();
 app.MapPeticionEndpoints();
 app.MapInvitacionEndpoints();
-app.MapUsuarioEndpoints();
-
+// app.MapUsuarioEndpoints();
 // Endpoint para introducir datos de prueba
 app.MapPost("/api/usuarios/importar-datos", async (UserService userService) =>
 {

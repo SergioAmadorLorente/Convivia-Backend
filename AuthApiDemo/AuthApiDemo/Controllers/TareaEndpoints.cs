@@ -1,112 +1,103 @@
-﻿using Microsoft.AspNetCore.Routing;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using AuthApiDemo.Models;
 using AuthApiDemo.DTOs;
 using AuthApiDemo.Services;
 
-namespace AuthApiDemo.Endpoints;
-
-public static class TareaEndpoints
+namespace AuthApiDemo.Controllers
 {
-    public static void MapTareaEndpoints(this IEndpointRouteBuilder app)
+    [ApiController]
+    [Route("api/tareas")]
+    [Produces("application/json")]
+    public class TareaController : ControllerBase
     {
-        var group = app.MapGroup("/api/tareas").WithTags("Tareas");
+        private readonly TareaService _service;
 
-        // Crear tarea
-        group.MapPost("/", async (CreateTareaDto dto, TareaService service) =>
+        public TareaController(TareaService service)
         {
-            var tareaDto = await service.AddAsync(dto);
-            return Results.Created($"/api/tareas/{tareaDto.IdTarea}", tareaDto);
-        })
-        .Produces<TareaDto>(201)
-        .Produces(400)
-        .Produces(409)
-        .Produces(500);
+            _service = service;
+        }
 
-        // Obtener tarea por id
-        group.MapGet("/{id}", async (string id, TareaService service) =>
+        [HttpPost]
+        [ProducesResponseType(typeof(TareaDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<TareaDto>> CreateTarea(CreateTareaDto dto)
         {
-            var tareaDto = await service.GetAsync(id);
-            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
-        })
-        .Produces<TareaDto>(200)
-        .Produces(404)
-        .Produces(500);
+            var tareaDto = await _service.AddAsync(dto);
+            return CreatedAtAction(nameof(GetTareaById), new { id = tareaDto.IdTarea }, tareaDto);
+        }
 
-        // Obtener tarea por usuario
-        /*app.MapGet("/api/tareasperusuari/{idusuari}", async (string idusuari, TareaService service) =>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(TareaDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<TareaDto>> GetTareaById(string id)
         {
-            var tareaDto = await service.GetAsync(idusuari);
-            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
-        })
-        .Produces<TareaDto>(200)
-        .Produces(404)
-        .Produces(500);*/
+            var tareaDto = await _service.GetAsync(id);
+            return tareaDto != null ? Ok(tareaDto) : NotFound();
+        }
 
-        // Eliminar tarea
-        group.MapDelete("/{id}", async (string id, TareaService service) =>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteTarea(string id)
         {
-            var deleted = await service.DeleteAsync(id);
-            return deleted ? Results.NoContent() : Results.NotFound();
-        })
-        .Produces(204)
-        .Produces(404)
-        .Produces(500);
+            var deleted = await _service.DeleteAsync(id);
+            return deleted ? NoContent() : NotFound();
+        }
 
-        // PATCH: Actualización parcial de tarea
-        group.MapPatch("/{id}", async (string id, UpdateTareaDto dto, TareaService service) =>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(typeof(TareaDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<TareaDto>> PatchTarea(string id, UpdateTareaDto dto)
         {
-            var tareaDto = await service.PatchAsync(id, dto);
-            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
-        })
-        .Produces<TareaDto>(200)
-        .Produces(400)
-        .Produces(404)
-        .Produces(500);
+            var tareaDto = await _service.PatchAsync(id, dto);
+            return tareaDto != null ? Ok(tareaDto) : NotFound();
+        }
 
-        group.MapGet("/", async (TareaService service) =>
+        [HttpGet]
+        [ProducesResponseType(typeof(List<TareaDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<TareaDto>>> GetAllTareas()
         {
-            var tareas = await service.GetAllAsync();
-            return Results.Ok(tareas);
-        })
-        .Produces<List<TareaDto>>(200)
-        .Produces(500);
+            var tareas = await _service.GetAllAsync();
+            return Ok(tareas);
+        }
 
-        group.MapGet("/filtrarestado", async (bool estado, TareaService service) =>
+        [HttpGet("filtrarestado")]
+        [ProducesResponseType(typeof(List<TareaDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<TareaDto>>> GetByEstado(bool estado)
         {
-            var tareas = await service.GetByEstadoAsync(estado);
-            return Results.Ok(tareas);
-        })
-        .Produces<List<TareaDto>>(200)
-        .Produces(500);
+            var tareas = await _service.GetByEstadoAsync(estado);
+            return Ok(tareas);
+        }
 
-        group.MapGet("/filtrarfecha", async (string fechainicio, string fechafinal, TareaService service) =>
+        [HttpGet("filtrarfecha")]
+        [ProducesResponseType(typeof(List<TareaDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<TareaDto>>> GetByFecha(string fechainicio, string fechafinal)
         {
             var inicio = DateTime.Parse(fechainicio, null, System.Globalization.DateTimeStyles.RoundtripKind);
             var final = DateTime.Parse(fechafinal, null, System.Globalization.DateTimeStyles.RoundtripKind);
 
-            var todas = await service.GetAllAsync();
-
+            var todas = await _service.GetAllAsync();
             var tareasFiltradas = todas.Where(t => t.FechaLimite >= inicio && t.FechaLimite <= final).ToList();
 
-            if (tareasFiltradas.Count() != 0)
-                return Results.Ok(tareasFiltradas);
-            else
-                return Results.NotFound();
-        })
-        .Produces<List<TareaDto>>(200)
-        .Produces(500);
+            return tareasFiltradas.Count != 0 ? Ok(tareasFiltradas) : NotFound();
+        }
 
-        group.MapPatch("/actualizarvariastareas", async (PatchVariasTareasDto data, TareaService service) =>
+        [HttpPatch("actualizarvariastareas")]
+        [ProducesResponseType(typeof(TareaDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TareaDto>> PatchVariasTareas(PatchVariasTareasDto data)
         {
-            var tareaDto = await service.PatchVariasAsync(data.ListaIds, data.Dto);
-            return tareaDto != null ? Results.Ok(tareaDto) : Results.NotFound();
-        })
-        .Produces<TareaDto>(200)
-        .Produces(400)
-        .Produces(404)
-        .Produces(500);
-
+            var tareaDto = await _service.PatchVariasAsync(data.ListaIds, data.Dto);
+            return tareaDto != null ? Ok(tareaDto) : NotFound();
+        }
     }
 }

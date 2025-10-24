@@ -21,7 +21,6 @@
         public PlantillaTarea(string id_PlantillaTarea, string nombre, DateTime fechaCreacion, int puntosKarma, bool disponible)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
-            if (repeticion < 0) throw new ArgumentException("La repetición debe ser positiva.");
             if (puntosKarma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
 
             PlantillaId = id_PlantillaTarea;
