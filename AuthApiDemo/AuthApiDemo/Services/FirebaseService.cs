@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using AuthApiDemo.Services;
 namespace AuthApiDemo.Services
 {
     public class FirebaseService : IFirebaseService
     {
-        private readonly FirestoreDb _db;
 
-        public FirebaseService(FirestoreDb firestoreDb)
+        private readonly FirestoreDb _db;
+        private readonly ILogger<FirebaseService> _logger;
+
+        public FirebaseService(FirestoreDb firestoreDb, ILogger<FirebaseService> logger)
         {
             _db = firestoreDb;
+            _logger = logger;
         }
 
         public async Task AddAsync<T>(string collection, string id, T entity)
@@ -52,17 +55,53 @@ namespace AuthApiDemo.Services
             return snap.Documents.Select(d => d.ConvertTo<T>()).ToList();
         }
 
+        /*
+                public async Task<List<T>> GetAllAsync<T>(string collection) where T : class
+                {
+                    var snapshot = await _db.Collection(collection).GetSnapshotAsync();
+                    var result = new List<T>();
+                    foreach (var doc in snapshot.Documents)
+                    {
+                        var entity = doc.ConvertTo<T>();
+                        if (entity != null)
+                            result.Add(entity);
+                    }
+                    return result;
+                }
+        */
+
         public async Task<List<T>> GetAllAsync<T>(string collection) where T : class
         {
             var snapshot = await _db.Collection(collection).GetSnapshotAsync();
             var result = new List<T>();
+
             foreach (var doc in snapshot.Documents)
             {
-                var entity = doc.ConvertTo<T>();
-                if (entity != null)
-                    result.Add(entity);
+                try
+                {
+                    var entity = doc.ConvertTo<T>();
+                    if (entity != null)
+                        result.Add(entity);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"❌ Error al convertir documento {doc.Id}");
+
+                    var data = doc.ToDictionary();
+                    foreach (var kvp in data)
+                    {
+                        _logger.LogError($"Campo: {kvp.Key}, Tipo: {kvp.Value?.GetType().Name}, Valor: {kvp.Value}");
+                    }
+                }
             }
+
             return result;
+        }
+
+
+        Task<string> IFirebaseService.AddAsync(string collection, string id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

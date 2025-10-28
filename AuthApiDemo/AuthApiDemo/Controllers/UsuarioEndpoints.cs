@@ -59,6 +59,29 @@ namespace AuthApiDemo.Controllers
             .Produces(200)
             .Produces(500);
 
+            // Eliminar usuario
+            group.MapDelete("/{id}", async (string id, UsuarioService service) =>
+            {
+                var deleted = await service.DeleteAsync(id);
+                return deleted ? Results.NoContent() : Results.NotFound();
+
+            })
+            .Produces(204)
+            .Produces(404)
+            .Produces(500);
+
+
+            // TODO acabar map patch 
+            // PATCH: Actualización parcial de usuario
+            group.MapPatch("/{id}", async (string id, UpdateUsuarioDto dto, UsuarioService service) =>
+            {
+                var usuario = await service.PatchAsync(id, dto);
+                return usuario != null ? Results.Ok(usuario) : Results.NotFound();
+            })
+            .Produces<UsuarioDto>(200)
+            .Produces(400)
+            .Produces(404)
+            .Produces(500);
         }
 
     }

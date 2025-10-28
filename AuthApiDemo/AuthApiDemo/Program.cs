@@ -49,6 +49,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthorization();
 
+// Endpoints
 app.MapControllers();
 app.MapEspacioEndpoints();
 app.MapPeticionEndpoints();
