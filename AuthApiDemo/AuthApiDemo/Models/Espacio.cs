@@ -1,65 +1,40 @@
 ﻿using Google.Cloud.Firestore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace AuthApiDemo.Models
 {
     /// <summary>
-    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones e invitaciones.
+    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones         e invitaciones.
     /// </summary>
     [FirestoreData]
     public class Espacio
     {
-        /// <summary>
-        /// Identificador único del espacio.
-        /// </summary>
         [FirestoreProperty]
-        public string Id_Espacio { get; } = Guid.NewGuid().ToString();
+        public string Id_Espacio { get; set; } = Guid.NewGuid().ToString(); // <- ahora con setter
 
-        /// <summary>
-        /// Nombre del espacio.
-        /// </summary>
         [FirestoreProperty]
         public string Nombre { get; set; }
 
-        /// <summary>
-        /// Dirección del espacio (opcional).
-        /// </summary>
         [FirestoreProperty]
         public string? Direccion { get; set; }
 
-        /// <summary>
-        /// Colección de salas asociadas al espacio.
-        /// </summary>
         [JsonIgnore]
         public List<Sala> Salas { get; set; } = new List<Sala>();
 
-        /// <summary>
-        /// Colección de UsuariosEspacios que pertenecen al espacio.
-        /// </summary>
         [JsonIgnore]
         public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
 
-        /// <summary>
-        /// Colección de peticiones de acceso al espacio.
-        /// </summary>
         [JsonIgnore]
         public List<Peticion> Peticiones { get; set; } = new List<Peticion>();
 
-        /// <summary>
-        /// Colección de invitaciones enviadas desde el espacio.
-        /// </summary>
         [JsonIgnore]
         public List<Invitacion> InvitacionesEnviadas { get; set; } = new List<Invitacion>();
 
-        /// <summary>
-        /// Constructor por defecto, útil para pruebas o deserialización.
-        /// </summary>
         public Espacio() { }
 
-        /// <summary>
-        /// Constructor principal que inicializa el espacio con nombre y dirección.
-        /// Valida que el nombre no esté vacío.
-        /// </summary>
         public Espacio(string name, string? direccion = null)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -69,9 +44,6 @@ namespace AuthApiDemo.Models
             Direccion = direccion;
         }
 
-        /// <summary>
-        /// Crea una nueva sala en el espacio, validando el nombre y evitando duplicados.
-        /// </summary>
         public Sala CrearSala(string nombre, string? descripcion = null)
         {
             if (string.IsNullOrWhiteSpace(nombre))
@@ -80,11 +52,12 @@ namespace AuthApiDemo.Models
             if (Salas.Any(s => s.Nombre == nombre))
                 throw new InvalidOperationException("Ya existe una sala con ese nombre.");
 
-            Sala nuevaSala = new Sala
+            // Crear la sala usando inicializador de objeto para evitar dependencias de constructor
+            var nuevaSala = new Sala
             {
-                Id_Sala = Guid.NewGuid().ToString(),
                 Nombre = nombre,
                 Descripcion = descripcion,
+                Id_Sala = Guid.NewGuid().ToString(),
                 Id_Espacio = this.Id_Espacio,
                 Espacio = this
             };
@@ -93,9 +66,6 @@ namespace AuthApiDemo.Models
             return nuevaSala;
         }
 
-        /// <summary>
-        /// Elimina una sala del espacio por su nombre.
-        /// </summary>  
         public bool EliminarSala(string nomsala)
         {
             if (string.IsNullOrWhiteSpace(nomsala))
@@ -110,9 +80,6 @@ namespace AuthApiDemo.Models
             return false;
         }
 
-        /// <summary>
-        /// Busca y devuelve una sala por su nombre.
-        /// </summary>
         public Sala BuscarSalaNombre(string nomsala)
         {
             if (string.IsNullOrWhiteSpace(nomsala))
@@ -121,9 +88,6 @@ namespace AuthApiDemo.Models
             return Salas.Find(s => s.Nombre == nomsala);
         }
 
-        /// <summary>
-        /// Admite un usuario en el espacio si existe una petición previa y no está ya admitido.
-        /// </summary>
         public bool AdmitirUsuario(Usuario usuario)
         {
             if (usuario == null)
@@ -149,9 +113,6 @@ namespace AuthApiDemo.Models
             return true;
         }
 
-        /// <summary>
-        /// Envía una invitación a un usuario para unirse al espacio.
-        /// </summary>
         public void InvitarUsuario(Usuario usuario)
         {
             if (usuario == null)
@@ -167,20 +128,13 @@ namespace AuthApiDemo.Models
             usuario.Invitaciones.Add(nuevaInvitacion);
         }
 
-        /// <summary>
-        /// Elimina un usuario del espacio por su nombre.
-        /// </summary>
         public bool EliminarUsuario(UsuarioEspacio usuariodelespacio)
         {
-
-            var usuariocomprobado = this.UsuarioEspacios.Find(u => u.Usuario.Nombre == usuariodelespacio.Usuario.Nombre);
-
             if (usuariodelespacio != null)
             {
                 UsuarioEspacios.Remove(usuariodelespacio);
                 return true;
             }
-
             return false;
         }
     }

@@ -1,4 +1,7 @@
 ﻿using Google.Cloud.Firestore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace AuthApiDemo.Models
@@ -10,39 +13,39 @@ namespace AuthApiDemo.Models
         public string Id_Sala { get; set; } = Guid.NewGuid().ToString();
 
         [FirestoreProperty]
-        public string Nombre { get; set; }
+        public string Nombre { get; set; } = string.Empty;
 
         [FirestoreProperty]
         public string? Descripcion { get; set; } // Puede ser null
 
+        // Usamos string para almacenar sólo el id del espacio (coherente con Espacio.Id_Espacio)
         [FirestoreProperty]
-        public string Id_Espacio { get; set; } // Solo el ID
+        public string Id_Espacio { get; set; } = string.Empty;
 
-        private List<Reserva> reservas = new List<Reserva>();
+        public List<Reserva> reservas = new List<Reserva>();
+
         [JsonIgnore]
         public Espacio? Espacio { get; set; } // Opcional: objeto completo
 
-        public Sala()
-        {
-            
-        }
-        
-        public Sala(string nombre, string id_Espacio, string? descripcion = null)
-        {
-            Nombre = nombre;
-            Descripcion = descripcion;
-            Id_Espacio = id_Espacio;
-        }
+        // Constructor por defecto (necesario para deserialización)
+        public Sala() { }
 
+        // Constructor práctico que acepta id de espacio como string
+        public Sala(string nombre, string idEspacio, string? descripcion = null)
+        {
+            Nombre = nombre ?? string.Empty;
+            Id_Espacio = idEspacio ?? string.Empty;
+            Descripcion = descripcion;
+        }
 
         public void listarReservas()
         {
             foreach (var reserva in reservas)
             {
-                Console.WriteLine($"Reserva ID: {reserva.Id_Reserva}, Fecha Inicial: {reserva.FechaInicial}, Fecha Final: {reserva.FechaFinal}, Usuario: {reserva.usuario.Nombre}");
+                Console.WriteLine($"Reserva ID: {reserva.Id_Reserva}, Fecha Inicial: {reserva.FechaInicial}, Fecha Final: {reserva.FechaFinal}, Usuario: {reserva.usuario?.Nombre}");
             }
         }
-        // Verifica si la sala está disponible en el rango de fechas dado, comparando tanto las fechas de inicio como las de fin.
+
         public bool esDisponible(DateTime fechaInicio, DateTime fechaFin)
         {
             foreach (var reserva in reservas)
@@ -55,12 +58,12 @@ namespace AuthApiDemo.Models
             }
             return true;
         }
-        // comprueva si la fecha esta disponible y si lo esta crea la reserva
+
         public bool crearReserva(DateTime fechaInicio, DateTime fechaFin, Usuario usuario)
         {
             if (esDisponible(fechaInicio, fechaFin))
             {
-                Reserva nuevaReserva = new Reserva
+                var nuevaReserva = new Reserva
                 {
                     Id_Reserva = Guid.NewGuid().ToString(),
                     FechaInicial = fechaInicio,
@@ -71,13 +74,10 @@ namespace AuthApiDemo.Models
                 reservas.Add(nuevaReserva);
                 return true;
             }
-            else
-            {
-                Console.WriteLine("No se pudo crear la reserva, el espacio no está disponible en las fechas solicitadas.");
-                return false;
-            }
+            Console.WriteLine("No se pudo crear la reserva, el espacio no está disponible en las fechas solicitadas.");
+            return false;
         }
-        // busca la reserva y la elimina
+
         public bool eliminarReserva(string idReserva)
         {
             var reserva = reservas.FirstOrDefault(r => r.Id_Reserva == idReserva);
@@ -86,11 +86,8 @@ namespace AuthApiDemo.Models
                 reservas.Remove(reserva);
                 return true;
             }
-            else
-            {
-                Console.WriteLine("Reserva no encontrada.");
-                return false;
-            }
+            Console.WriteLine("Reserva no encontrada.");
+            return false;
         }
 
         public bool eliminarReserva(Reserva reserva)
@@ -100,17 +97,13 @@ namespace AuthApiDemo.Models
                 reservas.Remove(reserva);
                 return true;
             }
-            else
-            {
-                Console.WriteLine("Reserva no encontrada.");
-                return false;
-            }
+            Console.WriteLine("Reserva no encontrada.");
+            return false;
         }
-        // busca la reserva con el id
-        public Reserva buscarReserva(string idReserva)
+
+        public Reserva? buscarReserva(string idReserva)
         {
             return reservas.FirstOrDefault(r => r.Id_Reserva == idReserva);
         }
-
     }
 }

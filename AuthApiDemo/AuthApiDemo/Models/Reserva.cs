@@ -1,4 +1,6 @@
-﻿namespace AuthApiDemo.Models
+﻿using System;
+
+namespace AuthApiDemo.Models
 {
     public class Reserva
     {

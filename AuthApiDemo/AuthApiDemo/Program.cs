@@ -1,65 +1,69 @@
-using AuthApiDemo.Controllers;
+﻿using AuthApiDemo.Controllers;
 using AuthApiDemo.Endpoints;
 using AuthApiDemo.Infraestructure;
 using AuthApiDemo.Services;
+
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración de logging
 builder.Logging
        .ClearProviders()
        .AddConsole()
        .AddDebug();
 
-// 2) FirestoreDb como singleton
+// FirestoreDb como singleton
 builder.Services.AddSingleton(provider =>
     FirestoreDb.Create("convivia-862f2") // tu ID de proyecto
 );
 
-// Add services to the container.
-
+// Inicializar Firebase
 FirebaseConfig.InitializeFirebase();
+
+// Registro de servicios en el contenedor de dependencias
 builder.Services.AddScoped<IFirebaseService, FirebaseService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TareaService>();
 builder.Services.AddScoped<EspacioService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<InvitacionService>();
+builder.Services.AddScoped<SalaService>(); // 👈 Faltaba este
+
+// Controllers y Swagger
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-
-
-// Configure the HTTP request pipeline.
+// Middleware de desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Comentado porque no vamos a usar https de momento, necesitamos certifiaci�n
-//app.UseHttpsRedirection();
+// Si quieres HTTPS, descomenta esta línea
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-// Endpoints
+// Mapear controladores y endpoints minimal API
 app.MapControllers();
 app.MapEspacioEndpoints();
 app.MapPeticionEndpoints();
 app.MapInvitacionEndpoints();
-// app.MapUsuarioEndpoints();
-// Endpoint para introducir datos de prueba
+app.MapSalaEndpoints();
+
+// Endpoint de prueba para importar datos
 app.MapPost("/api/usuarios/importar-datos", async (UserService userService) =>
 {
     var ok = await userService.ProbarConexionAsync();
-    return ok ? Results.Ok("Datos importados correctamente") : Results.Problem("Error al importar datos");
+    return ok ? Results.Ok("Datos importados correctamente")
+              : Results.Problem("Error al importar datos");
 });
 
 app.Run();
