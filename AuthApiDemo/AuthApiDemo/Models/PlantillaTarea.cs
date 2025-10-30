@@ -18,7 +18,8 @@
         {
         }
 
-        public PlantillaTarea(string id_PlantillaTarea, string nombre, DateTime fechaCreacion, int puntosKarma, bool disponible)
+        // TODO revisar logica de repeticion
+        public PlantillaTarea(string id_PlantillaTarea, string nombre, DateTime fechaCreacion, int puntosKarma, bool disponible, int repeticion)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
             if (puntosKarma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
