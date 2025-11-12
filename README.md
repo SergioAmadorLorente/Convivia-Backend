@@ -38,3 +38,25 @@ Consulta el archivo `LICENSE` para más detalles.
 ## 📬 Contacto
 ¿Tienes preguntas, sugerencias o ganas de colaborar?  
 Escríbenos a: **contacto@conviviaapp.com**
+
+```mermaid
+flowchart TB
+  A["Program.cs: arranque de la aplicación"] --> B["Inicializa Firebase (FirebaseConfig.InitializeFirebase)"]
+  A --> C["Contenedor DI: registra servicios y FirestoreDb"]
+  B --> D["FirestoreDb (FirestoreDb.Create)"]
+  C --> E["Servicios registrados: IFirebaseService, UserService, TareaService, PlantillaTareaService, EspacioService, ..."]
+  C --> F["Mapeo de endpoints: MapControllers(), MapEspacioEndpoints(), MapPeticionEndpoints(), MapInvitacionEndpoints(), MapSalaEndpoints(), MapPlantillaTareaEndpoints()"]
+  F --> G["Cliente HTTP -> Enrutador (Routing)"]
+  G --> H["Endpoint '/api/tareas' (PlantillaTareaEndpoints)"]
+  H --> I["Validación DTO (fechas)"]
+  I --> J["Si dto.Fechas.Count > 1 -> PlantillaTareaService.CreateFromTareaDtoAsync()"]
+  J --> K["Plantilla creada -> TareaService.CreateFromPlantillaAsync(plantilla, fechas) -> crea múltiples tareas"]
+  I --> L["Si dto.Fechas.Count == 1 -> TareaService.AddAsync(dto) -> crea tarea única"]
+  K --> M["IFirebaseService (FirebaseService) -> operaciones CRUD sobre colecciones 'tareas' y 'plantillatareas'"]
+  L --> M
+  M --> D
+  F --> N["POST /api/usuarios/importar-datos -> UserService.ProbarConexionAsync()"]
+  N --> O["UserService -> usa FirestoreDb directamente para operaciones de espacio/usuarios"]
+  O --> D
+  D --> P["Google Firestore (persistencia)"]
+```
