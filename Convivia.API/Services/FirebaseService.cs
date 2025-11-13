@@ -97,11 +97,5 @@ namespace AuthApiDemo.Services
 
             return result;
         }
-
-
-        Task<string> IFirebaseService.AddAsync(string collection, string id)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
