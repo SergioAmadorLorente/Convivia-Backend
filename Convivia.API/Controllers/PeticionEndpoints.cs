@@ -1,9 +1,7 @@
+
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http;
-using AuthApiDemo.Models;
-using System.Collections.Generic;
-using System.Linq;
-
+using Convivia.Domain.Models;
 namespace AuthApiDemo.Endpoints;
 
 public static class PeticionEndpoints

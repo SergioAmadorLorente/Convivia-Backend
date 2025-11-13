@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using AuthApiDemo.DTOs;
-using AuthApiDemo.Services;
+using Convivia.Application.DTOs;
+using Convivia.Interface.Services;
 
 namespace AuthApiDemo.Controllers
 {

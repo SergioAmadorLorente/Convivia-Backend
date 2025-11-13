@@ -1,9 +1,14 @@
-﻿using Microsoft.AspNetCore.Routing;
+﻿/*
+ * 
+ * 
+ * 
+ * 
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using AuthApiDemo.Models;
-using AuthApiDemo.DTOs;
-using AuthApiDemo.Services;
+//using AuthApiDemo.Models;
+using Convivia.Application.DTOs;
+using Convivia.Interface.Services;
 
 namespace AuthApiDemo.Controllers
 {
@@ -86,3 +91,4 @@ namespace AuthApiDemo.Controllers
 
     }
 }
+*/

@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Domain", "Convivia
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthApiDemo", "Convivia.API\AuthApiDemo.csproj", "{608AE9FB-1004-D056-469A-7E1231FD898A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Application", "Convivia.Application\Convivia.Application.csproj", "{300675C9-DC93-4F9F-8D62-91D0C3687784}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Interface", "Convivia.Interface\Convivia.Interface.csproj", "{0BF54380-22CC-4C75-B180-EB472F529454}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +27,14 @@ Global
 		{608AE9FB-1004-D056-469A-7E1231FD898A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{608AE9FB-1004-D056-469A-7E1231FD898A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{608AE9FB-1004-D056-469A-7E1231FD898A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{300675C9-DC93-4F9F-8D62-91D0C3687784}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{300675C9-DC93-4F9F-8D62-91D0C3687784}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{300675C9-DC93-4F9F-8D62-91D0C3687784}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{300675C9-DC93-4F9F-8D62-91D0C3687784}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BF54380-22CC-4C75-B180-EB472F529454}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BF54380-22CC-4C75-B180-EB472F529454}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BF54380-22CC-4C75-B180-EB472F529454}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BF54380-22CC-4C75-B180-EB472F529454}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -30,6 +42,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{49D1CC8D-8CC8-4F51-B013-F46A37A97D90} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{608AE9FB-1004-D056-469A-7E1231FD898A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{300675C9-DC93-4F9F-8D62-91D0C3687784} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{0BF54380-22CC-4C75-B180-EB472F529454} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B887BC1C-B962-4B5D-B673-0D94953C505F}

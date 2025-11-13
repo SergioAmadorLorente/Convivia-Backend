@@ -1,0 +1,10 @@
+using System.Collections.Generic;
+
+namespace Convivia.Application.DTOs
+{
+    public class PatchVariasTareasDto
+    {
+        public List<string> ListaIds { get; set; } = new List<string>();
+        public UpdateTareaDto Dto { get; set; } = new UpdateTareaDto();
+    }
+}

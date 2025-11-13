@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+/*
+ * 
+ * Auth controller no deveria tener una referencia al modelo
+ * 
+ * using Microsoft.AspNetCore.Mvc;
 using AuthApiDemo.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,4 +52,4 @@ namespace AuthApiDemo.Controllers
             else return StatusCode(500, "Error de conexión");
         }
     }
-}
+}*/

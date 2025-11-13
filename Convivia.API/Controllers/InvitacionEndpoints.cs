@@ -1,5 +1,5 @@
-﻿using AuthApiDemo.DTOs;
-using AuthApiDemo.Services;
+﻿using Convivia.Application.DTOs;
+using Convivia.Interface.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;

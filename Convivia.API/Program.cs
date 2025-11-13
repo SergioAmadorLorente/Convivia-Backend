@@ -1,7 +1,7 @@
 ﻿using AuthApiDemo.Controllers;
 using AuthApiDemo.Endpoints;
-using AuthApiDemo.Infraestructure;
-using AuthApiDemo.Services;
+using Convivia.Interface.Infraestructure; // Usar la implementación robusta
+using Convivia.Interface.Services;
 
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -15,13 +15,13 @@ builder.Logging
        .AddConsole()
        .AddDebug();
 
-// FirestoreDb como singleton
+// Inicializar Firebase ANTES de crear clientes de Google Cloud (para que ADC esté lista)
+FirebaseConfig.InitializeFirebase();
+
+// FirestoreDb como singleton (usa ADC si procede)
 builder.Services.AddSingleton(provider =>
     FirestoreDb.Create("convivia-862f2") // tu ID de proyecto
 );
-
-// Inicializar Firebase
-FirebaseConfig.InitializeFirebase();
 
 // Registro de servicios en el contenedor de dependencias
 builder.Services.AddScoped<IFirebaseService, FirebaseService>();
@@ -54,7 +54,7 @@ app.UseAuthorization();
 // Mapear controladores y endpoints minimal API
 app.MapControllers();
 app.MapEspacioEndpoints();
-app.MapPeticionEndpoints();
+//app.MapPeticionEndpoints(); //Tiene una refernecia directa con Dominio
 app.MapInvitacionEndpoints();
 app.MapSalaEndpoints();
 

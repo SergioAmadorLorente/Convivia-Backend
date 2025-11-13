@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http;
-using AuthApiDemo.DTOs;
-using AuthApiDemo.Services;
+using Convivia.Application.DTOs;
+using Convivia.Interface.Services;
 
 namespace AuthApiDemo.Endpoints;
 
