@@ -54,7 +54,7 @@ app.UseAuthorization();
 // Mapear controladores y endpoints minimal API
 app.MapControllers();
 app.MapEspacioEndpoints();
-//app.MapPeticionEndpoints(); //Tiene una refernecia directa con Dominio
+app.MapPeticionEndpoints(); //Tiene una refernecia directa con Dominio
 app.MapInvitacionEndpoints();
 app.MapSalaEndpoints();
 

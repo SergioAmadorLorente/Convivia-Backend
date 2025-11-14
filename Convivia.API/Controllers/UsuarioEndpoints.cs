@@ -1,12 +1,7 @@
-﻿/*
- * 
- * 
- * 
- * 
-using Microsoft.AspNetCore.Routing;
+﻿using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-//using AuthApiDemo.Models;
+using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
 using Convivia.Interface.Services;
 
@@ -91,4 +86,3 @@ namespace AuthApiDemo.Controllers
 
     }
 }
-*/

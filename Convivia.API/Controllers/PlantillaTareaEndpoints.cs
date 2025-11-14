@@ -2,9 +2,9 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using AuthApiDemo.Models;
-using AuthApiDemo.DTOs;
-using AuthApiDemo.Services;
+using Convivia.Domain.Models;
+using Convivia.Application.DTOs;
+using Convivia.Interface.Services;
 
 namespace AuthApiDemo.Endpoints;
 
