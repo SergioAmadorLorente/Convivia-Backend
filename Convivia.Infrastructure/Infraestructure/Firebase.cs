@@ -3,9 +3,9 @@ using Google.Apis.Auth.OAuth2;
 using System;
 using System.IO;
 using System.Text.Json;
-using Convivia.Interface.Infraestructure;
+using Convivia.Infrastructure.Infraestructure;
 
-namespace Convivia.Interface.Infraestructure
+namespace Convivia.Infrastructure.Infraestructure
 {
     public static class FirebaseConfig
     {

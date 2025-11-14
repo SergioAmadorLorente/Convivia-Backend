@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
 
-namespace Convivia.Interface.Services
+namespace Convivia.Infrastructure.Services
 {
     public class PlantillaTareaService
     {

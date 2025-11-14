@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Convivia.Application.DTOs;
-using Convivia.Interface.Services;
+using Convivia.Infrastructure.Services;
 
-namespace AuthApiDemo.Controllers
+namespace Convivia.API.Controllers
 {
     [ApiController]
     [Route("api/tareas")]

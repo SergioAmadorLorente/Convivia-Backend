@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Convivia.Interface.Services
+namespace Convivia.Infrastructure.Services
 {
     public class UsuarioService
     {

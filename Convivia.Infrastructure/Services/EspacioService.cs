@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Convivia.Interface.Services
+namespace Convivia.Infrastructure.Services
 {
     public class EspacioService
     {

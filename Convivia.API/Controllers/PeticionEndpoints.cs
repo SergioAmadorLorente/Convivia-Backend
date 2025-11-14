@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http;
 using Convivia.Domain.Models;
-namespace AuthApiDemo.Endpoints;
+namespace Convivia.API.Endpoints;
 
 public static class PeticionEndpoints
 {

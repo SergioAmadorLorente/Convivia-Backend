@@ -7,11 +7,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SRC", "SRC", "{02EA681E-C7D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Domain", "Convivia.Domain\Convivia.Domain.csproj", "{49D1CC8D-8CC8-4F51-B013-F46A37A97D90}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthApiDemo", "Convivia.API\AuthApiDemo.csproj", "{608AE9FB-1004-D056-469A-7E1231FD898A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.API", "Convivia.API\Convivia.API.csproj", "{608AE9FB-1004-D056-469A-7E1231FD898A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Application", "Convivia.Application\Convivia.Application.csproj", "{300675C9-DC93-4F9F-8D62-91D0C3687784}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Interface", "Convivia.Interface\Convivia.Interface.csproj", "{0BF54380-22CC-4C75-B180-EB472F529454}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Infrastructure", "Convivia.Infrastructure\Convivia.Infrastructure.csproj", "{0BF54380-22CC-4C75-B180-EB472F529454}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

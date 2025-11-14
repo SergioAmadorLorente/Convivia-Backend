@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
-using Convivia.Interface.Services;
+using Convivia.Infrastructure.Services;
 
-namespace AuthApiDemo.Controllers
+namespace Convivia.API.Controllers
 {
     public static class UsuarioEndpoints
     {

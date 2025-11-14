@@ -1,5 +1,5 @@
 using Convivia.Application.DTOs;
-using Convivia.Interface.Services;
+using Convivia.Infrastructure.Services;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
 
-namespace AuthApiDemo.Endpoints
+namespace Convivia.API.Endpoints
 {
     public static class SalaEndpoints
     {

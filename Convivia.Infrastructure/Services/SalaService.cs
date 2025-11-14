@@ -5,7 +5,7 @@ using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
 
-namespace Convivia.Interface.Services
+namespace Convivia.Infrastructure.Services
 {
     public class SalaService
     {

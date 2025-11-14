@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http;
 using Convivia.Application.DTOs;
-using Convivia.Interface.Services;
+using Convivia.Infrastructure.Services;
 
-namespace AuthApiDemo.Endpoints;
+namespace Convivia.API.Endpoints;
 
 public static class EspacioEndpoints
 {

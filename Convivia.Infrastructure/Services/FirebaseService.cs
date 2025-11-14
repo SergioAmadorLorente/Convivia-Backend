@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Convivia.Interface.Services;
+using Convivia.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
-namespace Convivia.Interface.Services
+namespace Convivia.Infrastructure.Services
 {
     public class FirebaseService : IFirebaseService
     {

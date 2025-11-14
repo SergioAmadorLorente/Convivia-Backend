@@ -1,7 +1,7 @@
-﻿using AuthApiDemo.Controllers;
-using AuthApiDemo.Endpoints;
-using Convivia.Interface.Infraestructure; // Usar la implementación robusta
-using Convivia.Interface.Services;
+﻿using Convivia.API.Controllers;
+using Convivia.API.Endpoints;
+using Convivia.Infrastructure.Infraestructure; // Usar la implementación robusta
+using Convivia.Infrastructure.Services;
 
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;

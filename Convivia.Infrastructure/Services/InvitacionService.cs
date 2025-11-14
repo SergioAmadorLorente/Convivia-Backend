@@ -14,7 +14,7 @@ using Convivia.Application.Mappers;
 
 using Convivia.Domain.Models;
 
-namespace Convivia.Interface.Services
+namespace Convivia.Infrastructure.Services
 
 {
 

@@ -17,12 +17,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Convivia.Application\Convivia.Application.csproj" />
-    <ProjectReference Include="..\Convivia.Interface\Convivia.Interface.csproj" />
+    <ProjectReference Include="..\Convivia.Infrastructure\Convivia.Infrastructure.csproj" />
   </ItemGroup>
 
   <!-- Incluimos explícitamente el serviceAccount.json del proyecto API y lo copiamos a salida -->
   <ItemGroup>
-    <Content Include="..\Convivia.Interface\Firebase\serviceAccount.json">
+    <Content Include="..\Convivia.Infrastructure\Firebase\serviceAccount.json">
       <Link>Firebase\serviceAccount.json</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
