@@ -10,7 +10,7 @@ namespace Convivia.Application.DTOs
     {
         public string Id { get; set; }
         public string UsuarioSolicitanteId { get; set; }
-        public string UsuarioInvitadoID { get; set; }
+        public string UsuarioInvitadoId { get; set; }
         public string EspacioId { get; set; }
         public string Mensaje { get; set; }
         public DateTime Fecha { get; set; }

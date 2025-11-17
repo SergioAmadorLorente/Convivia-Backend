@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Convivia.Application.DTOs
 {
-    internal class CrearInvitacionDto
+    internal class CreateInvitacionDto
     {
         public string UsuarioSolcitanteId { get; set; }
         public string UsuarioInvitadoId { get; set; }
