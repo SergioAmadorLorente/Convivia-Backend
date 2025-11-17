@@ -9,6 +9,7 @@ using Google.Cloud.Firestore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Configuración de logging
 builder.Logging
        .ClearProviders()
