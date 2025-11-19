@@ -39,24 +39,62 @@ Consulta el archivo `LICENSE` para más detalles.
 ¿Tienes preguntas, sugerencias o ganas de colaborar?  
 Escríbenos a: **contacto@conviviaapp.com**
 
+# Flujo del programa desacoplado
+
+Este diagrama representa la arquitectura desacoplada de una aplicación dividida en distintos dominios técnicos: Infrastructure, Domain, Application y API.  
+Cada grupo contiene componentes que interactúan entre sí para mantener la responsabilidad bien separada:
+
+- **Infrastructure** maneja la persistencia y el mapeo de datos entre la base de datos y la capa de dominio.
+- **Domain** almacena las entidades del núcleo del negocio, independientes de detalles técnicos.
+- **Application** transforma y gestiona los datos a DTOs que luego mostraremos pasando por mapeos.
+- **API** expone los datos transformados por la capa de aplicación a los consumidores externos.
+- **DB** es la fuente persistente final, conectada solo a la infraestructura.
+
+Las flechas en el diagrama detallan el flujo de datos y dependencias entre las distintas capas, garantizando un diseño desacoplado y escalable, donde cada bloque tiene un rol claro.
+
 ```mermaid
 flowchart TB
-  A["Program.cs: arranque de la aplicación"] --> B["Inicializa Firebase (FirebaseConfig.InitializeFirebase)"]
-  A --> C["Contenedor DI: registra servicios y FirestoreDb"]
-  B --> D["FirestoreDb (FirestoreDb.Create)"]
-  C --> E["Servicios registrados: IFirebaseService, UserService, TareaService, PlantillaTareaService, EspacioService, ..."]
-  C --> F["Mapeo de endpoints: MapControllers(), MapEspacioEndpoints(), MapPeticionEndpoints(), MapInvitacionEndpoints(), MapSalaEndpoints(), MapPlantillaTareaEndpoints()"]
-  F --> G["Cliente HTTP -> Enrutador (Routing)"]
-  G --> H["Endpoint '/api/tareas' (PlantillaTareaEndpoints)"]
-  H --> I["Validación DTO (fechas)"]
-  I --> J["Si dto.Fechas.Count > 1 -> PlantillaTareaService.CreateFromTareaDtoAsync()"]
-  J --> K["Plantilla creada -> TareaService.CreateFromPlantillaAsync(plantilla, fechas) -> crea múltiples tareas"]
-  I --> L["Si dto.Fechas.Count == 1 -> TareaService.AddAsync(dto) -> crea tarea única"]
-  K --> M["IFirebaseService (FirebaseService) -> operaciones CRUD sobre colecciones 'tareas' y 'plantillatareas'"]
-  L --> M
-  M --> D
-  F --> N["POST /api/usuarios/importar-datos -> UserService.ProbarConexionAsync()"]
-  N --> O["UserService -> usa FirestoreDb directamente para operaciones de espacio/usuarios"]
-  O --> D
-  D --> P["Google Firestore (persistencia)"]
+    %% Infraestructura
+    subgraph Infrastructure
+        InfraModels["Infrastructure/Models"]
+        InfraMapp["Infrastructure/Mapp"]
+    end
+
+    %% Dominio
+    subgraph Domain
+        DomainEntities["Domain/Entities"]
+    end
+
+    %% Aplicación
+    subgraph App
+        AppMapp["Application/Mapp"]
+        AppDTO["Application/DTO"]
+    end
+
+    %% API
+    subgraph API
+        APIControllers["API/Controllers"]
+    end
+
+    %% Base de Datos
+    DB["DB"]
+
+    %% Relaciones
+    DB --> InfraModels
+    InfraModels --> DB
+
+    InfraModels --> InfraMapp
+    InfraMapp --> InfraModels
+
+    DomainEntities --> InfraMapp
+    InfraMapp --> DomainEntities
+
+    AppMapp --> DomainEntities
+    DomainEntities --> AppMapp
+
+    AppDTO --> AppMapp
+    AppMapp --> AppDTO
+
+    AppDTO --> APIControllers
+    APIControllers --> AppDTO
 ```
