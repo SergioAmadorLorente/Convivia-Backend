@@ -1,4 +1,6 @@
-﻿namespace Convivia.Application.DTOs
+﻿using System;
+
+namespace Convivia.Aplicacion.DTOs
 {
     public class UsuarioDto
     {
@@ -9,9 +11,8 @@
         public bool Premium { get; set; }
         public DateTime FechaRegistro { get; set; }
 
-        public List<string> UsuarioEspacioIds { get; set; } = new();
-        public List<string> InvitacionIds { get; set; } = new();
-
-        // Contrsenya no s'inclou per seguretat
+        // Opcional: IDs de relaciones para referencias ligeras (evita cargar listas completas)
+        public List<string>? UsuarioEspacioIds { get; set; } // IDs de espacios asociados
+        public List<string>? InvitacionIds { get; set; } // IDs de invitaciones
     }
 }
