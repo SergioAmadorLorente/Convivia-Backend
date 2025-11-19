@@ -57,7 +57,6 @@ app.MapEspacioEndpoints();
 app.MapPeticionEndpoints(); //Tiene una refernecia directa con Dominio
 app.MapInvitacionEndpoints();
 app.MapSalaEndpoints();
-app.MapUsuarioEndpoints();
 
 // Endpoint de prueba para importar datos
 app.MapPost("/api/usuarios/importar-datos", async (UserService userService) =>

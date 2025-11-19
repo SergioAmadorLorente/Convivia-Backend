@@ -47,7 +47,8 @@ namespace Convivia.Domain.Models
             Premium = premium;
         }
 
-        // Métodos (lógica de negocio)
+        // Métodos
+
         public void unirseEspacio(Espacio espacio)
         {
             var invitacion = Invitaciones
