@@ -41,16 +41,7 @@ Escríbenos a: **contacto@conviviaapp.com**
 
 # Flujo del programa desacoplado
 
-Este diagrama representa la arquitectura desacoplada de una aplicación dividida en distintos dominios técnicos: Infrastructure, Domain, Application y API.  
-Cada grupo contiene componentes que interactúan entre sí para mantener la responsabilidad bien separada:
-
-- **Infrastructure** maneja la persistencia y el mapeo de datos entre la base de datos y la capa de dominio.
-- **Domain** almacena las entidades del núcleo del negocio, independientes de detalles técnicos.
-- **Application** transforma y gestiona los datos a DTOs que luego mostraremos pasando por mapeos.
-- **API** expone los datos transformados por la capa de aplicación a los consumidores externos.
-- **DB** es la fuente persistente final, conectada solo a la infraestructura.
-
-Las flechas en el diagrama detallan el flujo de datos y dependencias entre las distintas capas, garantizando un diseño desacoplado y escalable, donde cada bloque tiene un rol claro.
+> El diagrama describe la arquitectura desacoplada de la aplicación tal y como se representa en el diagrama Mermaid incluido más abajo. La aplicación está organizada en dominios técnicos claramente separados: Infrastructure, Domain, Application y API, con Firebase como la fuente de persistencia.
 
 ```mermaid
 flowchart TB
@@ -69,6 +60,7 @@ flowchart TB
     subgraph App
         AppMapp["Application/Mapp"]
         AppDTO["Application/DTO"]
+        Service["Application/Service"]
     end
 
     %% API
@@ -77,7 +69,7 @@ flowchart TB
     end
 
     %% Base de Datos
-    DB["DB"]
+    DB[(Firebase)]
 
     %% Relaciones
     DB --> InfraModels
@@ -95,6 +87,9 @@ flowchart TB
     AppDTO --> AppMapp
     AppMapp --> AppDTO
 
-    AppDTO --> APIControllers
-    APIControllers --> AppDTO
+    Service --> AppDTO
+    AppDTO --> Service
+
+    APIControllers --> Service
+    Service --> APIControllers
 ```
