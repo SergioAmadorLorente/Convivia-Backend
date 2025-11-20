@@ -1,0 +1,57 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Convivia.Application.DTOs;
+using Convivia.Infrastructure.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Convivia.API.Controllers
+{
+    [ApiController]
+    [Route("api/plantillas")]
+    [Produces("application/json")]
+    public class PlantillaTareaController : ControllerBase
+    {
+        private readonly PlantillaTareaService _service;
+
+        public PlantillaTareaController(PlantillaTareaService service)
+        {
+            _service = service;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<PlantillaTareaDto>> CreatePlantilla(CreatePlantillaTareaDto dto)
+        {
+            var plantillaDto = await _service.AddAsync(dto);
+            return CreatedAtAction(nameof(GetPlantillaById), new { id = plantillaDto.PlantillaId }, plantillaDto);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<PlantillaTareaDto>> GetPlantillaById(string id)
+        {
+            var plantillaDto = await _service.GetAsync(id);
+            return plantillaDto != null ? Ok(plantillaDto) : NotFound();
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<PlantillaTareaDto>>> GetAllPlantillas()
+        {
+            var list = await _service.GetAllAsync();
+            return Ok(list);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePlantilla(string id)
+        {
+            var deleted = await _service.DeleteAsync(id);
+            return deleted ? NoContent() : NotFound();
+        }
+
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<PlantillaTareaDto>> PatchPlantilla(string id, CreatePlantillaTareaDto dto)
+        {
+            var plantillaDto = await _service.UpdateAsync(id, dto);
+            return plantillaDto != null ? Ok(plantillaDto) : NotFound();
+        }
+    }
+}

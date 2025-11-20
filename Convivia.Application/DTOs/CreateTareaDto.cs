@@ -26,7 +26,7 @@ namespace Convivia.Application.DTOs
 
         public string? PlantillaId { get; set; }
 
-        public List<DayOfWeek> DiasRepeticion { get; set; } = new();
+        public List<int> DiasRepeticion { get; set; } = new();
 
     }
 }

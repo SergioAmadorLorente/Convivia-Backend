@@ -19,6 +19,8 @@ namespace Convivia.Domain.Models
         [FirestoreProperty]
         public bool Disponible { get; set; } = true;
         [FirestoreProperty]
-        public List<DayOfWeek> DiasRepeticion { get; set; } = new();
+        public List<int> DiasRepeticion { get; set; } = new();
+        [FirestoreProperty]
+        public List<string> TareasId { get; set; } = new();
     }
 }

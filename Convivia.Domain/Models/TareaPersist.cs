@@ -32,7 +32,7 @@ namespace Convivia.Domain.Models
         [FirestoreProperty]
         public string? PlantillaId { get; set; }
         [FirestoreProperty]
-        public List<DayOfWeek> DiasRepeticion { get; set; } = new();
+        public List<int> DiasRepeticion { get; set; } = new();
 
     }
 }

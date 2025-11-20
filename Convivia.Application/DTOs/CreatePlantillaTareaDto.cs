@@ -15,7 +15,9 @@ namespace Convivia.Application.DTOs
 
         public bool Disponible { get; set; }
 
-        public List<DayOfWeek> DiasRepeticion { get; set; }
+        public List<int> DiasRepeticion { get; set; }
+
+        public List<string> TareasId { get; set; }
 
     }
 }
