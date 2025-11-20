@@ -49,7 +49,6 @@ flowchart TB
     subgraph Infrastructure
         InfraModels["Infrastructure/Models"]
         InfraMapp["Infrastructure/Mapp"]
-        Service["Infrastructure/Service"]
     end
 
     %% Dominio
@@ -61,6 +60,7 @@ flowchart TB
     subgraph App
         AppMapp["Application/Mapp"]
         AppDTO["Application/DTO"]
+        Service["Application/Service"]
     end
 
     %% API
