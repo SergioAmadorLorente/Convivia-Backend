@@ -3,7 +3,7 @@
     public class Invitacion
     {
 
-        public string Id { get; } = Guid.NewGuid().ToString();
+        public string Id { get; internal set; } = Guid.NewGuid().ToString(); // El setter només sera accesible de manera interna, per a poder utilitzarlo en el repo de firestore
 
         public UsuarioEspacio UsuarioSolicitante { get; set; }
 
@@ -16,7 +16,8 @@
         public DateTime Fecha { get; set; } = DateTime.UtcNow;
 
         public string Estado { get; set; } = "pendiente";
-    
+
+        public Invitacion() { }
 
         public bool ValidarEstado()
         {

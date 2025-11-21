@@ -1,4 +1,4 @@
-﻿using Convivia.Application.DTOs;
+﻿using Convivia.Shared.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Convivia.Application.Mappers
 {
-    internal class InvitacionMapper
+    public class InvitacionMapper
     {
         // Metodo que recibe invitacion y devuelve InvitacionDto
         public static InvitacionDto ToDto(Convivia.Domain.Models.Invitacion domain)
