@@ -1,16 +1,18 @@
+/*
 using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
+using Convivia.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Convivia.Infrastructure.Services
+namespace Convivia.Application.Services
 {
     public class EspacioService
     {
         public const string COLLECTION = "espacios";
-        private readonly IFirebaseService _firebase;
+        private readonly Convivia.Infrastructure.Services.IFirebaseService _firebase;
 
         public EspacioService(IFirebaseService firebase)
         {
@@ -101,3 +103,4 @@ namespace Convivia.Infrastructure.Services
         }
     }
 }
+*/

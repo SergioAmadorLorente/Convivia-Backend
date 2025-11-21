@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Routing;
+﻿/*using Microsoft.AspNetCore.Routing;
+
 using Microsoft.AspNetCore.Http;
-using Convivia.Application.DTOs;
+using Convivia.Shared.DTOs;
 using Convivia.Infrastructure.Services;
 
 namespace Convivia.API.Endpoints;
@@ -54,3 +55,4 @@ public static class EspacioEndpoints
         .Produces(500);
     }
 }
+*/

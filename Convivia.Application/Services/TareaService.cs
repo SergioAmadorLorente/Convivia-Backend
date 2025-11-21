@@ -1,7 +1,10 @@
+/*
 using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
+using Convivia.Shared.Services;
 using System;
+using Convivia.Infrastructure.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -61,7 +64,7 @@ namespace Convivia.Infrastructure.Services
 
             return tareaDto;
 
-        }*/
+        }
 
         // Listar todas las tareas
         public async Task<List<TareaDto>> GetAllAsync()
@@ -167,3 +170,4 @@ namespace Convivia.Infrastructure.Services
         }
     }
 }
+*/

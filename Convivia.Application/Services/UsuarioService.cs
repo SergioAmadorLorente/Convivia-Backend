@@ -1,4 +1,5 @@
-﻿using Convivia.Domain.Models;
+﻿/*
+using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
 using System;
@@ -67,7 +68,7 @@ namespace Convivia.Infrastructure.Services
             await _firebase.AddAsync(COLLECTION, usuario.Id, usuario);
             return usuario;
         }
-        */
+        
 
         // Actualizar usuario
         public async Task<Usuario?> UpdateAsync(string id, Usuario updatedUsuario)
@@ -117,3 +118,4 @@ namespace Convivia.Infrastructure.Services
         }
     }
 }
+*/

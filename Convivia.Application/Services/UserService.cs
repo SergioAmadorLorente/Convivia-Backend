@@ -1,7 +1,8 @@
-using Convivia.Domain.Models;
-using FirebaseAdmin;
+/*
+ * using Convivia.Domain.Models;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Logging;
+using Convivia.Infrastructure.Services; 
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -166,7 +167,7 @@ public class UserService
                     if (bytes.Length > 0)
                         return bytes;
                 }
-                catch { /* No es base64 válido, lo dejamos como string */ }
+                catch { /* No es base64 válido, lo dejamos como string  }
             }
             return str;
         }
@@ -239,3 +240,4 @@ public class UserService
     }
 
 }
+*/

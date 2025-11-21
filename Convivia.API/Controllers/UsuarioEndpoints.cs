@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Routing;
+﻿/*
+ * using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Convivia.Domain.Models;
-using Convivia.Application.DTOs;
+using Convivia.Shared.DTOs;
 using Convivia.Infrastructure.Services;
 
 namespace Convivia.API.Controllers
@@ -86,3 +87,4 @@ namespace Convivia.API.Controllers
 
     }
 }
+*/
