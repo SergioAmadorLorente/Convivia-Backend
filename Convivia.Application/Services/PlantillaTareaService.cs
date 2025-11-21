@@ -1,21 +1,21 @@
 using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
 using Convivia.Shared.Services;
-using MapsterMapper;
 using Convivia.Shared.Repositories;
 using Convivia.Domain.Models;
+using MapsterMapper;
 
 namespace Convivia.Application.Services
 {
     public class PlantillaTareaService
     {
-        public const string COLLECTION = "plantillatareas";
         private readonly IPlantillaTareaRepository<PlantillaTarea> _repository;
         private readonly IMapper _mapper;
 
-        public PlantillaTareaService(IPlantillaTareaRepository<PlantillaTarea> plantilla)
+        public PlantillaTareaService(IPlantillaTareaRepository<PlantillaTarea> plantilla, IMapper _mapper)
         {
             _repository = plantilla ?? throw new ArgumentNullException(nameof(plantilla));
+            this._mapper = _mapper ?? throw new ArgumentNullException(nameof(_mapper));
         }
 
         public async Task<PlantillaTareaDto> AddAsync(CreatePlantillaTareaDto dto)

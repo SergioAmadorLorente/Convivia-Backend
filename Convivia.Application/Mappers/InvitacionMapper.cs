@@ -1,4 +1,5 @@
-﻿using Convivia.Shared.DTOs;
+﻿using Convivia.Application.DTOs;
+using Convivia.Shared.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿/*using Microsoft.AspNetCore.Mvc;
 using Convivia.Application.DTOs;
 using Convivia.Infrastructure.Services;
 
@@ -40,3 +40,4 @@ namespace Convivia.API.Controllers
         }
     }
 }
+*/

@@ -1,10 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using Convivia.Application.DTOs;
+using Convivia.Application.Services;
 using Convivia.Infrastructure.Services;
+using Google.Cloud.Firestore;
+using Google.Cloud.Firestore.V1;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Convivia.Application.Services;
 
 namespace Convivia.API.Controllers
 {
