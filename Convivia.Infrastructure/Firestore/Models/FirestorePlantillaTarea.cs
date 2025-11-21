@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace Convivia.Domain.Models
+namespace Convivia.Infrastructure.Models
 {
 
     [FirestoreData]
-    public class PlantillaTareaPersist
+    public class FirestorePlantillaTarea
     {
         [FirestoreProperty]
         public string PlantillaId { get; set; } = default!;

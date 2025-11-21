@@ -4,6 +4,7 @@ using Convivia.Application.DTOs;
 using Convivia.Infrastructure.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Convivia.Application.Services;
 
 namespace Convivia.API.Controllers
 {
@@ -26,21 +27,21 @@ namespace Convivia.API.Controllers
             return CreatedAtAction(nameof(GetPlantillaById), new { id = plantillaDto.PlantillaId }, plantillaDto);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PlantillaTareaDto>> GetPlantillaById(string id)
-        {
-            var plantillaDto = await _service.GetAsync(id);
-            return plantillaDto != null ? Ok(plantillaDto) : NotFound();
-        }
-
         [HttpGet]
         public async Task<ActionResult<List<PlantillaTareaDto>>> GetAllPlantillas()
         {
-            var list = await _service.GetAllAsync();
+            var list = await _service.GetAsync();
             return Ok(list);
         }
 
-        [HttpDelete("{id}")]
+        [HttpGet("{id}")]
+        public async Task<ActionResult<PlantillaTareaDto>> GetPlantillaById(string id)
+        {
+            var plantillaDto = await _service.GetByIdAsync(id);
+            return plantillaDto != null ? Ok(plantillaDto) : NotFound();
+        }
+
+        /*[HttpDelete("{id}")]
         public async Task<IActionResult> DeletePlantilla(string id)
         {
             var deleted = await _service.DeleteAsync(id);
@@ -52,6 +53,6 @@ namespace Convivia.API.Controllers
         {
             var plantillaDto = await _service.UpdateAsync(id, dto);
             return plantillaDto != null ? Ok(plantillaDto) : NotFound();
-        }
+        }*/
     }
 }

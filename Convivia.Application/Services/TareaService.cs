@@ -4,6 +4,7 @@ using Convivia.Application.Mappers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Convivia.Shared.Services;
 
 namespace Convivia.Infrastructure.Services
 {

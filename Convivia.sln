@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Application", "Con
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Infrastructure", "Convivia.Infrastructure\Convivia.Infrastructure.csproj", "{0BF54380-22CC-4C75-B180-EB472F529454}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Convivia.Shared", "Convivia.Shared\Convivia.Shared.csproj", "{C76E57C1-DF4A-4C85-8350-35AB07F302EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{0BF54380-22CC-4C75-B180-EB472F529454}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0BF54380-22CC-4C75-B180-EB472F529454}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0BF54380-22CC-4C75-B180-EB472F529454}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C76E57C1-DF4A-4C85-8350-35AB07F302EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C76E57C1-DF4A-4C85-8350-35AB07F302EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C76E57C1-DF4A-4C85-8350-35AB07F302EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C76E57C1-DF4A-4C85-8350-35AB07F302EE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +50,7 @@ Global
 		{608AE9FB-1004-D056-469A-7E1231FD898A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{300675C9-DC93-4F9F-8D62-91D0C3687784} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{0BF54380-22CC-4C75-B180-EB472F529454} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C76E57C1-DF4A-4C85-8350-35AB07F302EE} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B887BC1C-B962-4B5D-B673-0D94953C505F}

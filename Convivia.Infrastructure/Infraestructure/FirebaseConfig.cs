@@ -37,10 +37,8 @@ namespace Convivia.Infrastructure.Infraestructure
                 {
                     Console.WriteLine($"[FirebaseConfig] Archivo encontrado. Validando contenido...");
                     var fileJson = File.ReadAllText(credPath);
-                    
                     // Mostrar primeros caracteres para verificar que se está leyendo correctamente
                     Console.WriteLine($"[FirebaseConfig] Primeros 100 caracteres del archivo: {fileJson.Substring(0, Math.Min(100, fileJson.Length))}");
-                    
                     using var doc = JsonDocument.Parse(fileJson);
                     var root = doc.RootElement;
 

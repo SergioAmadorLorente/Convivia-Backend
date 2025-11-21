@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Convivia.Domain.Models;
 using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
+using Convivia.Shared.Services;
 
 namespace Convivia.Infrastructure.Services
 {

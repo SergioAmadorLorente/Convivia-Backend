@@ -1,19 +1,19 @@
-﻿using Mapster;
-using Convivia.Application.DTOs;
+﻿using Convivia.Application.DTOs;
 using Convivia.Domain.Models;
-using System.Reflection.Metadata;
+using Convivia.Infrastructure.Models;
+using Mapster;
 
-namespace Plantilla.Infraestructure.Mappings
+namespace Convivia.Infrastructure;
+public class MapsterConfig : IRegister
 {
-    public class MapsterConfig : IRegister
+    public void Register(TypeAdapterConfig config)
     {
-        public void Register(TypeAdapterConfig config)
-        {
-            // De Entidad → DTO
-            config.NewConfig<Sala, SalaDto>();
+        RegisterPair<PlantillaTarea, FirestorePlantillaTarea>(config);
+    }
 
-            // De DTO → Entidad
-            config.NewConfig<SalaDto, Sala>();
-        }
+    private void RegisterPair<TEntidad, TFirestore>(TypeAdapterConfig config)
+    {
+        config.NewConfig<TEntidad, TFirestore>();
+        config.NewConfig<TFirestore, TEntidad>();
     }
 }
