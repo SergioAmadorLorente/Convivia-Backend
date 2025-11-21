@@ -1,17 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Convivia.Application.DTOs
+namespace Convivia.Shared.DTOs
 {
     public class CreateInvitacionDto
     {
-        [Required]
-        public string UsuarioSolicitanteId { get; set; } = default!;
-
-        public string? UsuarioInvitadoId { get; set; } = default;
-
-        [Required]
-        public string EspacioId { get; set; } = default!;
-
+        public string UsuarioSolicitanteId { get; set; }
+        public string UsuarioInvitadoId { get; set; }
+        public string EspacioId { get; set; }
         public string? Mensaje { get; set; }
     }
 }
