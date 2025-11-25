@@ -55,9 +55,9 @@ namespace Convivia.Domain.Models
             // Crear la sala usando inicializador de objeto para evitar dependencias de constructor
             var nuevaSala = new Sala
             {
+                Id = Guid.NewGuid().ToString(),
                 Nombre = nombre,
                 Descripcion = descripcion,
-                Id_Sala = Guid.NewGuid().ToString(),
                 Id_Espacio = this.Id_Espacio,
                 Espacio = this
             };

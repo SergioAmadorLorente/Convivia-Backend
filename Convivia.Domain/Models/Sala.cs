@@ -10,7 +10,7 @@ namespace Convivia.Domain.Models
     public class Sala
     {
         [FirestoreProperty]
-        public string Id_Sala { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [FirestoreProperty]
         public string Nombre { get; set; } = string.Empty;
