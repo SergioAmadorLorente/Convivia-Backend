@@ -4,34 +4,25 @@ using System.Text.Json.Serialization;
 
 namespace Convivia.Domain.Models
 {
-    [FirestoreData]
+    
     public class Usuario
     {
-        [FirestoreProperty]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; internal set; } = Guid.NewGuid().ToString();
 
-        [FirestoreProperty]
         public string Nombre { get; set; }
 
-        [FirestoreProperty]
         public string Email { get; set; }
 
-        [FirestoreProperty]
         public string Password { get; set; }
 
-        [FirestoreProperty]
         public string? Telefono { get; set; }
 
-        [FirestoreProperty]
         public bool Premium { get; set; }
 
-        [FirestoreProperty]
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
-        [JsonIgnore]
         public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
 
-        [JsonIgnore]
         public List<Invitacion> Invitaciones { get; set; } = new List<Invitacion>();
 
         public Usuario()

@@ -1,121 +1,94 @@
-﻿/*
-using Convivia.Domain.Models;
-using Convivia.Application.DTOs;
-using Convivia.Application.Mappers;
-using System;
-using System.Threading.Tasks;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Convivia.Shared.DTOs;
+using Microsoft.Extensions.Logging;
+using Convivia.Shared.Repositories;
 
-namespace Convivia.Infrastructure.Services
+namespace Convivia.Application.Services
 {
-    public class UsuarioService
+    public class UsuarioService // Usuario
     {
-        public const string COLLECTION = "usuarios";
-        private readonly IFirebaseService _firebase;
+        private readonly IUsuarioRepository _repo;
+        private readonly ILogger<UsuarioService> _logger;
+
+        public UsuarioService(IUsuarioRepository repo, ILogger<UsuarioService> logger)
+        {
+            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task<string> CrearAsync(CreateUsuarioDto dto, CancellationToken ct = default)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("UsuarioSolicitanteId requerido");
+            if (string.IsNullOrWhiteSpace(dto.Email)) throw new ArgumentException("UsuarioInvitadoId requerido");
+
+            var usuario = new UsuarioDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Nombre = dto.Nombre,
+                Email = dto.Email,
+                Telefono = dto.Telefono,
+                Premium = false,
+                FechaRegistro = DateTime.UtcNow,
+            };
+
+            try
+            {
+                return await _repo.AddAsync(usuario, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creando usuario");
+                throw;
+            }
+        }
+
+        public async Task<UsuarioDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return null;
+            try
+            {
+                return await _repo.GetByIdAsync(id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<UsuarioDto>> GetByFullNameInvitadoAsync(string Nombre, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(Nombre)) return Array.Empty<UsuarioDto>();
+            try
+            {
+                return await _repo.GetByFullNameInvitadoAsync(Nombre, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ObtenerPorUsuarioFullName {Usuario}", Nombre);
+                throw;
+            }
+        }
+
+        public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            try
+            {
+                await _repo.DeleteAsync(id, ct);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error EliminarInvitacion {Id}", id);
+                throw;
+            }
+        }
+
         
-        public UsuarioService(IFirebaseService firebase)
-        {
-            _firebase = firebase;
-        }
-
-        // Obtener usuario por id
-        public async Task<Usuario?> GetAsync(string id)
-        {
-            var usuario = await _firebase.GetAsync<Usuario>(COLLECTION, id);
-            return usuario;
-        }
-
-        // Obtener usuario por email
-        public async Task<Usuario?> GetByEmailAsync(string email)
-        {
-            var usuarios = await _firebase.QueryAsync<Usuario>(COLLECTION, "Email", email);
-            return usuarios.Count > 0 ? usuarios[0] : null;
-        }
-
-        // Crear usuario
-        public async Task<Usuario> AddAsync(Usuario usuario)
-        {
-            if (string.IsNullOrWhiteSpace(usuario.Nombre))
-                throw new ArgumentException("El nombre no puede estar vacío.");
-            if (string.IsNullOrWhiteSpace(usuario.Email))
-                throw new ArgumentException("El email no puede estar vacío.");
-            if (string.IsNullOrWhiteSpace(usuario.Password))
-                throw new ArgumentException("La contraseña no puede estar vacía.");
-
-            var existing = await _firebase.QueryAsync<Usuario>(COLLECTION, "Email", usuario.Email);
-            if (existing.Count > 0)
-                throw new InvalidOperationException("Ya existe un usuario con ese email.");
-
-            
-            usuario.FechaRegistro = usuario.FechaRegistro.ToUniversalTime();
-
-            await _firebase.AddAsync(COLLECTION, usuario.Id, usuario);
-            return usuario;
-        }
-
-        /*
-        public async Task<Usuario> AddAsync(Usuario usuario)
-        {
-            if (string.IsNullOrWhiteSpace(usuario.Nombre))
-                throw new ArgumentException("El nombre no puede estar vacío.");
-            if (string.IsNullOrWhiteSpace(usuario.Email))
-                throw new ArgumentException("El email no puede estar vacío.");
-            if (string.IsNullOrWhiteSpace(usuario.Password))
-                throw new ArgumentException("La contraseña no puede estar vacía.");
-            var existing = await _firebase.QueryAsync<Usuario>(COLLECTION, "Email", usuario.Email);
-            if (existing.Count > 0)
-                throw new InvalidOperationException("Ya existe un usuario con ese email.");
-            await _firebase.AddAsync(COLLECTION, usuario.Id, usuario);
-            return usuario;
-        }
-        
-
-        // Actualizar usuario
-        public async Task<Usuario?> UpdateAsync(string id, Usuario updatedUsuario)
-        {
-            var existingUsuario = await _firebase.GetAsync<Usuario>(COLLECTION, id);
-            if (existingUsuario == null)
-                return null;
-            existingUsuario.Nombre = updatedUsuario.Nombre;
-            existingUsuario.Email = updatedUsuario.Email;
-            existingUsuario.Password = updatedUsuario.Password;
-            existingUsuario.Telefono = updatedUsuario.Telefono;
-            existingUsuario.Premium = updatedUsuario.Premium;
-            await _firebase.UpdateAsync(COLLECTION, id, existingUsuario);
-            return existingUsuario;
-        }
-
-        // PATCH: Actualización parcial de usuario
-        public async Task<UsuarioDto?> PatchAsync(string id, UpdateUsuarioDto dto)
-        {
-            var persist = await _firebase.GetAsync<UsuarioPersist>(COLLECTION, id);
-            if (persist == null)
-                return null;
-
-            if (dto.Nombre != null) persist.Nombre = dto.Nombre;
-            if (dto.Email != null) persist.Email = dto.Email;
-            if (dto.Telefono != null) persist.Telefono = dto.Telefono;
-
-            await _firebase.UpdateAsync(COLLECTION, id, persist);
-            return UsuarioMapper.ToDto(persist);
-        }
-
-        // Eliminar usuario
-        public async Task<bool> DeleteAsync(string id)
-        {
-            var existingUsuario = await _firebase.GetAsync<Usuario>(COLLECTION, id);
-            if (existingUsuario == null)
-                return false;
-            await _firebase.DeleteAsync(COLLECTION, id);
-            return true;
-        }
-
-        // Contar usuarios
-        public async Task<int> CountUsuariosAsync()
-        {
-            var usuarios = await _firebase.GetAllAsync<Usuario>(COLLECTION);
-            return usuarios.Count;
-        }
     }
 }
-*/

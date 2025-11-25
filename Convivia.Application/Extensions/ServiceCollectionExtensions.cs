@@ -10,6 +10,7 @@ namespace Convivia.Application.Extensions
             // Registrar servicios de aplicación
             // Si tienes interfaz IInvitacionService: services.AddScoped<IInvitacionService, InvitacionService>();
             services.AddScoped<InvitacionService>();
+            services.AddScoped<UsuarioService>();
 
             // Registrar mappers, validators, MediatR, etc. si procede
             // services.AddAutoMapper(typeof(YourProfile).Assembly);
