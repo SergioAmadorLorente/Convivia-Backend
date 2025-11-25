@@ -1,4 +1,4 @@
-﻿using Convivia.Domain.Models;
+﻿using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;

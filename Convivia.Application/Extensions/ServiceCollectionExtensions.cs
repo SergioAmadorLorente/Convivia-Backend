@@ -11,12 +11,14 @@ namespace Convivia.Application.Extensions
         {
             // Registrar servicios de aplicación
             // Si tienes interfaz IInvitacionService: services.AddScoped<IInvitacionService, InvitacionService>();
-            services.AddScoped<InvitacionService>();
+
             services.AddScoped<SalaService>();
 
             // Registrar mappers, validators, MediatR, etc. si procede
-            MapsterConfig.RegisterPair<Convivia.Domain.Models.Sala, Convivia.Shared.DTOs.SalaDto, Convivia.Shared.DTOs.CreateSalaDto, Convivia.Shared.DTOs.UpdateSalaDto>(TypeAdapterConfig.GlobalSettings);
+            MapsterConfig.RegisterPair<Convivia.Domain.Entities.Sala, Convivia.Shared.DTOs.SalaDto, Convivia.Shared.DTOs.CreateSalaDto, Convivia.Shared.DTOs.UpdateSalaDto>(TypeAdapterConfig.GlobalSettings);
 
+
+            // Registrar mapper con el modelo FireStore
             // services.AddAutoMapper(typeof(YourProfile).Assembly);
 
             return services;

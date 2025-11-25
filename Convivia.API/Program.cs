@@ -1,4 +1,4 @@
-﻿using Convivia.API.Endpoints;
+﻿using Convivia.API.Controllers;
 using Convivia.Application.Extensions;
 using Convivia.Infrastructure.Infraestructure;
 using Convivia.Infrastructure.Extensions;
@@ -36,7 +36,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 //app.MapEspacioEndpoints();
-app.MapPeticionEndpoints();
 
 //app.MapSalaEndpoints();
 // app.MapInvitacionEndpoints(); // descomenta cuando esté listo

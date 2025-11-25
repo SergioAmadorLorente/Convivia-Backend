@@ -1,7 +1,7 @@
 ﻿using System;
 using Mapster;
 using Convivia.Shared.DTOs;
-using Convivia.Domain.Models;
+using Convivia.Domain.Entities;
 using Convivia.Application.Mappers;
 
 namespace Convivia.Application.Mappers

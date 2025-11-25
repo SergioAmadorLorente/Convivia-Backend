@@ -12,7 +12,7 @@ namespace Convivia.Infrastructure.Extensions
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // Repositorios concretos
-            services.AddScoped<IInvitacionRepository, InvitacionRepository>();
+
             services.AddScoped<ISalaRepository, SalaRepository>();
 
             // Servicios de infraestructura
