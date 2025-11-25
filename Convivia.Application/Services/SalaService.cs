@@ -65,7 +65,7 @@ namespace Convivia.Application.Services
             }
         }
 
-        public async Task ActualizarAsync(string id, UpdateSalaDto dto, CancellationToken ct = default)
+        public async Task ActualizarAsync(string id, CreateSalaDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
             if (dto == null) throw new ArgumentNullException(nameof(dto));
@@ -98,7 +98,7 @@ namespace Convivia.Application.Services
             }
         }
 
-        public async Task<bool> ParcialActualizarAsync(string id, CreateSalaDto dto, CancellationToken ct = default)
+        public async Task<bool> ParcialActualizarAsync(string id, UpdateSalaDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
             if (dto == null) throw new ArgumentNullException(nameof(dto));

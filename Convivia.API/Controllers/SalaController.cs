@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Convivia.Shared.DTOs;
 using Convivia.Application.Services;
-using Google.Rpc;
 
 namespace Convivia.API.Controllers
 {
@@ -48,8 +49,9 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
+        // PUT = reemplazo completo: usar CreateSalaDto (campos obligatorios) y Servicio.ActualizarAsync espera CreateSalaDto
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] UpdateSalaDto model, CancellationToken ct)
+        public async Task<IActionResult> Update(string id, [FromBody] CreateSalaDto model, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
             if (string.IsNullOrWhiteSpace(model.Nombre) ||
@@ -58,12 +60,14 @@ namespace Convivia.API.Controllers
             {
                 return BadRequest("Nombre, Descripcion y IdEspacio son requeridos.");
             }
+
             await _service.ActualizarAsync(id, model, ct);
             return NoContent();
         }
 
+        // PATCH = actualización parcial: usar UpdateSalaDto y Servicio.ParcialActualizarAsync
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Patch(string id, [FromBody] CreateSalaDto model, CancellationToken ct)
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdateSalaDto model, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
             var updated = await _service.ParcialActualizarAsync(id, model, ct);
