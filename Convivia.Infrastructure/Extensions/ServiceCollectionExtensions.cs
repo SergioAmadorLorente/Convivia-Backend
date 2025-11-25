@@ -13,6 +13,7 @@ namespace Convivia.Infrastructure.Extensions
         {
             // Repositorios concretos
             services.AddScoped<IInvitacionRepository, InvitacionRepository>();
+            services.AddScoped<ISalaRepository, SalaRepository>();
 
             // Servicios de infraestructura
             services.AddScoped<IFirebaseService, FirebaseService>();
