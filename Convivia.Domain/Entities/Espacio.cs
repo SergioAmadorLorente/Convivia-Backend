@@ -96,7 +96,7 @@ namespace Convivia.Domain.Models
             if (UsuarioEspacios.Any(u => u.Usuario.Id == usuario.Id))
                 throw new InvalidOperationException("El usuario ya está admitido en el espacio.");
 
-            if (!Peticiones.Any(p => p.Solicitante == usuario))
+            if (!Peticiones.Any(p => p.IdSolicitante == usuario.Id))
                 throw new InvalidOperationException("No existe una petición para este usuario.");
 
             UsuarioEspacio usuarioEspacio = new UsuarioEspacio
@@ -109,7 +109,7 @@ namespace Convivia.Domain.Models
             };
 
             UsuarioEspacios.Add(usuarioEspacio);
-            Peticiones.RemoveAll(p => p.Solicitante == usuario);
+            Peticiones.RemoveAll(p => p.IdSolicitante == usuario.Id);
             return true;
         }
 

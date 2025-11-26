@@ -1,9 +1,9 @@
-﻿using Convivia.API.Endpoints;
-using Convivia.Application.Extensions;
-using Convivia.Infrastructure.Infraestructure;
+﻿using Convivia.Application.Extensions;
 using Convivia.Infrastructure.Extensions;
+using Convivia.Infrastructure.Infraestructure;
+using Convivia.Infrastructure.Repositories;
 using Google.Cloud.Firestore;
-
+using Convivia.Application.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // logging, Firebase init y FirestoreDb singleton (tu código actual)
@@ -18,6 +18,9 @@ builder.Services.AddSingleton(provider =>
     return FirestoreDb.Create(projectId);
 });
 
+
+
+builder.Services.AddScoped<IPeticionRepository, PeticionRepository>();
 // Registrar capas (antes de Build)
 builder.Services.AddApplicationServices();               // registra InvitacionService, mappers, etc.
 builder.Services.AddInfrastructure(builder.Configuration); // registra IInvitacionRepository, IFirebaseService, FirebaseService, etc.
@@ -36,7 +39,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 //app.MapEspacioEndpoints();
-app.MapPeticionEndpoints();
 
 //app.MapSalaEndpoints();
 // app.MapInvitacionEndpoints(); // descomenta cuando esté listo

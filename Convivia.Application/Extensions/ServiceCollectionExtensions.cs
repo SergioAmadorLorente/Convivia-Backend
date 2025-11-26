@@ -1,4 +1,5 @@
 ﻿using Convivia.Application.Services;
+using Convivia.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Convivia.Application.Extensions
@@ -11,6 +12,10 @@ namespace Convivia.Application.Extensions
             // Si tienes interfaz IInvitacionService: services.AddScoped<IInvitacionService, InvitacionService>();
             services.AddScoped<InvitacionService>();
             services.AddScoped<UsuarioService>();
+
+
+            services.AddScoped<PeticionService>();
+
 
             // Registrar mappers, validators, MediatR, etc. si procede
             // services.AddAutoMapper(typeof(YourProfile).Assembly);
