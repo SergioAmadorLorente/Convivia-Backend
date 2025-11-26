@@ -1,4 +1,4 @@
-﻿using Convivia.Shared.DTOs;
+﻿/*using Convivia.Shared.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,3 +48,4 @@ namespace Convivia.Application.Mappers
         }
     }
 }
+*/

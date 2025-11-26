@@ -1,39 +1,46 @@
-/*
 using Convivia.Shared.DTOs;
-using Convivia.Domain.Models;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Convivia.Application.Mappers
 {
-    public static class EspacioMapper
+    public class EspacioMapper
     {
-        public static EspacioPersist ToPersist(CreateEspacioDto dto, string idEspacio)
+        // Metodo que recibe Espacio y devuelve EspacioDto
+        public static EspacioDto ToDto(Convivia.Domain.Models.Espacio domain)
         {
-            return new EspacioPersist
+            if (domain == null) return null;
+            return new EspacioDto
             {
-                Id_Espacio = idEspacio,
-                Nombre = dto.Nombre,
-                Direccion = dto.Direccion,
-                SalaIds = dto.SalaIds ?? new List<string>(),
-                UsuarioEspacioIds = dto.UsuarioEspacioIds ?? new List<string>(),
-                PeticionIds = dto.PeticionIds ?? new List<string>(),
-                InvitacionIds = dto.InvitacionIds ?? new List<string>()
+                Id = domain.Id,
+                Nombre = domain.Nombre,
+                Direccion = domain?.Direccion
             };
         }
 
-        public static EspacioDto ToDto(EspacioPersist persist)
+        // Metodo que recibe CreateInvitacionDto y devuelve invitacion
+        public static Convivia.Domain.Models.Espacio FromCreateDto(CreateEspacioDto dto)
         {
-            return new EspacioDto
+            if (dto == null) return null;
+
+            var domain = new Convivia.Domain.Models.Espacio
             {
-                Id_Espacio = persist.Id_Espacio,
-                Nombre = persist.Nombre,
-                Direccion = persist.Direccion,
-                SalaIds = persist.SalaIds ?? new List<string>(),
-                UsuarioEspacioIds = persist.UsuarioEspacioIds ?? new List<string>(),
-                PeticionIds = persist.PeticionIds ?? new List<string>(),
-                InvitacionIds = persist.InvitacionIds ?? new List<string>()
+                Nombre = dto.Nombre,
+                Direccion = dto?.Direccion
             };
+
+            return domain;
+        }
+
+        // Metodo para actualizar el mensaje de invitacion, no permito que se cambie ni la fecha ni el id creo que es mejor  por ahora
+        public static void UpdateDomainFromDto(Convivia.Domain.Models.Espacio domain, CreateEspacioDto dto)
+        {
+            if (domain == null || dto == null) return;
+            domain.Nombre = dto.Nombre ?? domain.Nombre;
+            domain.Direccion = dto.Direccion ?? domain.Direccion;
         }
     }
 }
-*/

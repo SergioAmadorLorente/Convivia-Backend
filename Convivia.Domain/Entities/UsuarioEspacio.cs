@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+﻿/*using Google.Cloud.Firestore;
 using System.Text.Json.Serialization;
 namespace Convivia.Domain.Models
 {
@@ -204,3 +204,4 @@ namespace Convivia.Domain.Models
     }
 }
 
+*/

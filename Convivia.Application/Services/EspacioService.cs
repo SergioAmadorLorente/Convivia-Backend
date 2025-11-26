@@ -1,106 +1,110 @@
-/*
-using Convivia.Domain.Models;
-using Convivia.Application.DTOs;
-using Convivia.Application.Mappers;
-using Convivia.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Convivia.Shared.DTOs;
+using Microsoft.Extensions.Logging;
+using Convivia.Shared.Repositories;
 
 namespace Convivia.Application.Services
 {
     public class EspacioService
     {
-        public const string COLLECTION = "espacios";
-        private readonly Convivia.Infrastructure.Services.IFirebaseService _firebase;
+        private readonly IEspacioRepository _repo;
+        private readonly ILogger<EspacioService> _logger;
 
-        public EspacioService(IFirebaseService firebase)
+        public EspacioService(IEspacioRepository repo, ILogger<EspacioService> logger)
         {
-            _firebase = firebase;
+            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // Crear espacio
-        public async Task<EspacioDto> AddAsync(CreateEspacioDto dto)
+        public async Task<string> CrearAsync(CreateEspacioDto dto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(dto.Nombre))
-                throw new ArgumentException("El nombre no puede estar vacío.");
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre requerido");
+          
 
-            var idEspacio = Guid.NewGuid().ToString();
-            var persist = EspacioMapper.ToPersist(dto, idEspacio);
+            var espacio = new EspacioDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Nombre = dto.Nombre,
+                Direccion = dto?.Direccion
+            };
 
-            var existing = await _firebase.QueryMultipleConditionsAsync<EspacioPersist>(
-                COLLECTION,
-                new (string field, object val)[] { ("Nombre", dto.Nombre) }
-            );
-            if (existing.Count > 0)
-                throw new InvalidOperationException("Ya existe un espacio con ese nombre.");
-
-            await _firebase.AddAsync(COLLECTION, idEspacio, persist);
-            return EspacioMapper.ToDto(persist);
+            try
+            {
+                return await _repo.AddAsync(espacio, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creando espacio.");
+                throw;
+            }
         }
 
-        // Obtener espacio por id
-        public async Task<EspacioDto?> GetAsync(string id)
+        public async Task<EspacioDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
         {
-            var persist = await _firebase.GetAsync<EspacioPersist>(COLLECTION, id);
-            return persist != null ? EspacioMapper.ToDto(persist) : null;
+            if (string.IsNullOrWhiteSpace(id)) return null;
+            try
+            {
+                return await _repo.GetByIdAsync(id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
+                throw;
+            }
         }
 
-        // Listar todos los espacios
-        public async Task<List<EspacioDto>> GetAllAsync()
+        public async Task<IEnumerable<EspacioDto>> ObtenerPorDireccionAsync(string direccio, CancellationToken ct = default)
         {
-            var list = await _firebase.QueryAsync<EspacioPersist>(COLLECTION, "Id_Espacio", null);
-            var result = new List<EspacioDto>();
-            foreach (var item in list)
-                result.Add(EspacioMapper.ToDto(item));
-            return result;
+            if (string.IsNullOrWhiteSpace(direccio)) return Array.Empty<EspacioDto>();
+            try
+            {
+                return await _repo.GetByDireccionAsync(direccio, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ObtenerPorDireccion {Espacio}", direccio);
+                throw;
+            }
         }
 
-        // Actualizar espacio
-        public async Task<EspacioDto?> UpdateAsync(string id, CreateEspacioDto dto)
+        public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
         {
-            var persist = await _firebase.GetAsync<EspacioPersist>(COLLECTION, id);
-            if (persist == null)
-                return null;
-
-            persist.Nombre = dto.Nombre;
-            persist.Direccion = dto.Direccion;
-            persist.SalaIds = dto.SalaIds ?? new List<string>();
-            persist.UsuarioEspacioIds = dto.UsuarioEspacioIds ?? new List<string>();
-            persist.PeticionIds = dto.PeticionIds ?? new List<string>();
-            persist.InvitacionIds = dto.InvitacionIds ?? new List<string>();
-
-            await _firebase.UpdateAsync(COLLECTION, id, persist);
-            return EspacioMapper.ToDto(persist);
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            try
+            {
+                await _repo.DeleteAsync(id, ct);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error EliminarInvitacion {Id}", id);
+                throw;
+            }
         }
 
-        // PATCH: Actualización parcial de espacio
-        public async Task<EspacioDto?> PatchAsync(string id, UpdateEspacioDto dto)
+        public async Task ActualizarDireccionAsync(string id, CreateEspacioDto dto, CancellationToken ct = default)
         {
-            var persist = await _firebase.GetAsync<EspacioPersist>(COLLECTION, id);
-            if (persist == null)
-                return null;
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            if (dto.Nombre != null) persist.Nombre = dto.Nombre;
-            if (dto.Direccion != null) persist.Direccion = dto.Direccion;
-            if (dto.SalaIds != null) persist.SalaIds = dto.SalaIds;
-            if (dto.UsuarioEspacioIds != null) persist.UsuarioEspacioIds = dto.UsuarioEspacioIds;
-            if (dto.PeticionIds != null) persist.PeticionIds = dto.PeticionIds;
-            if (dto.InvitacionIds != null) persist.InvitacionIds = dto.InvitacionIds;
+            var existing = await ObtenerPorIdAsync(id, ct);
+            if (existing == null) throw new KeyNotFoundException("Espacio no encontrado");
 
-            await _firebase.UpdateAsync(COLLECTION, id, persist);
-            return EspacioMapper.ToDto(persist);
-        }
+            existing.Direccion = dto.Direccion ?? existing.Direccion;
 
-        // Eliminar espacio
-        public async Task<bool> DeleteAsync(string id)
-        {
-            var persist = await _firebase.GetAsync<EspacioPersist>(COLLECTION, id);
-            if (persist == null)
-                return false;
-            await _firebase.DeleteAsync(COLLECTION, id);
-            return true;
+            try
+            {
+                await _repo.UpdateAsync(id, existing, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ActualizarMensaje {Id}", id);
+                throw;
+            }
         }
     }
 }
-*/

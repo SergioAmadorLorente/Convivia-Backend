@@ -1,4 +1,4 @@
-﻿namespace Convivia.Domain.Models
+﻿/*namespace Convivia.Domain.Models
 {
     public class Invitacion
     {
@@ -46,4 +46,4 @@
             Estado = "cancelada";
         }
     }
-}
+}*/

@@ -1,4 +1,4 @@
-using System;
+/*using System;
 using System.Collections.Generic;
 
 namespace Convivia.Domain.Models
@@ -13,3 +13,4 @@ namespace Convivia.Domain.Models
         public List<Reserva> Reservas { get; set; } = new List<Reserva>();
     }
 }
+*/

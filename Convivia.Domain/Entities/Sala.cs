@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+﻿/*using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -106,4 +106,4 @@ namespace Convivia.Domain.Models
             return reservas.FirstOrDefault(r => r.Id_Reserva == idReserva);
         }
     }
-}
+}*/

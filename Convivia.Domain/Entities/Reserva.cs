@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+ * using System;
 
 namespace Convivia.Domain.Models
 {
@@ -41,3 +42,4 @@ namespace Convivia.Domain.Models
         }
     }
 }
+*/

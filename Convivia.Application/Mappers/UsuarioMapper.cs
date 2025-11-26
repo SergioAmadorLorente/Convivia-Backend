@@ -1,4 +1,4 @@
-﻿
+﻿/*
 using Convivia.Shared.DTOs;
 using Convivia.Domain.Models;
 
@@ -52,3 +52,4 @@ namespace Convivia.Application.Mappers
         }
     }
 }
+*/
