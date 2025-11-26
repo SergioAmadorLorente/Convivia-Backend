@@ -43,7 +43,7 @@ namespace Convivia.API.Controllers
             return plantillaDto != null ? Ok(plantillaDto) : NotFound();
         }
 
-        /*[HttpDelete("{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePlantilla(string id)
         {
             var deleted = await _service.DeleteAsync(id);
@@ -51,10 +51,10 @@ namespace Convivia.API.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<ActionResult<PlantillaTareaDto>> PatchPlantilla(string id, CreatePlantillaTareaDto dto)
+        public async Task<ActionResult<PlantillaTareaDto>> UpdatePlantilla(string id, UpdatePlantillaTareaDto dto)
         {
             var plantillaDto = await _service.UpdateAsync(id, dto);
             return plantillaDto != null ? Ok(plantillaDto) : NotFound();
-        }*/
+        }
     }
 }

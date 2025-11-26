@@ -1,6 +1,7 @@
 using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
 using Convivia.Shared.Services;
+using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Domain.Models;
 using MapsterMapper;
@@ -23,6 +24,7 @@ namespace Convivia.Application.Services
 
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             var plantillaTarea = _mapper.Map<PlantillaTarea>(dto);
+            plantillaTarea.PlantillaId = Guid.NewGuid().ToString();
             await _repository.AddAsync(plantillaTarea);
             return _mapper.Map<PlantillaTareaDto>(plantillaTarea);
 
@@ -41,6 +43,30 @@ namespace Convivia.Application.Services
             if (plantilla == null) return null;
             return _mapper.Map<PlantillaTareaDto>(plantilla);
 
+        }
+
+        public async Task<PlantillaTareaDto> UpdateAsync(string id, UpdatePlantillaTareaDto dto)
+        {
+
+            var plantilla = await _repository.GetAsync(id);
+            if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
+
+            plantilla.Nombre = dto.Nombre ?? plantilla.Nombre;
+            plantilla.PuntosKarma = dto.PuntosKarma ?? plantilla.PuntosKarma;
+            plantilla.Disponible = dto.Disponible ?? plantilla.Disponible;
+            plantilla.DiasRepeticion = dto.DiasRepeticion ?? plantilla.DiasRepeticion;
+            await _repository.UpdateAsync(plantilla);
+            var plantillaDto = _mapper.Map<PlantillaTareaDto>(plantilla);
+            return plantillaDto;
+
+        }
+
+        public async Task<bool> DeleteAsync(string id)
+        {
+            var plantilla = await _repository.GetAsync(id);
+            if (plantilla == null) return false;
+            await _repository.DeleteAsync(id);
+            return true;
         }
 
     }

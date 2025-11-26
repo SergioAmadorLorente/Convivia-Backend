@@ -9,7 +9,7 @@ namespace Convivia.Infrastructure.Models
     public class FirestorePlantillaTarea
     {
         [FirestoreProperty]
-        public string PlantillaId { get; set; } = default!;
+        public string PlantillaId { get; set; } = new Guid().ToString();
         [FirestoreProperty]
         public string Nombre { get; set; } = default!;
         [FirestoreProperty]
