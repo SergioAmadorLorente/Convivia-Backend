@@ -22,10 +22,6 @@ namespace Convivia.Application.DTOs
 
         public DateTime? Prorroga { get; set; }
 
-        public string? FacturaId { get; set; } // Referencia a la factura asociada
-
-        public string? PlantillaId { get; set; }
-
         public List<int> DiasRepeticion { get; set; } = new();
 
     }

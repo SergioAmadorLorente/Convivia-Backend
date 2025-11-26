@@ -5,7 +5,6 @@ namespace Convivia.Application.DTOs
 {
     public class TareaDto
     {
-        public string IdTarea { get; set; }
         public string Nombre { get; set; }
         public DateTime FechaLimite { get; set; }
         public string? Descripcion { get; set; }
