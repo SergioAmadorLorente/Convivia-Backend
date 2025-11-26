@@ -3,6 +3,7 @@ using Convivia.Application.Extensions;
 using Convivia.Infrastructure.Infraestructure;
 using Convivia.Infrastructure.Extensions;
 using Google.Cloud.Firestore;
+using Mapster;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,11 @@ builder.Services.AddSingleton(provider =>
     return FirestoreDb.Create(projectId);
 });
 
-// Registrar capas (antes de Build)
+// Registrar Mapster antes de los servicios que lo usan
+builder.Services.AddMapster();
+builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
+builder.Services.AddScoped<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>();
+
 builder.Services.AddApplicationServices();               // registra InvitacionService, mappers, etc.
 builder.Services.AddInfrastructure(builder.Configuration); // registra IInvitacionRepository, IFirebaseService, FirebaseService, etc.
 

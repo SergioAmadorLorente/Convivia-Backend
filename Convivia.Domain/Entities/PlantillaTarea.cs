@@ -12,13 +12,16 @@
 
         public bool Disponible { get; set; }
 
-        public List<DayOfWeek> DiasRepeticion { get; set; }
+        public List<int> DiasRepeticion { get; set; } = new List<int>();
+
+        public List<Tarea> tareas { get; set; } = new List<Tarea>();
+
+        public List<string> TareasId { get; set; } = new List<string>();
 
         public PlantillaTarea()
         {
         }
 
-        // TODO revisar logica de repeticion
         public PlantillaTarea(string id_PlantillaTarea, string nombre, DateTime fechaCreacion, int puntosKarma, bool disponible, int repeticion)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
@@ -30,10 +33,6 @@
             PuntosKarma = puntosKarma;
             Disponible = disponible;
         }
-        // TODO Cuando hagan plantilla tarea podreis configurar el metodo UsuarioEspacio.crearTareaDePlantilla(PlantillaTarea plantilla) no tengo muy claro que hace ni para que existe plantilla tarea, entonces mee cuesta imaginar el metodo ;-)
-        // Firmado Marc Sastre
-
-
         public void editarPlantilla(string nombre, int repeticion, int puntosKarma)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using Convivia.Shared.Repositories;
+using Convivia.Shared.Services;
 
 namespace Convivia.Application.Services
 {

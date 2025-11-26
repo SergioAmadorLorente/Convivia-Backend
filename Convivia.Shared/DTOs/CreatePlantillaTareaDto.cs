@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace Convivia.Application.DTOs
+{
+    public class CreatePlantillaTareaDto
+    {
+        [Required]
+        public string Nombre { get; set; }
+
+        public DateTime FechaCreacion { get; set; }
+
+        public int PuntosKarma { get; set; }
+
+        public bool Disponible { get; set; }
+
+        public List<int> DiasRepeticion { get; set; }
+
+        public List<string> TareasId { get; set; }
+
+    }
+}
