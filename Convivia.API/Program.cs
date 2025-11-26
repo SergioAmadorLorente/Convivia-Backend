@@ -1,36 +1,26 @@
 ﻿using Convivia.API.Controllers;
-using Convivia.API.Endpoints;
-using Convivia.Infrastructure.Infraestructure; // Usar la implementación robusta
-using Convivia.Infrastructure.Services;
-
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
+using Convivia.Application.Extensions;
+using Convivia.Infrastructure.Infraestructure;
+using Convivia.Infrastructure.Extensions;
 using Google.Cloud.Firestore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuración de logging
-builder.Logging
-       .ClearProviders()
-       .AddConsole()
-       .AddDebug();
-
-// Inicializar Firebase ANTES de crear clientes de Google Cloud (para que ADC esté lista)
+// logging, Firebase init y FirestoreDb singleton (tu código actual)
+builder.Logging.ClearProviders().AddConsole().AddDebug();
 FirebaseConfig.InitializeFirebase();
 
-// FirestoreDb como singleton (usa ADC si procede)
 builder.Services.AddSingleton(provider =>
-    FirestoreDb.Create("convivia-862f2") // tu ID de proyecto
-);
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var projectId = config["Firebase:ProjectId"] ?? Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID");
+    if (string.IsNullOrWhiteSpace(projectId)) throw new InvalidOperationException("Falta Firebase ProjectId.");
+    return FirestoreDb.Create(projectId);
+});
 
-// Registro de servicios en el contenedor de dependencias
-builder.Services.AddScoped<IFirebaseService, FirebaseService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<TareaService>();
-builder.Services.AddScoped<EspacioService>();
-builder.Services.AddScoped<UsuarioService>();
-builder.Services.AddScoped<InvitacionService>();
-builder.Services.AddScoped<SalaService>(); // 👈 Faltaba este
+// Registrar capas (antes de Build)
+builder.Services.AddApplicationServices();               // registra InvitacionService, mappers, etc.
+builder.Services.AddInfrastructure(builder.Configuration); // registra IInvitacionRepository, IFirebaseService, FirebaseService, etc.
 
 // Controllers y Swagger
 builder.Services.AddControllers();
@@ -39,31 +29,15 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Middleware de desarrollo
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-// Si quieres HTTPS, descomenta esta línea
+// Middleware y mapeo de endpoints
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 // app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
-// Mapear controladores y endpoints minimal API
 app.MapControllers();
-app.MapEspacioEndpoints();
-app.MapPeticionEndpoints(); //Tiene una refernecia directa con Dominio
-app.MapInvitacionEndpoints();
-app.MapSalaEndpoints();
 
-// Endpoint de prueba para importar datos
-app.MapPost("/api/usuarios/importar-datos", async (UserService userService) =>
-{
-    var ok = await userService.ProbarConexionAsync();
-    return ok ? Results.Ok("Datos importados correctamente")
-              : Results.Problem("Error al importar datos");
-});
+//app.MapEspacioEndpoints();
+
+//app.MapSalaEndpoints();
+// app.MapInvitacionEndpoints(); // descomenta cuando esté listo
 
 app.Run();

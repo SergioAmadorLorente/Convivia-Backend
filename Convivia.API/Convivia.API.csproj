@@ -12,12 +12,15 @@
     <PackageReference Include="Google.Apis.Auth" Version="1.71.0" />
     <PackageReference Include="Google.Cloud.Firestore" Version="3.10.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Convivia.Application\Convivia.Application.csproj" />
     <ProjectReference Include="..\Convivia.Infrastructure\Convivia.Infrastructure.csproj" />
+    <ProjectReference Include="..\Convivia.Shared\Convivia.Shared.csproj" />
   </ItemGroup>
 
   <!-- Incluimos explícitamente el serviceAccount.json del proyecto API y lo copiamos a salida -->

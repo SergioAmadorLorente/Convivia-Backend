@@ -1,4 +1,4 @@
-
+/*
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http;
 using Convivia.Domain.Models;
@@ -68,3 +68,4 @@ public static class PeticionEndpoints
         });
     }
 }
+*/

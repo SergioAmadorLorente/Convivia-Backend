@@ -1,81 +1,51 @@
-﻿// Mappers/InvitacionMapper.cs
-
+﻿/*using Convivia.Shared.DTOs;
 using System;
-using Convivia.Application.DTOs;
-using Convivia.Domain.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Convivia.Application.Mappers
 {
-    public static class InvitacionMapper
+    public class InvitacionMapper
     {
-        // Modelo -> Persistencia
-        public static InvitacionPersist ToPersist(Invitacion invitacion)
+        // Metodo que recibe invitacion y devuelve InvitacionDto
+        public static InvitacionDto ToDto(Convivia.Domain.Models.Invitacion domain)
         {
-            if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
-
-            return new InvitacionPersist
-            {
-                Id = string.IsNullOrWhiteSpace(invitacion.Id) ? Guid.NewGuid().ToString() : invitacion.Id,
-                UsuarioSolicitante = invitacion.UsuarioSolicitante?.Id_UsuarioEspacio ?? string.Empty,
-                UsuarioInvitado = invitacion.UsuarioInvitado?.Id ?? string.Empty,
-                Espacio = invitacion.Espacio?.Id_Espacio ?? string.Empty,
-                Mensaje = invitacion.Mensaje ?? string.Empty,
-                Fecha = invitacion.Fecha == default ? DateTime.UtcNow : invitacion.Fecha,
-                Estado = invitacion.Estado ?? "pendiente"
-            };
-        }
-
-        // Persistencia + objetos resueltos -> Modelo
-        public static Invitacion ToModel(InvitacionPersist persist, UsuarioEspacio solicitante = null, Usuario invitado = null, Espacio espacio = null)
-        {
-            if (persist == null) throw new ArgumentNullException(nameof(persist));
-
-            return new Invitacion
-            {
-                UsuarioSolicitante = solicitante!,
-                UsuarioInvitado = invitado!,
-                Espacio = espacio!,
-                Mensaje = persist.Mensaje,
-                Fecha = persist.Fecha,
-                Estado = persist.Estado
-            };
-        }
-
-        // Modelo -> DTO (respuesta API)
-        public static InvitacionDto ToDto(Invitacion invitacion)
-        {
-            if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
-
+            if (domain == null) return null;
             return new InvitacionDto
             {
-                Id = invitacion.Id,
-                UsuarioSolicitanteId = invitacion.UsuarioSolicitante?.Id_UsuarioEspacio ?? string.Empty,
-                UsuarioInvitadoId = invitacion.UsuarioInvitado?.Id ?? string.Empty,
-                EspacioId = invitacion.Espacio?.Id_Espacio ?? string.Empty,
-                Mensaje = invitacion.Mensaje ?? string.Empty,
-                Fecha = invitacion.Fecha,
-                Estado = invitacion.Estado ?? "pendiente"
+                Id = domain.Id,
+                UsuarioSolicitanteId = domain.UsuarioSolicitante?.Id_UsuarioEspacio,
+                UsuarioInvitadoId = domain.UsuarioInvitado?.Id, // Es comproba "?" si es null primer per evitar que llancin exepcions
+                EspacioId = domain.Espacio?.Id_Espacio,
+                Mensaje = domain.Mensaje,
+                Fecha = domain.Fecha,
+                Estado = domain.Estado
             };
         }
 
-        // Persist -> DTO directo (sin resolver objetos)
-        public static InvitacionDto ToDto(this InvitacionPersist persist)
+        // Metodo que recibe CreateInvitacionDto y devuelve invitacion
+        public static Convivia.Domain.Models.Invitacion FromCreateDto(CreateInvitacionDto dto)
         {
-            if (persist == null) throw new ArgumentNullException(nameof(persist));
+            if (dto == null) return null;
 
-            return new InvitacionDto
+            var domain = new Convivia.Domain.Models.Invitacion
             {
-                Id = persist.Id,
-                UsuarioSolicitanteId = persist.UsuarioSolicitante,
-                UsuarioInvitadoId = string.IsNullOrEmpty(persist.UsuarioInvitado) ? null : persist.UsuarioInvitado,
-                EspacioId = persist.Espacio,
-                Mensaje = persist.Mensaje ?? string.Empty,
-                Fecha = persist.Fecha,
-                Estado = persist.Estado ?? "pendiente"
+                Mensaje = dto.Mensaje,
+                Fecha = DateTime.UtcNow,
+                Estado = "pendiente"
             };
+
+            return domain; 
+        }
+
+        // Metodo para actualizar el mensaje de invitacion, no permito que se cambie ni la fecha ni el id creo que es mejor  por ahora
+        public static void UpdateDomainFromDto(Convivia.Domain.Models.Invitacion domain, CreateInvitacionDto dto)
+        {
+            if (domain == null || dto == null) return;
+            domain.Mensaje = dto.Mensaje ?? domain.Mensaje;
         }
     }
 }
-
-
-
+*/

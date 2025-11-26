@@ -1,45 +1,55 @@
-﻿using Convivia.Application.DTOs;
+﻿/*
+using Convivia.Shared.DTOs;
 using Convivia.Domain.Models;
 
 namespace Convivia.Application.Mappers
 {
-    public static class UsuarioMapper
+    public class UsuarioMapper
     {
-        public static UsuarioDto ToDto(UsuarioPersist usuario)
+        // Metodo que recibe Usuario y devuelve UsuarioDto
+        public static UsuarioDto ToDto(Convivia.Domain.Models.Usuario domain)
         {
+            if (domain == null) return null;
             return new UsuarioDto
             {
-                Id = usuario.Id,
-                Nombre = usuario.Nombre,
-                Email = usuario.Email,
-                Telefono = usuario.Telefono,
-                Premium = usuario.Premium,
-                FechaRegistro = usuario.FechaRegistro,
-                UsuarioEspacioIds = usuario.UsuarioEspacioIds,
-                InvitacionIds = usuario.InvitacionIds
+                Id = domain.Id,
+                Nombre = domain.Nombre,
+                Email = domain.Email,
+                Telefono = domain?.Telefono,
+                Premium = domain.Premium,
+                FechaRegistro = domain.FechaRegistro.Date
             };
         }
 
-        public static UsuarioPersist FromCrearDto(CreateUsuarioDto dto)
+        // Metodo que recibe CreateUsuarioDto y devuelve Usuario
+        public static Convivia.Domain.Models.Usuario FromCreateDto(CreateUsuarioDto dto)
         {
-            return new UsuarioPersist
+            if (dto == null) return null;
+
+            var domain = new Convivia.Domain.Models.Usuario
             {
-                Id = Guid.NewGuid().ToString(),
                 Nombre = dto.Nombre,
                 Email = dto.Email,
+                FechaRegistro = DateTime.UtcNow,
                 Password = dto.Password,
-                Telefono = dto.Telefono,
-                Premium = dto.Premium,
-                FechaRegistro = DateTime.UtcNow
+                Telefono = dto?.Telefono
             };
+
+            return domain;
         }
 
-        public static void ApplyActualizarDto(UsuarioPersist usuario, UpdateUsuarioDto dto)
+        // Metodo para actualizar el mensaje de Usuario, no permito que se cambie ni la fecha ni el id creo que es mejor  por ahora
+        public static void UpdateDomainFromDto(Convivia.Domain.Models.Usuario domain, CreateUsuarioDto dto)
         {
-            if (dto.Nombre != null) usuario.Nombre = dto.Nombre;
-            if (dto.Email != null) usuario.Email = dto.Email;
-            if (dto.Password != null) usuario.Password = dto.Password;
-            if (dto.Telefono != null) usuario.Telefono = dto.Telefono;
+            if (domain == null || dto == null) return;
+
+            domain.Nombre = dto.Nombre ?? domain.Nombre;
+            domain.Email = dto.Email ?? domain.Email;
+            domain.Password = dto.Password ?? domain.Password;
+            domain.Telefono = dto.Telefono ?? domain.Telefono;
+
+
         }
     }
 }
+*/

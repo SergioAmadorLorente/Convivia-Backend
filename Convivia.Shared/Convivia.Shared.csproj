@@ -7,20 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Modelo\**" />
-    <EmbeddedResource Remove="Modelo\**" />
-    <None Remove="Modelo\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Google.Cloud.Firestore" Version="3.10.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Convivia.Shared\Convivia.Shared.csproj" />
   </ItemGroup>
 
 </Project>

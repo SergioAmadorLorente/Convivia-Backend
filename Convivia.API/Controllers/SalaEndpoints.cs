@@ -1,4 +1,6 @@
+/*
 using Convivia.Application.DTOs;
+
 using Convivia.Infrastructure.Services;
 
 using Microsoft.AspNetCore.Builder;
@@ -105,3 +107,4 @@ namespace Convivia.API.Endpoints
         }
     }
 }
+*/

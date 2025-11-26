@@ -21,11 +21,15 @@
 
   <ItemGroup>
     <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Convivia.Application\Convivia.Application.csproj" />
     <ProjectReference Include="..\Convivia.Domain\Convivia.Domain.csproj" />
+    <ProjectReference Include="..\Convivia.Shared\Convivia.Shared.csproj" />
   </ItemGroup>
 
 </Project>
