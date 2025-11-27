@@ -4,25 +4,34 @@ using System.Text.Json.Serialization;
 
 namespace Convivia.Domain.Models
 {
-    
+    [FirestoreData]
     public class Usuario
     {
-        public string Id { get; internal set; } = Guid.NewGuid().ToString();
+        [FirestoreProperty]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
+        [FirestoreProperty]
         public string Nombre { get; set; }
 
+        [FirestoreProperty]
         public string Email { get; set; }
 
+        [FirestoreProperty]
         public string Password { get; set; }
 
+        [FirestoreProperty]
         public string? Telefono { get; set; }
 
+        [FirestoreProperty]
         public bool Premium { get; set; }
 
+        [FirestoreProperty]
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
+        [JsonIgnore]
         public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
 
+        [JsonIgnore]
         public List<Invitacion> Invitaciones { get; set; } = new List<Invitacion>();
 
         public Usuario()
@@ -45,8 +54,9 @@ namespace Convivia.Domain.Models
             var invitacion = Invitaciones
                 .FirstOrDefault(i => i.Espacio.Id_Espacio == espacio.Id_Espacio);
 
+            // Buscar petición por ID (ahora solo tiene Id, Mensaje, Fecha, Estado)
             var peticion = espacio.Peticiones
-                .FirstOrDefault(p => p.Solicitante == this);
+                .FirstOrDefault(p => p.Id == this.Id); // Asumiendo que el ID de petición coincide con el usuario
 
             if (invitacion != null && peticion != null)
             {
@@ -74,14 +84,13 @@ namespace Convivia.Domain.Models
                 return;
             }
 
-            var nuevaPeticion = new Peticion
-            {
-                Id = Guid.NewGuid().ToString(),
-                Solicitante = this,
-                Mensaje = $"Solicitud de acceso al espacio {espacio.Nombre}",
-                Fecha = DateTime.UtcNow,
-                Estado = "pendiente"
-            };
+            // Crear nueva petición usando el constructor público con ID autogenerado
+            var nuevaPeticion = new Peticion(
+                id: Guid.NewGuid().ToString(),
+                mensaje: $"Solicitud de acceso al espacio {espacio.Nombre}",
+                idSolicitante: this.Id,
+                idEspacio: espacio.Id_Espacio
+            );
 
             espacio.Peticiones.Add(nuevaPeticion);
         }

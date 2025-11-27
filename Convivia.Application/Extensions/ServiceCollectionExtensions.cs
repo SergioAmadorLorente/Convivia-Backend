@@ -1,6 +1,7 @@
 ﻿using Convivia.Application.Services;
 using Mapster;
 using Convivia.Infrastructure.Services;
+using Convivia.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Convivia.Application.Mappers;
 
@@ -17,6 +18,10 @@ namespace Convivia.Application.Extensions
             services.AddScoped<EspacioService>();
             services.AddScoped<SalaService>();
             services.AddScoped<PlantillaTareaService>();
+
+
+            services.AddScoped<PeticionService>();
+
 
             // Registrar mappers, validators, MediatR, etc. si procede
             MapsterConfig.RegisterPair<Convivia.Domain.Entities.Sala, Convivia.Shared.DTOs.SalaDto, Convivia.Shared.DTOs.CreateSalaDto, Convivia.Shared.DTOs.UpdateSalaDto>(TypeAdapterConfig.GlobalSettings);

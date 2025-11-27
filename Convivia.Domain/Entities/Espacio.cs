@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace Convivia.Domain.Models
 {
     /// <summary>
-    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones         e invitaciones.
+    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones e invitaciones.
     /// </summary>
     public class Espacio
     {
@@ -28,6 +28,5 @@ namespace Convivia.Domain.Models
        */
         public Espacio() { }
 
-       
     }
 }
