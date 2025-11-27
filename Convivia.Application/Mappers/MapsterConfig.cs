@@ -6,7 +6,7 @@ namespace Convivia.Application.Mappers
     /// <summary>
     /// Provides Mapster configuration for mapping between domain entities and DTOs.
     /// </summary>
-    public static class MapsterConfig
+    public class MapsterConfig
     {
         /// <summary>
         /// Registers mapping configurations between an entity and its related DTOs.

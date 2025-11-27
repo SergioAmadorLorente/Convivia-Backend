@@ -1,9 +1,9 @@
-﻿using Convivia.Application.DTOs;
+﻿/*using Convivia.Application.DTOs;
 using Convivia.Domain.Models;
 using Mapster;
 
 namespace Convivia.Application.Mappers;
-public class MapsterConfig : IRegister
+public  class MapsterConfig : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
@@ -15,5 +15,4 @@ public class MapsterConfig : IRegister
         config.NewConfig<TEntidad, TDto>();
         config.NewConfig<TDto, TEntidad>();
     }
-
-}
+}*/
