@@ -1,6 +1,7 @@
-﻿/*using Google.Cloud.Firestore;
+﻿using Convivia.Domain.Entities;
+using Google.Cloud.Firestore;
 using System.Text.Json.Serialization;
-namespace Convivia.Domain.Models
+namespace Convivia.Domain.Entities
 {
 
 
@@ -172,7 +173,7 @@ namespace Convivia.Domain.Models
         public void crearPlantilla()
         {
             // TODO
-        
+
         }
 
         // Asigna una tarea al usuario
@@ -181,7 +182,7 @@ namespace Convivia.Domain.Models
             tarea.agregarUsuarios(new List<UsuarioEspacio> { this });
             tareas.Add(tarea);
         }
-
+        /*
         // Elimina una tarea asignada al usuarios
         public void reservarSala(Sala sala, DateTime fechaInicio, DateTime fechaFin)
         {
@@ -200,8 +201,6 @@ namespace Convivia.Domain.Models
         {
             sala.eliminarReserva(r.Id_Reserva);
         }
-
+        */
     }
 }
-
-*/

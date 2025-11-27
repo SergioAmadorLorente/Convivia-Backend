@@ -3,7 +3,7 @@ using Convivia.Application.Mappers;
 using Convivia.Shared.Services;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
-using Convivia.Domain.Models;
+using Convivia.Domain.Entities;
 using MapsterMapper;
 
 namespace Convivia.Application.Services

@@ -1,4 +1,4 @@
-﻿using Convivia.Domain.Models;
+﻿using Convivia.Domain.Entities;
 using Mapster;
 using System;
 using System.Collections.Generic;

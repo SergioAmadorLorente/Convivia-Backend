@@ -1,8 +1,8 @@
-﻿/*
+﻿using Convivia.Domain.Entities;
 using Google.Cloud.Firestore;
 using System.Text.Json.Serialization;
 
-namespace Convivia.Domain.Models
+namespace Convivia.Domain.Entities
 {
     [FirestoreData]
     public class Tarea
@@ -128,4 +128,3 @@ namespace Convivia.Domain.Models
 
     }
 }
-*/

@@ -1,4 +1,6 @@
-﻿/*namespace Convivia.Domain.Models
+﻿using Convivia.Domain.Entities;
+
+namespace Convivia.Domain.Entities
 {
     public class Invitacion
     {
@@ -40,10 +42,10 @@
         {
             Estado = "pendiente";
         }
-        
+
         public void Cancelar()
         {
             Estado = "cancelada";
         }
     }
-}*/
+}

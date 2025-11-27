@@ -1,8 +1,8 @@
-﻿/*
+﻿using Convivia.Domain.Entities;
 using Google.Cloud.Firestore;
 using System.Text.Json.Serialization;
 
-namespace Convivia.Domain.Models
+namespace Convivia.Domain.Entities
 {
     /// <summary>
     /// Representa una factura con reparto de pago entre usuarios, estado de pago y posible documento/tarea asociada.
@@ -76,7 +76,7 @@ namespace Convivia.Domain.Models
             Documento = documento;
             foreach (var usuario in reparto)
             {
-                    _repartoMap[usuario] = precio / reparto.Count;
+                _repartoMap[usuario] = precio / reparto.Count;
             }
         }
 
@@ -204,4 +204,3 @@ namespace Convivia.Domain.Models
         }
     }
 }
-*/

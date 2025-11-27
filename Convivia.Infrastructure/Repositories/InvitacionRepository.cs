@@ -1,49 +1,48 @@
-﻿using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
-using Convivia.Shared.Services;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
+using Convivia.Shared.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class EspacioRepository : IEspacioRepository
+    public class InvitacionRepository : IInvitacionRepository
     {
         private readonly IFirebaseService _firebase;
-        private readonly ILogger<EspacioRepository> _logger;
-        private const string Collection = "espacios";
+        private readonly ILogger<InvitacionRepository> _logger;
+        private const string Collection = "invitaciones";
 
-        public EspacioRepository(IFirebaseService firebase, ILogger<EspacioRepository> logger)
+        public InvitacionRepository(IFirebaseService firebase, ILogger<InvitacionRepository> logger)
         {
             _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(EspacioDto espacio, CancellationToken ct = default)
+        public async Task<string> AddAsync(InvitacionDto invitacion, CancellationToken ct = default)
         {
-            if (espacio == null) throw new ArgumentNullException(nameof(espacio));
-            if (string.IsNullOrWhiteSpace(espacio.Id))
+            if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
+            if (string.IsNullOrWhiteSpace(invitacion.Id))
             {
                 // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, espacio, ct);
+                var generatedId = await _firebase.AddAsync(Collection, invitacion, ct);
                 return generatedId;
             }
 
             // Si ya tiene id, lo usamos para crear el documento con ese id
-            await _firebase.AddAsync(Collection, espacio.Id, espacio, ct);
-            return espacio.Id;
+            await _firebase.AddAsync(Collection, invitacion.Id, invitacion, ct);
+            return invitacion.Id;
         }
 
-        public async Task<EspacioDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<InvitacionDto?> GetByIdAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                return await _firebase.GetAsync<EspacioDto>(Collection, id, ct);
+                return await _firebase.GetAsync<InvitacionDto>(Collection, id, ct);
             }
             catch (Exception ex)
             {
@@ -52,29 +51,29 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task<IEnumerable<EspacioDto>> GetByDireccionAsync(string direccion, CancellationToken ct = default)
+        public async Task<IEnumerable<InvitacionDto>> GetByUsuarioInvitadoAsync(string usuarioInvitadoId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(direccion)) return Array.Empty<EspacioDto>();
+            if (string.IsNullOrWhiteSpace(usuarioInvitadoId)) return Array.Empty<InvitacionDto>();
             try
             {
-                var list = await _firebase.QueryAsync<EspacioDto>(Collection, nameof(EspacioDto.Direccion), direccion, ct);
-                return list ?? new List<EspacioDto>();
+                var list = await _firebase.QueryAsync<InvitacionDto>(Collection, nameof(InvitacionDto.UsuarioInvitadoId), usuarioInvitadoId, ct);
+                return list ?? new List<InvitacionDto>();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error GetByUsuarioInvitadoAsync {Usuario}", direccion);
+                _logger.LogError(ex, "Error GetByUsuarioInvitadoAsync {Usuario}", usuarioInvitadoId);
                 throw;
             }
         }
 
-        public async Task UpdateAsync(string id, EspacioDto espacio, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, InvitacionDto invitacion, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            if (espacio == null) throw new ArgumentNullException(nameof(espacio));
+            if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
 
             try
             {
-                await _firebase.UpdateAsync(Collection, id, espacio, ct);
+                await _firebase.UpdateAsync(Collection, id, invitacion, ct);
             }
             catch (Exception ex)
             {

@@ -1,5 +1,5 @@
 using Convivia.Infrastructure.Models;
-using Convivia.Domain.Models;
+using Convivia.Domain.Entities;
 using Convivia.Application.Interfaces;
 using Convivia.Shared.Services;
 

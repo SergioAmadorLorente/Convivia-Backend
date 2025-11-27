@@ -10,7 +10,7 @@ namespace Convivia.Application.Mappers
     public class EspacioMapper
     {
         // Metodo que recibe Espacio y devuelve EspacioDto
-        public static EspacioDto ToDto(Convivia.Domain.Models.Espacio domain)
+        public static EspacioDto ToDto(Convivia.Domain.Entities.Espacio domain)
         {
             if (domain == null) return null;
             return new EspacioDto
@@ -22,11 +22,11 @@ namespace Convivia.Application.Mappers
         }
 
         // Metodo que recibe CreateInvitacionDto y devuelve invitacion
-        public static Convivia.Domain.Models.Espacio FromCreateDto(CreateEspacioDto dto)
+        public static Convivia.Domain.Entities.Espacio FromCreateDto(CreateEspacioDto dto)
         {
             if (dto == null) return null;
 
-            var domain = new Convivia.Domain.Models.Espacio
+            var domain = new Convivia.Domain.Entities.Espacio
             {
                 Nombre = dto.Nombre,
                 Direccion = dto?.Direccion
@@ -36,7 +36,7 @@ namespace Convivia.Application.Mappers
         }
 
         // Metodo para actualizar el mensaje de invitacion, no permito que se cambie ni la fecha ni el id creo que es mejor  por ahora
-        public static void UpdateDomainFromDto(Convivia.Domain.Models.Espacio domain, CreateEspacioDto dto)
+        public static void UpdateDomainFromDto(Convivia.Domain.Entities.Espacio domain, CreateEspacioDto dto)
         {
             if (domain == null || dto == null) return;
             domain.Nombre = dto.Nombre ?? domain.Nombre;

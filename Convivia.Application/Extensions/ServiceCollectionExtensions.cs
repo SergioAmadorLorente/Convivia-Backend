@@ -18,8 +18,6 @@ namespace Convivia.Application.Extensions
             services.AddScoped<EspacioService>();
             services.AddScoped<SalaService>();
             services.AddScoped<PlantillaTareaService>();
-
-
             services.AddScoped<PeticionService>();
 
 

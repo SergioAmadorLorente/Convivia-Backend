@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Convivia.Domain.Models
+namespace Convivia.Domain.Entities
 {
     /// <summary>
     /// Entidad de dominio: Peticion

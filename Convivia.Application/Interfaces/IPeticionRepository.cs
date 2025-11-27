@@ -1,4 +1,4 @@
-using Convivia.Domain.Models;
+using Convivia.Domain.Entities;
 
 namespace Convivia.Application.Interfaces
 {

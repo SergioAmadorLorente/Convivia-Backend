@@ -1,5 +1,5 @@
 ﻿using Convivia.Application.DTOs;
-using Convivia.Domain.Models;
+using Convivia.Domain.Entities;
 using Convivia.Infrastructure.Models;
 using Mapster;
 

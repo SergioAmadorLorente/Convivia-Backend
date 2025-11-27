@@ -1,4 +1,4 @@
-namespace Convivia.Domain.Models
+namespace Convivia.Domain.Entities
 {
     public class Permiso
     {

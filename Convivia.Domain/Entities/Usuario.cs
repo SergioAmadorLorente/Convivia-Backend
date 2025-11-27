@@ -1,8 +1,8 @@
-﻿/*using Google.Cloud.Firestore;
+﻿using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Identity;
 using System.Text.Json.Serialization;
 
-namespace Convivia.Domain.Models
+namespace Convivia.Domain.Entities
 {
     [FirestoreData]
     public class Usuario
@@ -52,7 +52,7 @@ namespace Convivia.Domain.Models
         public void unirseEspacio(Espacio espacio)
         {
             var invitacion = Invitaciones
-                .FirstOrDefault(i => i.Espacio.Id_Espacio == espacio.Id_Espacio);
+                .FirstOrDefault(i => i.Espacio.Id == espacio.Id);
 
             // Buscar petición por ID (ahora solo tiene Id, Mensaje, Fecha, Estado)
             var peticion = espacio.Peticiones
@@ -89,7 +89,7 @@ namespace Convivia.Domain.Models
                 id: Guid.NewGuid().ToString(),
                 mensaje: $"Solicitud de acceso al espacio {espacio.Nombre}",
                 idSolicitante: this.Id,
-                idEspacio: espacio.Id_Espacio
+                idEspacio: espacio.Id
             );
 
             espacio.Peticiones.Add(nuevaPeticion);
@@ -117,4 +117,3 @@ namespace Convivia.Domain.Models
         }
     }
 }
-*/

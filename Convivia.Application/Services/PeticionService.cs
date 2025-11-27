@@ -1,7 +1,7 @@
 using Mapster;
 using Convivia.Application.DTOs;
 using Convivia.Application.Interfaces;
-using Convivia.Domain.Models;
+using Convivia.Domain.Entities;
 
 namespace Convivia.Application.Services
 {
