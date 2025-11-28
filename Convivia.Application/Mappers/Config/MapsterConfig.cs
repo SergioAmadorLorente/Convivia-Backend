@@ -8,6 +8,7 @@ public class MapsterConfig : IRegister
     public void Register(TypeAdapterConfig config)
     {
         RegisterPair<PlantillaTarea, PlantillaTareaDto>(config);
+        RegisterPair<CreatePlantillaTareaDto, TareaDto>(config);
     }
 
     private void RegisterPair<TEntidad, TDto>(TypeAdapterConfig config)

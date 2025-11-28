@@ -12,6 +12,7 @@ namespace Convivia.Application.Extensions
             // Si tienes interfaz IInvitacionService: services.AddScoped<IInvitacionService, InvitacionService>();
             services.AddScoped<InvitacionService>();
             services.AddScoped<PlantillaTareaService>();
+            services.AddScoped<TareaService>();
 
             // Registrar mappers, validators, MediatR, etc. si procede
             // services.AddAutoMapper(typeof(YourProfile).Assembly);

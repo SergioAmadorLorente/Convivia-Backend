@@ -154,7 +154,7 @@ namespace Convivia.Domain.Models
         public void sumKarmaAndPassTask(Tarea tarea)
         {
             tarea.cambiarEstado(true);
-            Karma += tarea.karma;
+            Karma += tarea.PuntosKarma;
         }
 
         // Resta puntos de karma al usuario

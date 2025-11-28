@@ -1,9 +1,11 @@
 ﻿using Convivia.API.Endpoints;
 using Convivia.Application.Extensions;
-using Convivia.Infrastructure.Infraestructure;
+using Convivia.Application.Mappers;
 using Convivia.Infrastructure.Extensions;
+using Convivia.Infrastructure.Infraestructure;
 using Google.Cloud.Firestore;
 using Mapster;
+using static System.Net.Mime.MediaTypeNames;
 
 var builder = WebApplication.CreateBuilder(args);
 

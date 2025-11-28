@@ -3,37 +3,31 @@ using System.Text.Json.Serialization;
 
 namespace Convivia.Domain.Models
 {
-    [FirestoreData]
+
     public class Tarea
     {
-        [FirestoreProperty]
-        public string Id_Tarea { get; set; } = Guid.NewGuid().ToString();
 
-        [JsonIgnore]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        public string Nombre { get; set; }
+
         public List<UsuarioEspacio> Usuarios { get; set; }
 
-        [FirestoreProperty]
         public DateTime FechaRealizacion { get; set; }
 
-        [FirestoreProperty]
         public DateTime FechaLimite { get; set; }
 
-        [FirestoreProperty]
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
 
-        [FirestoreProperty]
         public DateTime? Prorroga { get; set; } // Puede ser null
 
-        [FirestoreProperty]
         public bool Estado { get; set; }
 
-        [JsonIgnore]
         public Espacio espacio { get; set; }
 
-        [JsonIgnore]
         public Factura? Factura { get; set; }
-        [FirestoreProperty]
-        public int karma { get; set; } = 10; // Puntos de karma que se otorgan al completar la tarea
+
+        public int PuntosKarma { get; set; } = 10; // Puntos de karma que se otorgan al completar la tarea
 
         public Tarea()
         {
@@ -48,7 +42,7 @@ namespace Convivia.Domain.Models
             Foto = foto;
             Prorroga = prorroga;
             Estado = estado;
-            this.karma = karma;
+            this.PuntosKarma = karma;
         }
 
         public void agregarUsuarios(List<UsuarioEspacio> listausuarios)
@@ -115,8 +109,8 @@ namespace Convivia.Domain.Models
 
         public void crearFactura(List<UsuarioEspacio> usuariosapagar, int precio)
         {
-            Factura = new Factura(Id_Tarea,
-                "Factura de Tarea " + Id_Tarea,
+            Factura = new Factura(Id,
+                "Factura de Tarea " + Id,
                 precio,
                 usuariosapagar,
                 false,
