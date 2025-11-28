@@ -8,26 +8,19 @@ using System.Threading.Tasks;
 
 namespace Convivia.Shared.DTOs
 {
-    [FirestoreData]
     public class UsuarioDto
     {
 
-        [FirestoreProperty("Id")]
-        public string Id { get;  set; } = Guid.NewGuid().ToString();
+        public string Id { get;  set; }
 
-        [FirestoreProperty("Nombre")]
         public string Nombre { get; set; }
 
-        [FirestoreProperty("Email")]
         public string Email { get; set; }
 
-        [FirestoreProperty("Telefono")]
         public string? Telefono { get; set; }
 
-        [FirestoreProperty("Premium")]
         public bool Premium { get; set; }
 
-        [FirestoreProperty("FechaRegistro")]
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
       //  [FirestoreProperty("UsuarioEspacios")]

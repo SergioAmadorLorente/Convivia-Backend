@@ -2,7 +2,7 @@
 using Mapster;
 using Convivia.Shared.DTOs;
 using Convivia.Domain.Entities;
-using Convivia.Application.Mappers;
+using Convivia.Application.Mappers.Config;
 
 namespace Convivia.Application.Mappers
 {

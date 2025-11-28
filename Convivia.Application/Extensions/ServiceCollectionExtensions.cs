@@ -3,7 +3,7 @@ using Mapster;
 using Convivia.Infrastructure.Services;
 using Convivia.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using Convivia.Application.Mappers;
+using Convivia.Application.Mappers.Config;
 
 namespace Convivia.Application.Extensions
 {

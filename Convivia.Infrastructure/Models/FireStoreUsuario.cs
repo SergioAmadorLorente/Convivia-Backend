@@ -10,7 +10,7 @@ namespace Convivia.Infrastructure.Models
     public class UsuarioPersist
     {
         [FirestoreProperty("Id")]
-        public string Id { get; set; } = string.Empty;
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         [FirestoreProperty("Nombre")]
         public string Nombre { get; set; } = string.Empty;

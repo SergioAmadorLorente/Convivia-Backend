@@ -6,6 +6,7 @@ using Convivia.Shared.DTOs;
 using Convivia.Application.Mappers;
 using Microsoft.Extensions.Logging;
 using Convivia.Shared.Repositories;
+using Mapster;
 
 namespace Convivia.Application.Services
 {
@@ -26,11 +27,11 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre requerido");
             if (string.IsNullOrWhiteSpace(dto.Email)) throw new ArgumentException("Email requerido");
 
-            // ✅ Usar Mapster para convertir CreateUsuarioDto a Usuario
-            var usuario = UsuarioMapper.FromCreateDto(dto);
-            
-            // ✅ Convertir Usuario a UsuarioDto para el repositorio
-            var usuarioDto = UsuarioMapper.ToDto(usuario);
+            // Usar Mapster para convertir CreateUsuarioDto a Usuario
+            var usuarioDomain = dto.Adapt<Convivia.Domain.Entities.Usuario>();
+            var usuarioDto = usuarioDomain.Adapt<UsuarioDto>();
+
+
 
             try
             {
