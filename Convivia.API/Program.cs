@@ -1,12 +1,13 @@
 using Convivia.API.Controllers;
 using Convivia.Application.Extensions;
-using Convivia.Infrastructure.Infraestructure;
-using Convivia.Application.Extensions;
+using Convivia.Application.Interfaces;
+using Convivia.Application.Mappers;
 using Convivia.Infrastructure.Extensions;
+using Convivia.Infrastructure.Infraestructure;
 using Convivia.Infrastructure.Repositories;
+using Convivia.Shared.DTOs;
 using Google.Cloud.Firestore;
 using Mapster;
-using Convivia.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

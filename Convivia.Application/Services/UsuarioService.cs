@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
+using Convivia.Application.Mappers;
 using Microsoft.Extensions.Logging;
 using Convivia.Shared.Repositories;
-using Convivia.Shared.Services;
+using Mapster;
 
 namespace Convivia.Application.Services
 {
-    public class UsuarioService // Usuario
+    public class UsuarioService
     {
         private readonly IUsuarioRepository _repo;
         private readonly ILogger<UsuarioService> _logger;
@@ -23,22 +24,18 @@ namespace Convivia.Application.Services
         public async Task<string> CrearAsync(CreateUsuarioDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("UsuarioSolicitanteId requerido");
-            if (string.IsNullOrWhiteSpace(dto.Email)) throw new ArgumentException("UsuarioInvitadoId requerido");
+            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre requerido");
+            if (string.IsNullOrWhiteSpace(dto.Email)) throw new ArgumentException("Email requerido");
 
-            var usuario = new UsuarioDto
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                Nombre = dto.Nombre,
-                Email = dto.Email,
-                Telefono = dto.Telefono,
-                Premium = false,
-                FechaRegistro = DateTime.UtcNow,
-            };
+            // Usar Mapster para convertir CreateUsuarioDto a Usuario
+            var usuarioDomain = dto.Adapt<Convivia.Domain.Entities.Usuario>();
+            var usuarioDto = usuarioDomain.Adapt<UsuarioDto>();
+
+
 
             try
             {
-                return await _repo.AddAsync(usuario, ct);
+                return await _repo.AddAsync(usuarioDto, ct);
             }
             catch (Exception ex)
             {
@@ -89,7 +86,5 @@ namespace Convivia.Application.Services
                 throw;
             }
         }
-
-        
     }
 }
