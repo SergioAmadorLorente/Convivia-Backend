@@ -11,6 +11,7 @@ public class MapsterConfig : IRegister
         RegisterPair<PlantillaTarea, FirestorePlantillaTarea>(config);
         RegisterPair<Usuario, FireStoreUsuario>(config);
         RegisterPair<Invitacion, FireStoreInvitacion>(config);
+        RegisterPair<Sala, FireStoreSala>(config);
     }
 
     private void RegisterPair<TEntidad, TFirestore>(TypeAdapterConfig config)
