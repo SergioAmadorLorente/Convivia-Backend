@@ -1,6 +1,7 @@
 using Mapster;
 using System.Reflection;
-
+using Convivia.Domain.Entities;
+using Convivia.Shared.DTOs;
 namespace Convivia.Application.Mappers
 {
     public static class MapsterBootstrap
@@ -9,10 +10,13 @@ namespace Convivia.Application.Mappers
         {
             // Register application-level mappings (DTO <-> Domain)
             // Sala mappings
-            Config.MapsterConfig.RegisterPair<Convivia.Domain.Entities.Sala, Convivia.Shared.DTOs.SalaDto, Convivia.Shared.DTOs.CreateSalaDto, Convivia.Shared.DTOs.UpdateSalaDto>(config);
+            Config.MapsterConfig.RegisterPair<Sala, SalaDto, CreateSalaDto, UpdateSalaDto>(config);
 
             // Usuario mappings (DTO <-> Domain)
-            Config.MapsterConfig.RegisterPair<Convivia.Domain.Entities.Usuario, Convivia.Shared.DTOs.UsuarioDto, Convivia.Shared.DTOs.CreateUsuarioDto, Convivia.Shared.DTOs.UpdateUsuarioDto>(config);
+            Config.MapsterConfig.RegisterPair<Usuario, UsuarioDto, CreateUsuarioDto, UpdateUsuarioDto>(config);
+
+            // Invitacion mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Invitacion, InvitacionDto, CreateInvitacionDto, UpdateInvitacionDto>(config);
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try
