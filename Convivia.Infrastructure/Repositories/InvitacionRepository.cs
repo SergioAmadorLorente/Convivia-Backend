@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
+using Convivia.Infrastructure.Models;
+using Convivia.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
@@ -25,16 +28,21 @@ namespace Convivia.Infrastructure.Repositories
         public async Task<string> AddAsync(InvitacionDto invitacion, CancellationToken ct = default)
         {
             if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
-            if (string.IsNullOrWhiteSpace(invitacion.Id))
+            
+            // Convertir InvitacionDto → Invitacion (Domain) → FireStoreInvitacion (Firestore)
+            var invitacionDomain = invitacion.Adapt<Invitacion>();
+            var invitacionPersist = invitacionDomain.Adapt<FireStoreInvitacion>();
+            
+            if (string.IsNullOrWhiteSpace(invitacionPersist.Id))
             {
                 // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, invitacion, ct);
+                var generatedId = await _firebase.AddAsync(Collection, invitacionPersist, ct);
                 return generatedId;
             }
 
             // Si ya tiene id, lo usamos para crear el documento con ese id
-            await _firebase.AddAsync(Collection, invitacion.Id, invitacion, ct);
-            return invitacion.Id;
+            await _firebase.AddAsync(Collection, invitacionPersist.Id, invitacionPersist, ct);
+            return invitacionPersist.Id;
         }
 
         public async Task<InvitacionDto?> GetByIdAsync(string id, CancellationToken ct = default)
@@ -42,7 +50,13 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                return await _firebase.GetAsync<InvitacionDto>(Collection, id, ct);
+                // Obtener FireStoreInvitacion de Firestore
+                var invitacionPersist = await _firebase.GetAsync<FireStoreInvitacion>(Collection, id, ct);
+                if (invitacionPersist == null) return null;
+                
+                // Convertir FireStoreInvitacion → Invitacion (Domain) → InvitacionDto
+                var invitacionDomain = invitacionPersist.Adapt<Invitacion>();
+                return invitacionDomain.Adapt<InvitacionDto>();
             }
             catch (Exception ex)
             {
@@ -56,8 +70,12 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(usuarioInvitadoId)) return Array.Empty<InvitacionDto>();
             try
             {
-                var list = await _firebase.QueryAsync<InvitacionDto>(Collection, nameof(InvitacionDto.UsuarioInvitadoId), usuarioInvitadoId, ct);
-                return list ?? new List<InvitacionDto>();
+                // Consultar FireStoreInvitacion desde Firestore
+                var list = await _firebase.QueryAsync<FireStoreInvitacion>(Collection, nameof(FireStoreInvitacion.UsuarioInvitadoId), usuarioInvitadoId, ct);
+                if (list == null || !list.Any()) return new List<InvitacionDto>();
+                
+                // Convertir FireStoreInvitacion → Invitacion (Domain) → InvitacionDto
+                return list.Select(ip => ip.Adapt<Invitacion>().Adapt<InvitacionDto>()).ToList();
             }
             catch (Exception ex)
             {
@@ -73,7 +91,11 @@ namespace Convivia.Infrastructure.Repositories
 
             try
             {
-                await _firebase.UpdateAsync(Collection, id, invitacion, ct);
+                // Convertir InvitacionDto → Invitacion (Domain) → FireStoreInvitacion
+                var invitacionDomain = invitacion.Adapt<Invitacion>();
+                var invitacionPersist = invitacionDomain.Adapt<FireStoreInvitacion>();
+                
+                await _firebase.UpdateAsync(Collection, id, invitacionPersist, ct);
             }
             catch (Exception ex)
             {
