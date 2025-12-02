@@ -25,6 +25,6 @@ namespace Convivia.Shared.DTOs
 
         public string? TareaId { get; private set; }
 
-        public DateTime FechaCreacion { get; private set; }
+        public DateTime FechaCreacion { get; private set; } = DateTime.UtcNow;
     }
 }

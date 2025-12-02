@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace Convivia.Infrastructure.Models
 {
     [FirestoreData]
-    public class Factura
+    public class FireStoreFactura
     {
         [FirestoreProperty("Id")]
         public string IdFactura { get; set; }
@@ -18,7 +18,6 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("Precio")]
         public float Precio { get; set; }
 
-        // Reparto serializable: clave = UsuarioId, valor = importe a pagar (recordar per al mapper)
         [FirestoreProperty("Reparto")]
         public Dictionary<string, decimal> Reparto { get; private set; } = new Dictionary<string, decimal>();
 
