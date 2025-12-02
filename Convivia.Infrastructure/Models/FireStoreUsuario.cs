@@ -7,7 +7,7 @@ namespace Convivia.Infrastructure.Models
     /// Coincide exactamente con la estructura en Firebase
     /// </summary>
     [FirestoreData]
-    public class UsuarioPersist
+    public class FireStoreUsuario
     {
         [FirestoreProperty("Id")]
         public string Id { get; set; } = Guid.NewGuid().ToString("N");

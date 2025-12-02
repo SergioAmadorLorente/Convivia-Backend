@@ -28,9 +28,9 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (usuario == null) throw new ArgumentNullException(nameof(usuario));
             
-            // Convertir UsuarioDto → Usuario (Domain) → UsuarioPersist (Firestore)
+            // Convertir UsuarioDto → Usuario (Domain) → FireStoreUsuario (Firestore)
             var usuarioDomain = usuario.Adapt<Usuario>();
-            var usuarioPersist = usuarioDomain.Adapt<UsuarioPersist>();
+            var usuarioPersist = usuarioDomain.Adapt<FireStoreUsuario>();
             
             if (string.IsNullOrWhiteSpace(usuarioPersist.Id))
             {
@@ -49,11 +49,11 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                // Obtener UsuarioPersist de Firestore
-                var usuarioPersist = await _firebase.GetAsync<UsuarioPersist>(Collection, id, ct);
+                // Obtener FireStoreUsuario de Firestore
+                var usuarioPersist = await _firebase.GetAsync<FireStoreUsuario>(Collection, id, ct);
                 if (usuarioPersist == null) return null;
                 
-                // Convertir UsuarioPersist → Usuario (Domain) → UsuarioDto
+                // Convertir FireStoreUsuario → Usuario (Domain) → UsuarioDto
                 var usuarioDomain = usuarioPersist.Adapt<Usuario>();
                 return usuarioDomain.Adapt<UsuarioDto>();
             }
@@ -69,11 +69,11 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(Nombre)) return Array.Empty<UsuarioDto>();
             try
             {
-                // Consultar UsuarioPersist desde Firestore
-                var list = await _firebase.QueryAsync<UsuarioPersist>(Collection, nameof(UsuarioPersist.Nombre), Nombre, ct);
+                // Consultar FireStoreUsuario desde Firestore
+                var list = await _firebase.QueryAsync<FireStoreUsuario>(Collection, nameof(FireStoreUsuario.Nombre), Nombre, ct);
                 if (list == null || !list.Any()) return new List<UsuarioDto>();
                 
-                // Convertir UsuarioPersist → Usuario (Domain) → UsuarioDto
+                // Convertir FireStoreUsuario → Usuario (Domain) → UsuarioDto
                 return list.Select(up => up.Adapt<Usuario>().Adapt<UsuarioDto>()).ToList();
             }
             catch (Exception ex)
@@ -90,9 +90,9 @@ namespace Convivia.Infrastructure.Repositories
 
             try
             {
-                // Convertir UsuarioDto → Usuario (Domain) → UsuarioPersist
+                // Convertir UsuarioDto → Usuario (Domain) → FireStoreUsuario
                 var usuarioDomain = usuario.Adapt<Usuario>();
-                var usuarioPersist = usuarioDomain.Adapt<UsuarioPersist>();
+                var usuarioPersist = usuarioDomain.Adapt<FireStoreUsuario>();
                 
                 await _firebase.UpdateAsync(Collection, id, usuarioPersist, ct);
             }

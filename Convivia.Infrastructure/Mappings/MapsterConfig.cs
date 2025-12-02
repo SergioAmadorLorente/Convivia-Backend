@@ -9,7 +9,7 @@ public class MapsterConfig : IRegister
     public void Register(TypeAdapterConfig config)
     {
         RegisterPair<PlantillaTarea, FirestorePlantillaTarea>(config);
-        RegisterPair<Usuario, UsuarioPersist>(config);
+        RegisterPair<Usuario, FireStoreUsuario>(config);
     }
 
     private void RegisterPair<TEntidad, TFirestore>(TypeAdapterConfig config)
