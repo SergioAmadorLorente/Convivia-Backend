@@ -16,6 +16,9 @@ namespace Convivia.Infrastructure.Mappers
             config.NewConfig<FireStoreSala, Sala>();
             config.NewConfig<Sala, FireStoreSala>();
 
+            // Invitacion
+            config.NewConfig<FireStoreInvitacion, Invitacion>();
+            config.NewConfig<Invitacion, FireStoreInvitacion>();
         }
 
     }
