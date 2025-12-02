@@ -1,24 +1,17 @@
-﻿using Google.Cloud.Firestore;
+﻿using System;
 
 namespace Convivia.Shared.DTOs
 {
-    [FirestoreData]
     public class SalaDto
     {
-        public SalaDto() { }
-
-        [FirestoreProperty("Id")]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         
-        [FirestoreProperty("Nombre")]
-        public string Nombre { get; set; }
+        public string Nombre { get; set; } = string.Empty;
         
-        [FirestoreProperty("Descripcion")]
         public string? Descripcion { get; set; }
         
-        [FirestoreProperty("IdEspacio")]
-        public string IdEspacio { get; set; }
+        public string IdEspacio { get; set; } = string.Empty;
 
-        // Note: Reservas are not included temporarily. We do in the next Sprint.
+        public SalaDto() { }
     }
 }
