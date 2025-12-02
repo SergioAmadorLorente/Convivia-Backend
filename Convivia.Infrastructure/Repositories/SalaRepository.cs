@@ -2,7 +2,9 @@
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
+using Convivia.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
+using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
@@ -21,13 +23,21 @@ namespace Convivia.Infrastructure.Repositories
         public async Task<string> AddAsync(SalaDto sala, CancellationToken ct = default)
         {
             if (sala == null) throw new ArgumentNullException(nameof(sala));
-            if (string.IsNullOrWhiteSpace(sala.Id))
+            
+            // Convertir SalaDto → Sala (Domain) → FireStoreSala (Firestore)
+            var salaDomain = sala.Adapt<Sala>();
+            var salaPersist = salaDomain.Adapt<FireStoreSala>();
+            
+            if (string.IsNullOrWhiteSpace(salaPersist.Id))
             {
-                var generatedId = await _firebase.AddAsync(Collection, sala, ct);
+                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
+                var generatedId = await _firebase.AddAsync(Collection, salaPersist, ct);
                 return generatedId;
             }
-            await _firebase.AddAsync(Collection, sala.Id, sala, ct);
-            return sala.Id;
+
+            // Si ya tiene id, lo usamos para crear el documento con ese id
+            await _firebase.AddAsync(Collection, salaPersist.Id, salaPersist, ct);
+            return salaPersist.Id;
         }
 
         public async Task<SalaDto?> GetByIdAsync(string id, CancellationToken ct = default)
@@ -35,7 +45,13 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                return await _firebase.GetAsync<SalaDto>(Collection, id, ct);
+                // Obtener FireStoreSala de Firestore
+                var salaPersist = await _firebase.GetAsync<FireStoreSala>(Collection, id, ct);
+                if (salaPersist == null) return null;
+                
+                // Convertir FireStoreSala → Sala (Domain) → SalaDto
+                var salaDomain = salaPersist.Adapt<Sala>();
+                return salaDomain.Adapt<SalaDto>();
             }
             catch (Exception ex)
             {
@@ -49,8 +65,12 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(idEspacio)) return Array.Empty<SalaDto>();
             try
             {
-                var list = await _firebase.QueryAsync<SalaDto>(Collection, nameof(SalaDto.IdEspacio), ct);
-                return list ?? new List<SalaDto>();
+                // Consultar FireStoreSala desde Firestore
+                var list = await _firebase.QueryAsync<FireStoreSala>(Collection, nameof(FireStoreSala.IdEspacio), idEspacio, ct);
+                if (list == null || !list.Any()) return new List<SalaDto>();
+                
+                // Convertir FireStoreSala → Sala (Domain) → SalaDto
+                return list.Select(sp => sp.Adapt<Sala>().Adapt<SalaDto>()).ToList();
             }
             catch (Exception ex)
             {
@@ -66,7 +86,11 @@ namespace Convivia.Infrastructure.Repositories
 
             try
             {
-                await _firebase.UpdateAsync(Collection, id, sala, ct);
+                // Convertir SalaDto → Sala (Domain) → FireStoreSala
+                var salaDomain = sala.Adapt<Sala>();
+                var salaPersist = salaDomain.Adapt<FireStoreSala>();
+                
+                await _firebase.UpdateAsync(Collection, id, salaPersist, ct);
             }
             catch (Exception ex)
             {
@@ -88,5 +112,5 @@ namespace Convivia.Infrastructure.Repositories
                 throw;
             }
         }
-}
     }
+}
