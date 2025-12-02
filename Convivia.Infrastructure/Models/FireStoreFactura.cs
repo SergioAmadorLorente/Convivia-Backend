@@ -33,6 +33,6 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("FechaCreacion")]
         public DateTime FechaCreacion { get; private set; }
 
-        public Factura() {}
+       
     }
 }
