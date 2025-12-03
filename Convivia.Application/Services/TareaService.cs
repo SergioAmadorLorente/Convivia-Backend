@@ -1,4 +1,3 @@
-using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
 using Convivia.Application.Services;
 using Convivia.Domain.Entities;
