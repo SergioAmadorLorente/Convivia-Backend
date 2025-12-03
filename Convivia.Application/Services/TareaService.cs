@@ -33,17 +33,25 @@ namespace Convivia.Application.Services
 
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             var tarea = _mapper.Map<Tarea>(dto);
+            tarea.EspacioId = espacioid;
             // falta crear també plantillatarea i enllaçar-la
             var id = await _repository.AddAsync(tarea);
             return id;
 
         }
 
-        public async Task<IEnumerable<TareaDto>> GetAsync(string espacioid)
+        public async Task<IEnumerable<TareaDto>> GetAsync()
         {
             var tareas = await _repository.GetAllAsync();
             return _mapper.Map<IEnumerable<TareaDto>>(tareas);
         }
+
+        public async Task<IEnumerable<TareaDto>> GetAllByEspacioAsync(string espacioid)
+        {
+            var tareas = await _repository.GetAllByEspacioIdAsync(espacioid);
+            return _mapper.Map<IEnumerable<TareaDto>>(tareas);
+        }
+        
 
         public async Task<TareaDto?> GetByIdAsync(string espacioid, string id)
         {
@@ -61,10 +69,10 @@ namespace Convivia.Application.Services
             if (tarea == null) throw new ArgumentNullException(nameof(tarea));
 
             tarea.Nombre = dto.Nombre ?? tarea.Nombre;
-            tarea.PuntosKarma = dto.PuntosKarma ?? tarea.PuntosKarma;
+            tarea.karma = dto.karma ?? tarea.karma;
             tarea.Estado = dto.Estado ?? tarea.Estado;
             tarea.HoraLimite = dto.HoraLimite ?? tarea.HoraLimite;
-            tarea.UsuarioEspaciosIds = dto.UsuarioEspacioIds ?? tarea.UsuarioEspaciosIds;
+            tarea.UsuarioEspaciosIds = dto.UsuarioEspaciosIds ?? tarea.UsuarioEspaciosIds;
             tarea.Foto = dto.Foto ?? tarea.Foto;
             tarea.Prorroga = dto.Prorroga ?? tarea.Prorroga;
             tarea.FacturaId = dto.FacturaId ?? tarea.FacturaId;

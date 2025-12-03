@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Convivia.Infrastructure.Repositories
@@ -41,6 +42,25 @@ namespace Convivia.Infrastructure.Repositories
             var firestoreEntity = await _firebase.GetAsync<FirestoreTarea>(COLLECTION, id);
             var entity = firestoreEntity?.Adapt<Tarea>();
             return entity;
+        }
+
+        public async Task<List<Tarea?>> GetAllByEspacioIdAsync(string espacioid, CancellationToken ct = default)
+        {
+
+            if(string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+            var entidadesEspacio = await _firebase.QueryAsync<FirestoreTarea>(COLLECTION, nameof(FirestoreTarea.EspacioId), espacioid);
+            List<Tarea> lista = new List<Tarea>();
+            if (!entidadesEspacio.Any())
+                return lista;
+            foreach(var pte in entidadesEspacio)
+            {
+
+                var entidadmapeada = pte.Adapt<Tarea>();
+                lista.Add(entidadmapeada);
+
+            }
+
+            return lista;
         }
 
         public async Task<List<Tarea>> GetAllAsync(CancellationToken ct = default)

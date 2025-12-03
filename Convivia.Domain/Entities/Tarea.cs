@@ -32,21 +32,21 @@ namespace Convivia.Domain.Entities
 
         public Factura? Factura { get; set; }
 
-        public int PuntosKarma { get; set; } = 10; // Puntos de karma que se otorgan al completar la tarea
+        public int karma { get; set; }
 
         public Tarea()
         {
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(string nombre, List<string> usuarioEspaciosIds, DateTime horaLimite, int puntosKarma, string espacioId, string? plantillaId = null, string? facturaId = null)
+        public Tarea(string nombre, List<string> usuarioEspaciosIds, DateTime horaLimite, int karma, string espacioId, string? plantillaId = null, string? facturaId = null)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
-            if (puntosKarma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
+            if (karma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
             Nombre = nombre;
             UsuarioEspaciosIds = usuarioEspaciosIds;
             HoraLimite = horaLimite;
-            PuntosKarma = puntosKarma;
+            this.karma = karma;
             Estado = false; // Por defecto, la tarea está incompleta
             EspacioId = espacioId;
             PlantillaId = plantillaId;

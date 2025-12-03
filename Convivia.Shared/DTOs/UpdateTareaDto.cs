@@ -12,9 +12,9 @@ namespace Convivia.Shared.DTOs
 
         public string? Descripcion { get; set; }
 
-        public List<string>? UsuarioEspacioIds { get; set; } = new();
+        public List<string>? UsuarioEspaciosIds { get; set; }
 
-        public int? PuntosKarma { get; set; } = 10;
+        public int? karma { get; set; } = 10;
 
         public byte[]? Foto { get; set; }
 

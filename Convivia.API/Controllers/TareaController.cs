@@ -29,12 +29,12 @@ namespace Convivia.API.Controllers
             return TareaDto;
         }
 
-        [HttpGet]
+        /*[HttpGet]
         public async Task<ActionResult<List<TareaDto>>> GetAllTareas(string espacioid)
         {
-            var list = await _service.GetAsync(espacioid);
+            var list = await _service.GetAsync();
             return Ok(list);
-        }
+        }*/
 
         [HttpGet("{id}")]
         public async Task<ActionResult<TareaDto>> GetTareaById(string espacioid, string id)
@@ -56,5 +56,13 @@ namespace Convivia.API.Controllers
             var TareaDto = await _service.UpdateAsync(espacioid, id, dto);
             return TareaDto != null ? Ok(TareaDto) : NotFound();
         }
+
+        [HttpGet]
+        public async Task<ActionResult<TareaDto>> GetTareasByEspacioId(string espacioid)
+        {
+            var list = await _service.GetAllByEspacioAsync(espacioid);
+            return !list.Any() ? NotFound() : Ok(list);
+        }
+
     }
 }

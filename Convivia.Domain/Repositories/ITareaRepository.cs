@@ -12,5 +12,6 @@ namespace Convivia.Domain.Repositories
         Task<List<Tarea>> GetAllAsync(CancellationToken ct = default);
         Task UpdateAsync(string id, Tarea tarea, CancellationToken ct = default);
         Task DeleteAsync(string id, CancellationToken ct = default);
+        Task<List<Tarea?>> GetAllByEspacioIdAsync(string espacioid, CancellationToken ct = default);
     }
 }

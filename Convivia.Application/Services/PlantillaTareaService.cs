@@ -52,7 +52,7 @@ namespace Convivia.Application.Services
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             plantilla.Nombre = dto.Nombre ?? plantilla.Nombre;
-            plantilla.PuntosKarma = dto.PuntosKarma ?? plantilla.PuntosKarma;
+            plantilla.karma = dto.karma ?? plantilla.karma;
             plantilla.Estado = dto.Estado ?? plantilla.Estado;
             plantilla.DiasRepeticion = dto.DiasRepeticion ?? plantilla.DiasRepeticion;
             await _repository.UpdateAsync(id, plantilla);

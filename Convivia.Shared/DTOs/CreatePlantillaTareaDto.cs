@@ -11,7 +11,7 @@ namespace Convivia.Shared.DTOs
 
         public DateTime FechaCreacion { get; set; }
 
-        public int PuntosKarma { get; set; }
+        public int karma { get; set; }
 
         public bool Disponible { get; set; }
 

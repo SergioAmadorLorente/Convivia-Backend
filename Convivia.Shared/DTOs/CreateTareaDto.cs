@@ -14,14 +14,17 @@ namespace Convivia.Shared.DTOs
 
         public string? Descripcion { get; set; }
 
-        public List<string> UsuarioEspacioIds { get; set; } = new();
+        [Required]
+        public List<string> UsuarioEspaciosIds { get; set; }
 
-        public int Karma { get; set; } = 10;
+        [Required]
+        public int karma { get; set; }
 
         public byte[]? Foto { get; set; }
 
         public DateTime? Prorroga { get; set; }
 
+        [Required]
         public List<int> DiasRepeticion { get; set; } = new();
 
     }

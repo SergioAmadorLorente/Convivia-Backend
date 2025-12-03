@@ -36,6 +36,6 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public string? FacturaId { get; set; }
         [FirestoreProperty]
-        public int karma { get; set; } = 0;
+        public int karma { get; set; }
     }
 }

@@ -10,7 +10,7 @@
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
-        public int PuntosKarma { get; set; }
+        public int karma { get; set; }
 
         public bool Estado { get; set; }
 
@@ -22,15 +22,15 @@
         {
         }
 
-        public PlantillaTarea(string id_PlantillaTarea, string nombre, DateTime fechaCreacion, int puntosKarma, bool estado, int repeticion)
+        public PlantillaTarea(string id_PlantillaTarea, string nombre, DateTime fechaCreacion, int karma, bool estado, int repeticion)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
-            if (puntosKarma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
+            if (karma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
 
             PlantillaId = id_PlantillaTarea;
             Nombre = nombre;
             FechaCreacion = fechaCreacion;
-            PuntosKarma = puntosKarma;
+            this.karma = karma;
             Estado = estado;
         }
     }

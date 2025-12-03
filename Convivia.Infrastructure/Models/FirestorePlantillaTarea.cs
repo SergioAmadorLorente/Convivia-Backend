@@ -20,7 +20,7 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public DateTime FechaCreacion { get; set; }
         [FirestoreProperty]
-        public int PuntosKarma { get; set; } = 10;
+        public int karma { get; set; } = 10;
         [FirestoreProperty]
         public bool Estado { get; set; } = true;
         [FirestoreProperty]
