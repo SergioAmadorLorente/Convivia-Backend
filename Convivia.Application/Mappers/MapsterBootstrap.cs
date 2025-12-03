@@ -9,6 +9,10 @@ namespace Convivia.Application.Mappers
         public static void Configure(TypeAdapterConfig config)
         {
             // Register application-level mappings (DTO <-> Domain)
+            
+            // Espacio mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Espacio, EspacioDto, CreateEspacioDto, UpdateEspacioDto>(config);
+
             // Sala mappings
             Config.MapsterConfig.RegisterPair<Sala, SalaDto, CreateSalaDto, UpdateSalaDto>(config);
 
