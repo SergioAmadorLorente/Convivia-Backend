@@ -18,6 +18,9 @@ namespace Convivia.Application.Mappers
             // Invitacion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Invitacion, InvitacionDto, CreateInvitacionDto, UpdateInvitacionDto>(config);
 
+            // Peticion mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Peticion, PeticionDto, CreatePeticionDto, UpdatePeticionDto>(config);
+
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try
             {

@@ -19,6 +19,10 @@ namespace Convivia.Infrastructure.Mappers
             // Invitacion
             config.NewConfig<FireStoreInvitacion, Invitacion>();
             config.NewConfig<Invitacion, FireStoreInvitacion>();
+
+            // Peticion
+            config.NewConfig<FireStorePeticion, Peticion>();
+            config.NewConfig<Peticion, FireStorePeticion>();
         }
 
     }

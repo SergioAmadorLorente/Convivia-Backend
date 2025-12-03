@@ -17,6 +17,7 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IEspacioRepository, EspacioRepository>();
             services.AddScoped<ISalaRepository, SalaRepository>();
+            services.AddScoped<IPeticionRepository, PeticionRepository>();
             services.AddScoped<IPlantillaTareaRepository<PlantillaTarea>, PlantillaTareaRepository>();
             services.AddScoped<ITareaRepository<Tarea>, TareaRepository>();
 

@@ -7,7 +7,7 @@ namespace Convivia.Infrastructure.Models
     /// Coincide exactamente con la estructura en Firebase
     /// </summary>
     [FirestoreData]
-    public class PeticionPersist
+    public class FireStorePeticion
     {
         [FirestoreProperty("Id")]
         public string Id { get; set; } = string.Empty;

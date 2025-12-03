@@ -1,7 +1,6 @@
 ﻿using Convivia.Application.Services;
 using Mapster;
 using Convivia.Infrastructure.Services;
-using Convivia.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Convivia.Application.Mappers.Config;
 using Convivia.Application.Mappers;

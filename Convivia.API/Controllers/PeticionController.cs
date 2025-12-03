@@ -1,4 +1,4 @@
-using Convivia.Application.DTOs;
+using Convivia.Shared.DTOs;
 using Convivia.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -150,5 +150,11 @@ namespace Convivia.API.Controllers
                 return Problem(title: "Error interno", detail: ex.Message);
             }
         }
+    }
+
+    // DTO auxiliar para cambiar estado
+    public class CambiarEstadoPeticionDto
+    {
+        public string Accion { get; set; } = string.Empty;
     }
 }
