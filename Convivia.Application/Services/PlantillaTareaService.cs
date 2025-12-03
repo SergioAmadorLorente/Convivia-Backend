@@ -53,7 +53,7 @@ namespace Convivia.Application.Services
 
             plantilla.Nombre = dto.Nombre ?? plantilla.Nombre;
             plantilla.PuntosKarma = dto.PuntosKarma ?? plantilla.PuntosKarma;
-            plantilla.Disponible = dto.Disponible ?? plantilla.Disponible;
+            plantilla.Estado = dto.Disponible ?? plantilla.Estado;
             plantilla.DiasRepeticion = dto.DiasRepeticion ?? plantilla.DiasRepeticion;
             await _repository.UpdateAsync(plantilla);
             var plantillaDto = _mapper.Map<PlantillaTareaDto>(plantilla);
