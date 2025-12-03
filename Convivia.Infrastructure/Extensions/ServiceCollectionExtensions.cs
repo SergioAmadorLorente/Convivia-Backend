@@ -4,7 +4,8 @@ using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Repositories;
 using Convivia.Infrastructure.Services;
-using Convivia.Domain.Entities; 
+using Convivia.Domain.Entities;
+using Convivia.Domain.Repositories;
 
 namespace Convivia.Infrastructure.Extensions
 {
@@ -18,8 +19,8 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<IEspacioRepository, EspacioRepository>();
             services.AddScoped<ISalaRepository, SalaRepository>();
             services.AddScoped<IPeticionRepository, PeticionRepository>();
-            services.AddScoped<IPlantillaTareaRepository<PlantillaTarea>, PlantillaTareaRepository>();
-            services.AddScoped<ITareaRepository<Tarea>, TareaRepository>();
+            services.AddScoped<IPlantillaTareaRepository, PlantillaTareaRepository>();
+            services.AddScoped<ITareaRepository, TareaRepository>();
 
             // Servicios de infraestructura
             services.AddScoped<IFirebaseService, FirebaseService>();

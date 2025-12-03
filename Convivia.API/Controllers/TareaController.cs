@@ -1,6 +1,7 @@
 using Convivia.Application.DTOs;
 using Convivia.Application.Services;
 using Convivia.Infrastructure.Services;
+using Convivia.Shared.DTOs;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.AspNetCore.Http;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 namespace Convivia.API.Controllers
 {
     [ApiController]
-    [Route("api/tareas")]
+    [Route("api/tareas/{espacioid}")]
     [Produces("application/json")]
     public class TareaController : ControllerBase
     {
@@ -23,37 +24,37 @@ namespace Convivia.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<TareaDto>> CreateTarea(CreateTareaDto dto)
+        public async Task<ActionResult<string>> CreateTarea(string espacioid, CreateTareaDto dto)
         {
-            var TareaDto = await _service.AddAsync(dto);
-            return CreatedAtAction(nameof(GetTareaById), new { id = TareaDto.Id }, TareaDto);
+            var TareaDto = await _service.AddAsync(espacioid, dto);
+            return TareaDto;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<TareaDto>>> GetAllTareas()
+        public async Task<ActionResult<List<TareaDto>>> GetAllTareas(string espacioid)
         {
-            var list = await _service.GetAsync();
+            var list = await _service.GetAsync(espacioid);
             return Ok(list);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TareaDto>> GetTareaById(string id)
+        public async Task<ActionResult<TareaDto>> GetTareaById(string espacioid, string id)
         {
-            var TareaDto = await _service.GetByIdAsync(id);
+            var TareaDto = await _service.GetByIdAsync(espacioid, id);
             return TareaDto != null ? Ok(TareaDto) : NotFound();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTarea(string id)
+        public async Task<IActionResult> DeleteTarea(string espacioid, string id)
         {
-            var deleted = await _service.DeleteAsync(id);
+            var deleted = await _service.DeleteAsync(espacioid, id);
             return deleted ? NoContent() : NotFound();
         }
 
         [HttpPatch("{id}")]
-        public async Task<ActionResult<TareaDto>> UpdateTarea(string id, UpdateTareaDto dto)
+        public async Task<ActionResult<TareaDto>> UpdateTarea(string espacioid, string id, UpdateTareaDto dto)
         {
-            var TareaDto = await _service.UpdateAsync(id, dto);
+            var TareaDto = await _service.UpdateAsync(espacioid, id, dto);
             return TareaDto != null ? Ok(TareaDto) : NotFound();
         }
     }

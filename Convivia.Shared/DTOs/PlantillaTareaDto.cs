@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Convivia.Application.DTOs
+namespace Convivia.Shared.DTOs
 {
     public class PlantillaTareaDto
     {

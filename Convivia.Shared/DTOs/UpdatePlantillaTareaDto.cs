@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Convivia.Application.DTOs
+namespace Convivia.Shared.DTOs
 {
     public class UpdatePlantillaTareaDto
     {
@@ -12,7 +12,7 @@ namespace Convivia.Application.DTOs
 
         public int? PuntosKarma { get; set; }
 
-        public bool? Disponible { get; set; }
+        public bool? Estado { get; set; }
 
         public List<int>? DiasRepeticion { get; set; }
 

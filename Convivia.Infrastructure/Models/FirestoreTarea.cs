@@ -10,16 +10,16 @@ namespace Convivia.Infrastructure.Models
     public class FirestoreTarea
     {
         [FirestoreProperty]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; }
 
         [FirestoreProperty]
         public List<string> UsuarioEspaciosIds { get; set; }
 
         [FirestoreProperty]
-        public DateTime FechaRealizacion { get; set; }
+        public DateTime? FechaRealizacion { get; set; }
 
         [FirestoreProperty]
-        public DateTime FechaLimite { get; set; }
+        public DateTime HoraLimite { get; set; }
 
         [FirestoreProperty]
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria

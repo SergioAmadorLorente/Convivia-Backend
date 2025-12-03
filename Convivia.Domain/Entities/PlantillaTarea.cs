@@ -2,11 +2,13 @@
 {
     public class PlantillaTarea
     {
-        public string PlantillaId { get; set; }
+        public string PlantillaId { get; set; } = Guid.NewGuid().ToString("N");
 
         public string Nombre { get; set; }
 
-        public DateTime FechaCreacion { get; set; }
+        public string Descripcion { get; set; }
+
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
         public int PuntosKarma { get; set; }
 

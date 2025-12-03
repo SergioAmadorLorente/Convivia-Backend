@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Convivia.Application.DTOs
+namespace Convivia.Shared.DTOs
 {
     public class TareaDto
     {
         public string Id { get; set; }
         public string Nombre { get; set; }
-        public DateTime FechaLimite { get; set; }
+        public DateTime HoraLimite { get; set; }
         public string? Descripcion { get; set; }
         public List<string> UsuarioEspacioIds { get; set; } = new();
         public int Karma { get; set; }

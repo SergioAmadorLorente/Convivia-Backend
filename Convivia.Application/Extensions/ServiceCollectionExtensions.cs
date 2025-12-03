@@ -19,6 +19,7 @@ namespace Convivia.Application.Extensions
             services.AddScoped<SalaService>();
             services.AddScoped<PlantillaTareaService>();
             services.AddScoped<PeticionService>();
+            services.AddScoped<TareaService>();
 
 
             // Centralizar Mapster configuration

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Convivia.Application.DTOs
+namespace Convivia.Shared.DTOs
 {
     public class CreateTareaDto
     {
@@ -10,7 +10,7 @@ namespace Convivia.Application.DTOs
         public string Nombre { get; set; }
 
         [Required]
-        public DateTime FechaLimite { get; set; }
+        public DateTime HoraLimite { get; set; }
 
         public string? Descripcion { get; set; }
 

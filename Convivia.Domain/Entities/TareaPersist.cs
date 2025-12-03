@@ -12,7 +12,7 @@ namespace Convivia.Domain.Models
         [FirestoreProperty]
         public string Nombre { get; set; } = default!;
         [FirestoreProperty]
-        public DateTime FechaLimite { get; set; }
+        public DateTime HoraLimite { get; set; }
         [FirestoreProperty]
         public string? Descripcion { get; set; }
         [FirestoreProperty]

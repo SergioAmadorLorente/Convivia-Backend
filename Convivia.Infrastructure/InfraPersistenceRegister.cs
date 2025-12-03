@@ -23,6 +23,15 @@ namespace Convivia.Infrastructure.Mappers
             // Peticion
             config.NewConfig<FireStorePeticion, Peticion>();
             config.NewConfig<Peticion, FireStorePeticion>();
+            
+            // PlantillaTarea
+            config.NewConfig<FirestorePlantillaTarea, PlantillaTarea>();
+            config.NewConfig<PlantillaTarea, FirestorePlantillaTarea>();
+
+            // Tarea
+            config.NewConfig<FirestoreTarea, Tarea>();
+            config.NewConfig<Tarea, FirestoreTarea>();
+
         }
 
     }
