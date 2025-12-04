@@ -35,11 +35,19 @@ namespace Convivia.Infrastructure.Repositories
             return firestoreEntity.Id;
         }
 
-        public async Task<Tarea?> GetAsync(string id, CancellationToken ct = default)
+        public async Task<Tarea?> GetAsync(string espacioid, string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
 
-            var firestoreEntity = await _firebase.GetAsync<FirestoreTarea>(COLLECTION, id);
+            var conditions = new (string field, object val)[]
+            {
+                (nameof(FirestoreTarea.EspacioId), espacioid),
+                (nameof(FirestoreTarea.Id), id)
+            };
+
+            var firestoreEntities = await _firebase.QueryMultipleConditionsAsync<FirestoreTarea>(COLLECTION, conditions, ct);
+            var firestoreEntity = firestoreEntities?.FirstOrDefault();
             var entity = firestoreEntity?.Adapt<Tarea>();
             return entity;
         }

@@ -56,7 +56,7 @@ namespace Convivia.Application.Services
         public async Task<TareaDto?> GetByIdAsync(string espacioid, string id)
         {
 
-            var tarea = await _repository.GetAsync(id);
+            var tarea = await _repository.GetAsync(espacioid, id);
             if (tarea == null) return null;
             return _mapper.Map<TareaDto>(tarea);
 
@@ -65,7 +65,7 @@ namespace Convivia.Application.Services
         public async Task<TareaDto> UpdateAsync(string espacioid, string id, UpdateTareaDto dto)
         {
 
-            var tarea = await _repository.GetAsync(id);
+            var tarea = await _repository.GetAsync(espacioid, id);
             if (tarea == null) throw new ArgumentNullException(nameof(tarea));
 
             tarea.Nombre = dto.Nombre ?? tarea.Nombre;
@@ -87,7 +87,7 @@ namespace Convivia.Application.Services
 
         public async Task<bool> DeleteAsync(string espacioid, string id)
         {
-            var tarea = await _repository.GetAsync(id);
+            var tarea = await _repository.GetAsync(espacioid, id);
             if (tarea == null) return false;
             await _repository.DeleteAsync(id);
             return true;
