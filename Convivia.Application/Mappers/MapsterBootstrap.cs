@@ -9,14 +9,30 @@ namespace Convivia.Application.Mappers
         public static void Configure(TypeAdapterConfig config)
         {
             // Register application-level mappings (DTO <-> Domain)
+            
+            // Espacio mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Espacio, EspacioDto, CreateEspacioDto, UpdateEspacioDto>(config);
+
             // Sala mappings
             Config.MapsterConfig.RegisterPair<Sala, SalaDto, CreateSalaDto, UpdateSalaDto>(config);
 
             // Usuario mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Usuario, UsuarioDto, CreateUsuarioDto, UpdateUsuarioDto>(config);
 
+            // Permiso mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Permiso, PermisoDto, CreatePermisoDto, UpdatePermisoDto>(config);
+
             // Invitacion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Invitacion, InvitacionDto, CreateInvitacionDto, UpdateInvitacionDto>(config);
+
+            // Peticion mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Peticion, PeticionDto, CreatePeticionDto, UpdatePeticionDto>(config);
+            // Tarea mappings (DTO <-> Domain)
+
+            Config.MapsterConfig.RegisterPair<Tarea, TareaDto, CreateTareaDto, UpdateTareaDto>(config);
+
+            // PlantillaTarea mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<PlantillaTarea, PlantillaTareaDto, CreatePlantillaTareaDto, UpdatePlantillaTareaDto>(config);
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try

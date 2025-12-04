@@ -1,114 +1,127 @@
-using Convivia.Infrastructure.Models;
 using Convivia.Domain.Entities;
-using Convivia.Application.Interfaces;
+using Convivia.Shared.DTOs;
+using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
+using Convivia.Infrastructure.Models;
+using Microsoft.Extensions.Logging;
+using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    /// <summary>
-    /// Implementación del repositorio de peticiones usando Firebase
-    /// Toda la lógica de Firestore está encapsulada aquí
-    /// </summary>
     public class PeticionRepository : IPeticionRepository
     {
-        private readonly IFirebaseService _firebaseService;
-        private const string COLLECTION = "peticiones";
+        private readonly IFirebaseService _firebase;
+        private readonly ILogger<PeticionRepository> _logger;
+        private const string Collection = "peticiones";
 
-        public PeticionRepository(IFirebaseService firebaseService)
+        public PeticionRepository(IFirebaseService firebase, ILogger<PeticionRepository> logger)
         {
-            _firebaseService = firebaseService ?? throw new ArgumentNullException(nameof(firebaseService));
+            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<Peticion> AddAsync(Peticion peticion)
+        public async Task<string> AddAsync(PeticionDto peticion, CancellationToken ct = default)
         {
             if (peticion == null) throw new ArgumentNullException(nameof(peticion));
 
-            // Convertir entidad de dominio a modelo de persistencia
-            var persist = new PeticionPersist
+            // Convertir PeticionDto ? Peticion (Domain) ? FireStorePeticion (Firestore)
+            var peticionDomain = peticion.Adapt<Peticion>();
+            var peticionPersist = peticionDomain.Adapt<FireStorePeticion>();
+
+            if (string.IsNullOrWhiteSpace(peticionPersist.Id))
             {
-                Id = peticion.Id,
-                Mensaje = peticion.Mensaje,
-                Fecha = peticion.Fecha,
-                Estado = peticion.Estado,
-                IdSolicitante = peticion.IdSolicitante,
-                IdEspacio = peticion.IdEspacio
-            };
-
-            // Guardar en Firebase
-            await _firebaseService.AddAsync(COLLECTION, peticion.Id, persist);
-
-            return peticion;
-        }
-
-        public async Task<Peticion?> GetByIdAsync(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-
-            var persist = await _firebaseService.GetAsync<PeticionPersist>(COLLECTION, id);
-            if (persist == null) return null;
-
-            // Reconstruir entidad de dominio desde modelo de persistencia
-            return Peticion.Reconstruir(persist.Id, persist.Mensaje, persist.Fecha, persist.Estado, persist.IdSolicitante, persist.IdEspacio);
-        }
-
-        public async Task<List<Peticion>> GetAllAsync()
-        {
-            var persistList = await _firebaseService.GetAllAsync<PeticionPersist>(COLLECTION);
-            
-            var entities = new List<Peticion>();
-            foreach (var persist in persistList)
-            {
-                entities.Add(Peticion.Reconstruir(persist.Id, persist.Mensaje, persist.Fecha, persist.Estado, persist.IdSolicitante, persist.IdEspacio));
+                var generatedId = await _firebase.AddAsync(Collection, peticionPersist, ct);
+                return generatedId;
             }
 
-            return entities;
+            await _firebase.AddAsync(Collection, peticionPersist.Id, peticionPersist, ct);
+            return peticionPersist.Id;
         }
 
-        public async Task<List<Peticion>> GetByEstadoAsync(string estado)
+        public async Task<PeticionDto?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(estado)) throw new ArgumentNullException(nameof(estado));
-
-            var persistList = await _firebaseService.QueryAsync<PeticionPersist>(COLLECTION, "Estado", estado);
-            
-            var entities = new List<Peticion>();
-            foreach (var persist in persistList)
+            if (string.IsNullOrWhiteSpace(id)) return null;
+            try
             {
-                entities.Add(Peticion.Reconstruir(persist.Id, persist.Mensaje, persist.Fecha, persist.Estado, persist.IdSolicitante, persist.IdEspacio));
-            }
+                var peticionPersist = await _firebase.GetAsync<FireStorePeticion>(Collection, id, ct);
+                if (peticionPersist == null) return null;
 
-            return entities;
+                // Convertir FireStorePeticion ? Peticion (Domain) ? PeticionDto
+                var peticionDomain = peticionPersist.Adapt<Peticion>();
+                return peticionDomain.Adapt<PeticionDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
+                throw;
+            }
         }
 
-        public async Task<Peticion> UpdateAsync(Peticion peticion)
+        public async Task<IEnumerable<PeticionDto>> GetAllAsync(CancellationToken ct = default)
         {
+            try
+            {
+                var list = await _firebase.GetAllAsync<FireStorePeticion>(Collection, ct);
+                if (list == null || !list.Any()) return new List<PeticionDto>();
+
+                return list.Select(p => p.Adapt<Peticion>().Adapt<PeticionDto>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetAllAsync");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<PeticionDto>> GetByEstadoAsync(string estado, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(estado)) return Array.Empty<PeticionDto>();
+            try
+            {
+                var list = await _firebase.QueryAsync<FireStorePeticion>(Collection, nameof(FireStorePeticion.Estado), estado, ct);
+                if (list == null || !list.Any()) return new List<PeticionDto>();
+
+                return list.Select(p => p.Adapt<Peticion>().Adapt<PeticionDto>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetByEstadoAsync {Estado}", estado);
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(string id, PeticionDto peticion, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
             if (peticion == null) throw new ArgumentNullException(nameof(peticion));
 
-            // Convertir entidad de dominio a modelo de persistencia
-            var persist = new PeticionPersist
+            try
             {
-                Id = peticion.Id,
-                Mensaje = peticion.Mensaje,
-                Fecha = peticion.Fecha,
-                Estado = peticion.Estado,
-                IdSolicitante = peticion.IdSolicitante,
-                IdEspacio = peticion.IdEspacio
-            };
+                // Convertir PeticionDto ? Peticion (Domain) ? FireStorePeticion
+                var peticionDomain = peticion.Adapt<Peticion>();
+                var peticionPersist = peticionDomain.Adapt<FireStorePeticion>();
 
-            // Actualizar en Firebase
-            await _firebaseService.UpdateAsync(COLLECTION, peticion.Id, persist);
-
-            return peticion;
+                await _firebase.UpdateAsync(Collection, id, peticionPersist, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error UpdateAsync {Id}", id);
+                throw;
+            }
         }
 
-        public async Task<bool> DeleteAsync(string id)
+        public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-
-            var persist = await _firebaseService.GetAsync<PeticionPersist>(COLLECTION, id);
-            if (persist == null) return false;
-
-            await _firebaseService.DeleteAsync(COLLECTION, id);
-            return true;
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+            try
+            {
+                await _firebase.DeleteAsync(Collection, id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
+                throw;
+            }
         }
     }
 }

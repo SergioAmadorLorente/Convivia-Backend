@@ -1,6 +1,6 @@
-using Convivia.Application.DTOs;
 using Convivia.Application.Services;
 using Convivia.Infrastructure.Services;
+using Convivia.Shared.DTOs;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.AspNetCore.Http;
@@ -23,10 +23,10 @@ namespace Convivia.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<PlantillaTareaDto>> CreatePlantilla(CreatePlantillaTareaDto dto)
+        public async Task<ActionResult<string>> CreatePlantilla(CreatePlantillaTareaDto dto)
         {
-            var plantillaDto = await _service.AddAsync(dto);
-            return CreatedAtAction(nameof(GetPlantillaById), new { id = plantillaDto.PlantillaId }, plantillaDto);
+            var plantillaDtoId = await _service.AddAsync(dto);
+            return plantillaDtoId;
         }
 
         [HttpGet]

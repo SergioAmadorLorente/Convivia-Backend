@@ -15,8 +15,18 @@ namespace Convivia.Domain.Entities
         public string IdSolicitante { get; set; }
         public string IdEspacio { get; set; }
 
-        // Constructor privado para reconstruir desde persistencia
-        private Peticion() { }
+        // Constructor público sin parámetros para deserialización y Mapster
+
+        //public Peticion() { }
+        public Peticion() 
+        {
+            Id = string.Empty;
+            Mensaje = string.Empty;
+            Estado = "pendiente";
+            IdSolicitante = string.Empty;
+            IdEspacio = string.Empty;
+            Fecha = DateTime.UtcNow;
+        }
 
         // Constructor para crear nueva peticion
         public Peticion(string id, string mensaje, string idSolicitante, string idEspacio)

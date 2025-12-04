@@ -4,55 +4,53 @@ using System.Text.Json.Serialization;
 
 namespace Convivia.Domain.Entities
 {
-    [FirestoreData]
+
     public class Tarea
     {
-        [FirestoreProperty]
-        public string Id_Tarea { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
-        [JsonIgnore]
+        public string Nombre { get; set; }
+
         public List<UsuarioEspacio> Usuarios { get; set; }
+        
+        public DateTime? FechaRealizacion { get; set; }
 
-        [FirestoreProperty]
-        public DateTime FechaRealizacion { get; set; }
+        public DateTime HoraLimite { get; set; }
 
-        [FirestoreProperty]
-        public DateTime FechaLimite { get; set; }
-
-        [FirestoreProperty]
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
 
-        [FirestoreProperty]
         public DateTime? Prorroga { get; set; } // Puede ser null
 
-        [FirestoreProperty]
         public bool Estado { get; set; }
 
-        [JsonIgnore]
         public Espacio espacio { get; set; }
 
-        [JsonIgnore]
+        public string? FacturaId { get; set; }
+        public string EspacioId { get; set; }
+        public string? PlantillaId { get; set; }
+        public List<string> UsuarioEspaciosIds { get; set; } = new();
+
         public Factura? Factura { get; set; }
-        [FirestoreProperty]
-        public int karma { get; set; } = 10; // Puntos de karma que se otorgan al completar la tarea
+
+        public int karma { get; set; }
 
         public Tarea()
         {
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(List<UsuarioEspacio> usuarios, DateTime fechaRealizacion, DateTime fechaLimite, int karma, byte[]? foto = null, DateTime? prorroga = null, bool estado = false)
+        public Tarea(string nombre, List<string> usuarioEspaciosIds, DateTime horaLimite, int karma, string espacioId, string? plantillaId = null, string? facturaId = null)
         {
-            Usuarios = usuarios;
-            FechaRealizacion = fechaRealizacion;
-            FechaLimite = fechaLimite;
-            Foto = foto;
-            Prorroga = prorroga;
-            Estado = estado;
+            if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
+            if (karma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
+            Nombre = nombre;
+            UsuarioEspaciosIds = usuarioEspaciosIds;
+            HoraLimite = horaLimite;
             this.karma = karma;
+            Estado = false; // Por defecto, la tarea está incompleta
+            EspacioId = espacioId;
+            PlantillaId = plantillaId;
+            FacturaId = facturaId;
         }
-
-        
-
     }
 }

@@ -126,7 +126,7 @@
     "t3": {
       "IdTarea": "t3",
       "Nombre": "Limpiar terraza",
-      "FechaLimite": "2025-07-10T23:59:59Z",
+      "HoraLimite": "2025-07-10T23:59:59Z",
       "Descripcion": "Barrer y fregar la terraza",
       "UsuarioEspacioIds": [ "ue3" ],
       "Karma": 4,
@@ -139,7 +139,7 @@
     "t4": {
       "IdTarea": "t4",
       "Nombre": "Compra de productos de limpieza",
-      "FechaLimite": "2025-07-15T23:59:59Z",
+      "HoraLimite": "2025-07-15T23:59:59Z",
       "Descripcion": "Lejía, bayetas y jabón",
       "UsuarioEspacioIds": [ "ue3", "ue4" ],
       "Karma": 6,
@@ -152,7 +152,7 @@
     "t5": {
       "IdTarea": "t5",
       "Nombre": "Reunión mensual con equipo",
-      "FechaLimite": "2025-08-01T14:00:00Z",
+      "HoraLimite": "2025-08-01T14:00:00Z",
       "Descripcion": "Revisión de objetivos del mes",
       "UsuarioEspacioIds": [ "ue5", "ue6" ],
       "Karma": 2,
@@ -165,7 +165,7 @@
     "t6": {
       "IdTarea": "t6",
       "Nombre": "Comprar café y té",
-      "FechaLimite": "2025-08-05T23:59:59Z",
+      "HoraLimite": "2025-08-05T23:59:59Z",
       "Descripcion": "Reposición para la oficina",
       "UsuarioEspacioIds": [ "ue6" ],
       "Karma": 3,
@@ -178,7 +178,7 @@
     "t7": {
       "IdTarea": "t7",
       "Nombre": "Pago electricidad julio",
-      "FechaLimite": "2025-07-31T23:59:59Z",
+      "HoraLimite": "2025-07-31T23:59:59Z",
       "Descripcion": "Abonar la factura de luz del mes",
       "UsuarioEspacioIds": [ "ue3" ],
       "Karma": 5,
@@ -191,7 +191,7 @@
     "t8": {
       "IdTarea": "t8",
       "Nombre": "Mantenimiento impresora",
-      "FechaLimite": "2025-09-10T23:59:59Z",
+      "HoraLimite": "2025-09-10T23:59:59Z",
       "Descripcion": "Revisión general y cambio de piezas",
       "UsuarioEspacioIds": [ "ue5" ],
       "Karma": 4,
@@ -292,7 +292,7 @@
       "PlantillaId": "pt2",
       "Nombre": "Sacar la basura",
       "FechaCreacion": "2025-01-12T12:00:00Z",
-      "PuntosKarma": 1,
+      "karma": 1,
       "Disponible": true,
       "DiasRepeticion": [ 1 ],
       "TareasId": [ "t4", "t5", "t6" ]
@@ -301,7 +301,7 @@
       "PlantillaId": "pt3",
       "Nombre": "Reponer papel higiénico",
       "FechaCreacion": "2025-02-01T09:00:00Z",
-      "PuntosKarma": 1,
+      "karma": 1,
       "Disponible": true,
       "DiasRepeticion": [ 2 ],
       "TareasId": [ "t4", "t5", "t6" ]
@@ -310,7 +310,7 @@
       "PlantillaId": "pt4",
       "Nombre": "Regar plantas",
       "FechaCreacion": "2025-02-15T09:00:00Z",
-      "PuntosKarma": 1,
+      "karma": 1,
       "Disponible": true,
       "DiasRepeticion": [ 3 ],
       "TareasId": [ "t4", "t5", "t6" ]

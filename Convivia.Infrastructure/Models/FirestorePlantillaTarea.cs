@@ -9,15 +9,20 @@ namespace Convivia.Infrastructure.Models
     public class FirestorePlantillaTarea
     {
         [FirestoreProperty]
-        public string PlantillaId { get; set; } = new Guid().ToString();
+        public string PlantillaId { get; set; }
+
         [FirestoreProperty]
         public string Nombre { get; set; } = default!;
+
+        [FirestoreProperty]
+        public string? Descripcion { get; set; }
+
         [FirestoreProperty]
         public DateTime FechaCreacion { get; set; }
         [FirestoreProperty]
-        public int PuntosKarma { get; set; } = 10;
+        public int karma { get; set; } = 10;
         [FirestoreProperty]
-        public bool Disponible { get; set; } = true;
+        public bool Estado { get; set; } = true;
         [FirestoreProperty]
         public List<int> DiasRepeticion { get; set; } = new();
         [FirestoreProperty]

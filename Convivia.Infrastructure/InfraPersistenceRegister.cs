@@ -12,6 +12,10 @@ namespace Convivia.Infrastructure.Mappers
             config.NewConfig<FireStoreUsuario, Usuario>();
             config.NewConfig<Usuario, FireStoreUsuario>();
 
+            // Espacio
+            config.NewConfig<FireStoreEspacio, Espacio>();
+            config.NewConfig<Espacio, FireStoreEspacio>();
+
             // Sala 
             config.NewConfig<FireStoreSala, Sala>();
             config.NewConfig<Sala, FireStoreSala>();
@@ -19,6 +23,19 @@ namespace Convivia.Infrastructure.Mappers
             // Invitacion
             config.NewConfig<FireStoreInvitacion, Invitacion>();
             config.NewConfig<Invitacion, FireStoreInvitacion>();
+
+            // Peticion
+            config.NewConfig<FireStorePeticion, Peticion>();
+            config.NewConfig<Peticion, FireStorePeticion>();
+            
+            // PlantillaTarea
+            config.NewConfig<FirestorePlantillaTarea, PlantillaTarea>();
+            config.NewConfig<PlantillaTarea, FirestorePlantillaTarea>();
+
+            // Tarea
+            config.NewConfig<FirestoreTarea, Tarea>();
+            config.NewConfig<Tarea, FirestoreTarea>();
+
         }
 
     }

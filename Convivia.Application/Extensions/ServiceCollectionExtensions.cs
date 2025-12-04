@@ -1,7 +1,6 @@
 ﻿using Convivia.Application.Services;
 using Mapster;
 using Convivia.Infrastructure.Services;
-using Convivia.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Convivia.Application.Mappers.Config;
 using Convivia.Application.Mappers;
@@ -20,6 +19,8 @@ namespace Convivia.Application.Extensions
             services.AddScoped<SalaService>();
             services.AddScoped<PlantillaTareaService>();
             services.AddScoped<PeticionService>();
+            services.AddScoped<TareaService>();
+            services.AddScoped<PermisoService>();
 
 
             // Centralizar Mapster configuration

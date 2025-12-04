@@ -8,16 +8,12 @@ using Google.Cloud.Firestore;
 
 namespace Convivia.Shared.DTOs
 {
-    [FirestoreData]
     public class EspacioDto
     {
-        [FirestoreProperty("Id")]
-        public string Id { get; set; } = Guid.NewGuid().ToString(); // <- ahora con setter
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [FirestoreProperty("Nombre")]
         public string Nombre { get; set; }
 
-        [FirestoreProperty("Direccion")]
         public string? Direccion { get; set; }
     }
 }

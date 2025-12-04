@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Convivia.Application.DTOs
+namespace Convivia.Shared.DTOs
 {
     public class PlantillaTareaDto
     {
@@ -11,7 +11,7 @@ namespace Convivia.Application.DTOs
 
         public DateTime FechaCreacion { get; set; }
 
-        public int PuntosKarma { get; set; }
+        public int karma { get; set; }
 
         public bool Disponible { get; set; }
 
