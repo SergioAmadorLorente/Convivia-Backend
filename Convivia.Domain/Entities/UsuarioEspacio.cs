@@ -77,13 +77,10 @@ namespace Convivia.Domain.Entities
             {
                 this.Permiso = Permiso.Admin;
             }
-            else if (rol == "usuario")
-            {
-                this.Permiso = Permiso.Usuario;
-            }
             else
             {
-                this.Permiso = Permiso.Huesped;
+                // Por defecto asignar rol Usuario
+                this.Permiso = Permiso.Usuario;
             }
         }
 
