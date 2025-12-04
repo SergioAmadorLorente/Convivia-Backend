@@ -19,6 +19,9 @@ namespace Convivia.Application.Mappers
             // Usuario mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Usuario, UsuarioDto, CreateUsuarioDto, UpdateUsuarioDto>(config);
 
+            // Permiso mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Permiso, PermisoDto, CreatePermisoDto, UpdatePermisoDto>(config);
+
             // Invitacion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Invitacion, InvitacionDto, CreateInvitacionDto, UpdateInvitacionDto>(config);
 
