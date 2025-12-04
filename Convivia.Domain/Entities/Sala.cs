@@ -4,7 +4,7 @@ namespace Convivia.Domain.Entities
 {
     public class Sala
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         public string Nombre { get; set; } = string.Empty;
 

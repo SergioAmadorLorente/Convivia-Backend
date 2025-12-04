@@ -1,10 +1,9 @@
 ﻿using Convivia.Domain.Entities;
-using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
-using Convivia.Shared.Services;
+using Convivia.Domain.Repositories;
 using Convivia.Infrastructure.Models;
-using Microsoft.Extensions.Logging;
+using Convivia.Shared.Services;
 using Mapster;
+using Microsoft.Extensions.Logging;
 
 namespace Convivia.Infrastructure.Repositories
 {
@@ -20,38 +19,23 @@ namespace Convivia.Infrastructure.Repositories
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(SalaDto sala, CancellationToken ct = default)
+        public async Task<Sala?> AddAsync(Sala entity, CancellationToken ct = default)
         {
-            if (sala == null) throw new ArgumentNullException(nameof(sala));
-            
-            // Convertir SalaDto → Sala (Domain) → FireStoreSala (Firestore)
-            var salaDomain = sala.Adapt<Sala>();
-            var salaPersist = salaDomain.Adapt<FireStoreSala>();
-            
-            if (string.IsNullOrWhiteSpace(salaPersist.Id))
-            {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, salaPersist, ct);
-                return generatedId;
-            }
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-            // Si ya tiene id, lo usamos para crear el documento con ese id
-            await _firebase.AddAsync(Collection, salaPersist.Id, salaPersist, ct);
-            return salaPersist.Id;
+            var fireStoreSala = entity.Adapt<FireStoreSala>();
+            await _firebase.AddAsync(Collection, entity.Id, fireStoreSala, ct);
+
+            return entity;
         }
 
-        public async Task<SalaDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<Sala?> GetByIdAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                // Obtener FireStoreSala de Firestore
-                var salaPersist = await _firebase.GetAsync<FireStoreSala>(Collection, id, ct);
-                if (salaPersist == null) return null;
-                
-                // Convertir FireStoreSala → Sala (Domain) → SalaDto
-                var salaDomain = salaPersist.Adapt<Sala>();
-                return salaDomain.Adapt<SalaDto>();
+                var fsala = await _firebase.GetAsync<FireStoreSala>(Collection, id, ct);
+                return fsala?.Adapt<Sala>();
             }
             catch (Exception ex)
             {
@@ -60,17 +44,13 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task<IEnumerable<SalaDto>> GetByEspacioIdAsync(string idEspacio, CancellationToken ct = default)
+        public async Task<IEnumerable<Sala>> GetByEspacioIdAsync(string idEspacio, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(idEspacio)) return Array.Empty<SalaDto>();
+            if (string.IsNullOrWhiteSpace(idEspacio)) return Array.Empty<Sala>();
             try
             {
-                // Consultar FireStoreSala desde Firestore
                 var list = await _firebase.QueryAsync<FireStoreSala>(Collection, nameof(FireStoreSala.IdEspacio), idEspacio, ct);
-                if (list == null || !list.Any()) return new List<SalaDto>();
-                
-                // Convertir FireStoreSala → Sala (Domain) → SalaDto
-                return list.Select(sp => sp.Adapt<Sala>().Adapt<SalaDto>()).ToList();
+                return list?.Select(fs => fs.Adapt<Sala>()) ?? new List<Sala>();
             }
             catch (Exception ex)
             {
@@ -79,24 +59,13 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task UpdateAsync(string id, SalaDto sala, CancellationToken ct = default)
+        public async Task<Sala?> UpdateAsync(string id, Sala entity, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            if (sala == null) throw new ArgumentNullException(nameof(sala));
+            var fsala = entity.Adapt<FireStoreSala>();
+            await _firebase.UpdateAsync(Collection, id, fsala, ct);
 
-            try
-            {
-                // Convertir SalaDto → Sala (Domain) → FireStoreSala
-                var salaDomain = sala.Adapt<Sala>();
-                var salaPersist = salaDomain.Adapt<FireStoreSala>();
-                
-                await _firebase.UpdateAsync(Collection, id, salaPersist, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error UpdateAsync {Id}", id);
-                throw;
-            }
+            var updated = await _firebase.GetAsync<FireStoreSala>(Collection, id, ct);
+            return updated?.Adapt<Sala>();
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
@@ -111,6 +80,12 @@ namespace Convivia.Infrastructure.Repositories
                 _logger.LogError(ex, "Error DeleteAsync {Id}", id);
                 throw;
             }
+        }
+
+        public async Task<IEnumerable<Sala>> GetAllAsync(CancellationToken ct = default)
+        {
+            var list = await _firebase.GetAllAsync<FireStoreSala>(Collection, ct);
+            return list.Select(fs => fs.Adapt<Sala>());
         }
     }
 }
