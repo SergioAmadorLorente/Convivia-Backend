@@ -1,84 +1,69 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Convivia.Application.Services;
 using Convivia.Shared.DTOs;
-using Convivia.Application.Services;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Convivia.API.Controllers
+namespace Convivia.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class SalaController : ControllerBase
     {
         private readonly SalaService _service;
+        private readonly ILogger<SalaController> _logger;
 
-        public SalaController(SalaService service)
+        public SalaController(SalaService service, ILogger<SalaController> logger)
         {
-            _service = service;
+            _service = service ?? throw new ArgumentNullException(nameof(service));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        // POST: api/sala
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateSalaDto model, CancellationToken ct)
+        public async Task<ActionResult<SalaDto>> Crear([FromBody] CreateSalaDto dto, CancellationToken ct)
         {
-            if (model == null) return BadRequest();
-
-            if (string.IsNullOrWhiteSpace(model.Nombre) ||
-                string.IsNullOrWhiteSpace(model.Descripcion) ||
-                string.IsNullOrWhiteSpace(model.IdEspacio))
-            {
-                return BadRequest("Nombre, Descripcion y IdEspacio son requeridos.");
-            }
-            var id = await _service.CrearAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+            var result = await _service.AddAsync(dto, ct);
+            if (result == null) return BadRequest("No se pudo crear la sala");
+            return CreatedAtAction(nameof(ObtenerPorId), new { id = result.Id }, result);
         }
 
+        // GET: api/sala/{id}
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(string id, CancellationToken ct)
+        public async Task<ActionResult<SalaDto>> ObtenerPorId(string id, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-            var sala = await _service.ObtenerPorIdAsync(id, ct);
-            if (sala == null) return NotFound();
-            return Ok(sala);
+            var result = await _service.ObtenerPorIdAsync(id, ct);
+            if (result == null) return NotFound();
+            return Ok(result);
         }
 
-        [HttpGet("por-espacio/{idEspacio}")]
-        public async Task<IActionResult> GetByEspacioId(string idEspacio, CancellationToken ct)
+        // GET: api/sala/espacio/{idEspacio}
+        [HttpGet("espacio/{idEspacio}")]
+        public async Task<ActionResult<IEnumerable<SalaDto>>> ObtenerPorEspacio(string idEspacio, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(idEspacio)) return BadRequest();
-            var list = await _service.ObtenerPorEspacioAsync(idEspacio, ct);
-            return Ok(list);
+            var result = await _service.ObtenerPorEspacioAsync(idEspacio, ct);
+            return Ok(result);
         }
 
-        // PUT = reemplazo completo: usar CreateSalaDto (campos obligatorios) y Servicio.ActualizarAsync espera CreateSalaDto
+        // PUT: api/sala/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] CreateSalaDto model, CancellationToken ct)
+        public async Task<ActionResult<SalaDto>> Actualizar(string id, [FromBody] UpdateSalaDto dto, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
-            if (string.IsNullOrWhiteSpace(model.Nombre) ||
-                string.IsNullOrWhiteSpace(model.Descripcion) ||
-                string.IsNullOrWhiteSpace(model.IdEspacio))
-            {
-                return BadRequest("Nombre, Descripcion y IdEspacio son requeridos.");
-            }
-
-            await _service.ActualizarAsync(id, model, ct);
-            return NoContent();
+            var result = await _service.UpdateAsync(id, dto, ct);
+            return Ok(result);
         }
 
-        // PATCH = actualización parcial: usar UpdateSalaDto y Servicio.ParcialActualizarAsync
+        // PATCH: api/sala/{id}
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Patch(string id, [FromBody] UpdateSalaDto model, CancellationToken ct)
+        public async Task<ActionResult> ActualizacionParcial(string id, [FromBody] UpdateSalaDto dto, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
-            var updated = await _service.ParcialActualizarAsync(id, model, ct);
-            if (!updated) return NotFound();
+            var result = await _service.ParcialActualizarAsync(id, dto, ct);
+            if (!result) return NotFound();
             return NoContent();
         }
 
+        // DELETE: api/sala/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id, CancellationToken ct)
+        public async Task<ActionResult> Eliminar(string id, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
             await _service.EliminarAsync(id, ct);
             return NoContent();
         }
