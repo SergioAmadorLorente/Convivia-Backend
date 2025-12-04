@@ -21,6 +21,7 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<IPeticionRepository, PeticionRepository>();
             services.AddScoped<IPlantillaTareaRepository, PlantillaTareaRepository>();
             services.AddScoped<ITareaRepository, TareaRepository>();
+            services.AddScoped<IPermisoRepository, PermisoRepository>();
 
             // Servicios de infraestructura
             services.AddScoped<IFirebaseService, FirebaseService>();
