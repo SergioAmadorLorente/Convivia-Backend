@@ -2,6 +2,7 @@ namespace Convivia.Domain.Entities
 {
     public class Rol
     {
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
         public string Nombre { get; set; }
         public bool CrearTarea { get; set; }
         public bool EliminarTarea { get; set; }

@@ -14,6 +14,7 @@ namespace Convivia.Application.Services
     {
         private readonly IPermisoRepository _repo;
         private readonly ILogger<PermisoService> _logger;
+        private static readonly string[] RolesValidos = { "Usuario", "Admin" };
 
         public PermisoService(IPermisoRepository repo, ILogger<PermisoService> logger)
         {
@@ -27,25 +28,56 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(dto.Rol)) throw new ArgumentException("Rol requerido");
 
             // Validar que el rol sea válido
-            if (!Permiso.EsRolValido(dto.Rol))
+            if (!EsRolValido(dto.Rol))
             {
-                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", Permiso.RolesValidos)}");
+                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
             }
 
-            // Usar los permisos predefinidos según el rol
+            // Crear permiso con el rol apropiado
             Permiso permisoDomain;
+            Rol rolDomain = new Rol();
+            
             if (dto.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
-                permisoDomain = new Permiso();
-                permisoDomain.SetConfigurarcionAdmin();
+                rolDomain.SetConfigurarcionAdmin();
+                permisoDomain = new Permiso(
+                    rolDomain,
+                    crearTarea: rolDomain.CrearTarea,
+                    eliminarTarea: rolDomain.EliminarTarea,
+                    editarTarea: rolDomain.EditarTarea,
+                    añadirUsuario: rolDomain.AñadirUsuario,
+                    eliminarUsuario: rolDomain.EliminarUsuario,
+                    asignarTarea: rolDomain.AsignarTarea,
+                    asignarseTarea: rolDomain.AsignarseTarea
+                );
             }
             else // Usuario por defecto
             {
-                permisoDomain = new Permiso();
-                permisoDomain.SetConfigurarcionUsuario();
+                rolDomain.SetConfigurarcionUsuario();
+                permisoDomain = new Permiso(
+                    rolDomain,
+                    crearTarea: rolDomain.CrearTarea,
+                    eliminarTarea: rolDomain.EliminarTarea,
+                    editarTarea: rolDomain.EditarTarea,
+                    añadirUsuario: rolDomain.AñadirUsuario,
+                    eliminarUsuario: rolDomain.EliminarUsuario,
+                    asignarTarea: rolDomain.AsignarTarea,
+                    asignarseTarea: rolDomain.AsignarseTarea
+                );
             }
 
-            var permisoDto = permisoDomain.Adapt<PermisoDto>();
+            var permisoDto = new PermisoDto
+            {
+                Id = permisoDomain.Id,
+                Rol = permisoDomain.Rol.Nombre,
+                CrearTarea = permisoDomain.CrearTarea,
+                EliminarTarea = permisoDomain.EliminarTarea,
+                EditarTarea = permisoDomain.EditarTarea,
+                AñadirUsuario = permisoDomain.AñadirUsuario,
+                EliminarUsuario = permisoDomain.EliminarUsuario,
+                AsignarTarea = permisoDomain.AsignarTarea,
+                AsignarseTarea = permisoDomain.AsignarseTarea
+            };
 
             try
             {
@@ -77,9 +109,9 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(rol)) return Array.Empty<PermisoDto>();
             
             // Validar que el rol sea válido
-            if (!Permiso.EsRolValido(rol))
+            if (!EsRolValido(rol))
             {
-                throw new ArgumentException($"Rol '{rol}' no válido. Los roles permitidos son: {string.Join(", ", Permiso.RolesValidos)}");
+                throw new ArgumentException($"Rol '{rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
             }
 
             try
@@ -115,32 +147,32 @@ namespace Convivia.Application.Services
             if (existing == null) throw new KeyNotFoundException("Permiso no encontrado");
 
             // Validar rol si se está actualizando
-            if (dto.Rol != null && !Permiso.EsRolValido(dto.Rol))
+            if (dto.Rol != null && !EsRolValido(dto.Rol))
             {
-                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", Permiso.RolesValidos)}");
+                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
             }
 
             // Si se está cambiando el rol, aplicar la configuración predefinida
             if (dto.Rol != null && dto.Rol != existing.Rol)
             {
-                var permisoDomain = new Permiso();
+                var rolDomain = new Rol();
                 if (dto.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
                 {
-                    permisoDomain.SetConfigurarcionAdmin();
+                    rolDomain.SetConfigurarcionAdmin();
                 }
                 else
                 {
-                    permisoDomain.SetConfigurarcionUsuario();
+                    rolDomain.SetConfigurarcionUsuario();
                 }
                 
-                existing.Rol = permisoDomain.Rol;
-                existing.CrearTarea = permisoDomain.CrearTarea;
-                existing.EliminarTarea = permisoDomain.EliminarTarea;
-                existing.EditarTarea = permisoDomain.EditarTarea;
-                existing.AñadirUsuario = permisoDomain.AñadirUsuario;
-                existing.EliminarUsuario = permisoDomain.EliminarUsuario;
-                existing.AsignarTarea = permisoDomain.AsignarTarea;
-                existing.AsignarseTarea = permisoDomain.AsignarseTarea;
+                existing.Rol = rolDomain.Nombre;
+                existing.CrearTarea = rolDomain.CrearTarea;
+                existing.EliminarTarea = rolDomain.EliminarTarea;
+                existing.EditarTarea = rolDomain.EditarTarea;
+                existing.AñadirUsuario = rolDomain.AñadirUsuario;
+                existing.EliminarUsuario = rolDomain.EliminarUsuario;
+                existing.AsignarTarea = rolDomain.AsignarTarea;
+                existing.AsignarseTarea = rolDomain.AsignarseTarea;
             }
             else
             {
@@ -179,6 +211,12 @@ namespace Convivia.Application.Services
                 _logger.LogError(ex, "Error EliminarPermiso {Id}", id);
                 throw;
             }
+        }
+
+        private static bool EsRolValido(string rol)
+        {
+            return !string.IsNullOrWhiteSpace(rol) && 
+                   RolesValidos.Contains(rol, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

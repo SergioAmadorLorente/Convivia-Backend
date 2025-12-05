@@ -3,39 +3,38 @@ using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Convivia.Application.Services;
-using Convivia.Domain.Entities;
 
 namespace Convivia.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PermisosController : ControllerBase
+    public class RolController : ControllerBase
     {
-        private readonly PermisoService _service;
-        private static readonly string[] RolesValidos = { "Usuario", "Admin" };
+        private readonly RolService _service;
+        private static readonly string[] NombresValidos = { "Usuario", "Admin" };
 
-        public PermisosController(PermisoService service)
+        public RolController(RolService service)
         {
             _service = service;
         }
 
-        // POST api/permisos
+        // POST api/rol
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreatePermisoDto model, CancellationToken ct)
+        public async Task<IActionResult> Create([FromBody] CreateRolDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
-            if (string.IsNullOrWhiteSpace(model.Rol))
+            if (string.IsNullOrWhiteSpace(model.Nombre))
             {
-                return BadRequest("Rol es requerido.");
+                return BadRequest("Nombre es requerido.");
             }
 
-            // Validar que el rol sea válido
-            if (!EsRolValido(model.Rol))
+            // Validar que el nombre sea válido
+            if (!EsNombreValido(model.Nombre))
             {
                 return BadRequest(new
                 {
-                    error = $"Rol '{model.Rol}' no válido.",
-                    rolesPermitidos = RolesValidos
+                    error = $"Nombre '{model.Nombre}' no válido.",
+                    nombresPermitidos = NombresValidos
                 });
             }
 
@@ -50,18 +49,18 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // GET api/permisos/{id}
+        // GET api/rol/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
 
-            var permiso = await _service.ObtenerPorIdAsync(id, ct);
-            if (permiso == null) return NotFound();
-            return Ok(permiso);
+            var rol = await _service.ObtenerPorIdAsync(id, ct);
+            if (rol == null) return NotFound();
+            return Ok(rol);
         }
 
-        // GET api/permisos
+        // GET api/rol
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
@@ -69,13 +68,13 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // GET api/permisos/roles-validos
-        [HttpGet("roles-validos")]
-        public IActionResult GetRolesValidos()
+        // GET api/rol/nombres-validos
+        [HttpGet("nombres-validos")]
+        public IActionResult GetNombresValidos()
         {
             return Ok(new
             {
-                roles = RolesValidos,
+                nombres = NombresValidos,
                 descripcion = new
                 {
                     Usuario = "Puede crear y editar tareas, y asignarse tareas",
@@ -84,26 +83,27 @@ namespace Convivia.API.Controllers
             });
         }
 
-        // GET api/permisos/por-rol/{rol}
-        [HttpGet("rol/{rol}")]
-        public async Task<IActionResult> GetByRol(string rol, CancellationToken ct)
+        // GET api/rol/por-nombre/{nombre}
+        [HttpGet("nombre/{nombre}")]
+        public async Task<IActionResult> GetByNombre(string nombre, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(rol)) return BadRequest("Rol es requerido.");
+            if (string.IsNullOrWhiteSpace(nombre)) return BadRequest("Nombre es requerido.");
 
-            // Validar que el rol sea válido
-            if (!EsRolValido(rol))
+            // Validar que el nombre sea válido
+            if (!EsNombreValido(nombre))
             {
                 return BadRequest(new
                 {
-                    error = $"Rol '{rol}' no válido.",
-                    rolesPermitidos = RolesValidos
+                    error = $"Nombre '{nombre}' no válido.",
+                    nombresPermitidos = NombresValidos
                 });
             }
 
             try
             {
-                var list = await _service.ObtenerPorRolAsync(rol, ct);
-                return Ok(list);
+                var rol = await _service.ObtenerPorNombreAsync(nombre, ct);
+                if (rol == null) return NotFound();
+                return Ok(rol);
             }
             catch (ArgumentException ex)
             {
@@ -111,20 +111,20 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // PUT api/permisos/{id}
+        // PUT api/rol/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
+        public async Task<IActionResult> Update(string id, [FromBody] UpdateRolDto model, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
 
-            // Validar rol si se está actualizando
-            if (model.Rol != null && !EsRolValido(model.Rol))
+            // Validar nombre si se está actualizando
+            if (model.Nombre != null && !EsNombreValido(model.Nombre))
             {
                 return BadRequest(new
                 {
-                    error = $"Rol '{model.Rol}' no válido.",
-                    rolesPermitidos = RolesValidos
+                    error = $"Nombre '{model.Nombre}' no válido.",
+                    nombresPermitidos = NombresValidos
                 });
             }
 
@@ -144,7 +144,7 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // DELETE api/permisos/{id}
+        // DELETE api/rol/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
@@ -155,10 +155,10 @@ namespace Convivia.API.Controllers
             return NoContent();
         }
 
-        private static bool EsRolValido(string rol)
+        private static bool EsNombreValido(string nombre)
         {
-            return !string.IsNullOrWhiteSpace(rol) && 
-                   RolesValidos.Contains(rol, StringComparer.OrdinalIgnoreCase);
+            return !string.IsNullOrWhiteSpace(nombre) && 
+                   NombresValidos.Contains(nombre, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

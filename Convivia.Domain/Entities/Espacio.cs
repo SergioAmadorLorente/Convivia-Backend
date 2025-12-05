@@ -94,11 +94,24 @@ namespace Convivia.Domain.Entities
             if (!Peticiones.Any(p => p.IdSolicitante == usuario.Id))
                 throw new InvalidOperationException("No existe una petición para este usuario.");
 
+            var rolUsuario = new Rol();
+            rolUsuario.SetConfigurarcionUsuario();
+            var permisoUsuario = new Permiso(
+                rolUsuario,
+                crearTarea: rolUsuario.CrearTarea,
+                eliminarTarea: rolUsuario.EliminarTarea,
+                editarTarea: rolUsuario.EditarTarea,
+                añadirUsuario: rolUsuario.AñadirUsuario,
+                eliminarUsuario: rolUsuario.EliminarUsuario,
+                asignarTarea: rolUsuario.AsignarTarea,
+                asignarseTarea: rolUsuario.AsignarseTarea
+            );
+
             UsuarioEspacio usuarioEspacio = new UsuarioEspacio
             {
                 Usuario = usuario,
                 Espacio = this,
-                Permiso = Permiso.Usuario,
+                Permiso = permisoUsuario,
                 Ausente = false,
                 Karma = 0
             };

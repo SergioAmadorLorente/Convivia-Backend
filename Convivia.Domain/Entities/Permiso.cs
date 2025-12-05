@@ -12,13 +12,9 @@ namespace Convivia.Domain.Entities
         public bool AsignarTarea { get; set; }
         public bool AsignarseTarea { get; set; }
 
-       
-
-        
-
         public Permiso()
         {
-            
+            Rol = new Rol();
         }
         
         public Permiso(
@@ -31,9 +27,7 @@ namespace Convivia.Domain.Entities
                 bool asignarTarea = false,
                 bool asignarseTarea = true)
         {
-           
-
-            this.Rol = rol;
+            this.Rol = rol ?? new Rol();
             this.CrearTarea = crearTarea;
             this.EliminarTarea = eliminarTarea;
             this.EditarTarea = editarTarea;
@@ -42,9 +36,5 @@ namespace Convivia.Domain.Entities
             this.AsignarTarea = asignarTarea;
             this.AsignarseTarea = asignarseTarea;
         }
-
-       
-
-       
     }
 }
