@@ -5,6 +5,7 @@ using Convivia.Infrastructure.Models;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
+using Google.Cloud.Firestore;
 using Mapster;
 using Microsoft.Extensions.Logging;
 using System;
