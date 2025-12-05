@@ -27,12 +27,19 @@ namespace Convivia.Application.Mappers
 
             // Peticion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Peticion, PeticionDto, CreatePeticionDto, UpdatePeticionDto>(config);
-            // Tarea mappings (DTO <-> Domain)
 
+            // Tarea mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Tarea, TareaDto, CreateTareaDto, UpdateTareaDto>(config);
 
             // PlantillaTarea mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<PlantillaTarea, PlantillaTareaDto, CreatePlantillaTareaDto, UpdatePlantillaTareaDto>(config);
+
+            // Custom: map CreateTareaDto -> CreatePlantillaTareaDto
+            config.NewConfig<CreateTareaDto, CreatePlantillaTareaDto>()
+                .Map(dest => dest.Nombre, src => src.Nombre)
+                .Map(dest => dest.Descripcion, src => src.Descripcion)
+                .Map(dest => dest.karma, src => src.karma)
+                .Map(dest => dest.DiasRepeticion, src => src.DiasRepeticion);
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try

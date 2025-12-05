@@ -8,6 +8,7 @@ using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
 using Google.Apis.Util;
+using Mapster;
 using MapsterMapper;
 using System;
 using System.Collections.Generic;
@@ -30,14 +31,26 @@ namespace Convivia.Application.Services
 
         public async Task<string> AddAsync(string espacioid, CreateTareaDto dto)
         {
-
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
+
+            var plantillaId = await _ptservice.AddAsync(createPlantilla);
+
             var tarea = _mapper.Map<Tarea>(dto);
             tarea.EspacioId = espacioid;
-            // falta crear també plantillatarea i enllaçar-la
-            var id = await _repository.AddAsync(tarea);
-            return id;
+            tarea.PlantillaId = plantillaId;
 
+            var id = await _repository.AddAsync(tarea);
+
+            var plantilla = await _ptservice.GetByIdAsync(plantillaId);
+            if (plantilla != null)
+            {
+                plantilla.TareasId.Add(id);
+                await _ptservice.UpdateAsync(plantilla.PlantillaId, new UpdatePlantillaTareaDto { Nombre = plantilla.Nombre, karma = plantilla.karma, DiasRepeticion = plantilla.DiasRepeticion });
+            }
+
+            return id;
         }
 
         public async Task<IEnumerable<TareaDto>> GetAsync()
@@ -55,34 +68,23 @@ namespace Convivia.Application.Services
 
         public async Task<TareaDto?> GetByIdAsync(string espacioid, string id)
         {
-
             var tarea = await _repository.GetAsync(espacioid, id);
             if (tarea == null) return null;
             return _mapper.Map<TareaDto>(tarea);
-
         }
 
         public async Task<TareaDto> UpdateAsync(string espacioid, string id, UpdateTareaDto dto)
         {
-
             var tarea = await _repository.GetAsync(espacioid, id);
             if (tarea == null) throw new ArgumentNullException(nameof(tarea));
+            tarea = _mapper.Map<Tarea>(dto);
 
-            tarea.Nombre = dto.Nombre ?? tarea.Nombre;
-            tarea.karma = dto.karma ?? tarea.karma;
-            tarea.Estado = dto.Estado ?? tarea.Estado;
-            tarea.HoraLimite = dto.HoraLimite ?? tarea.HoraLimite;
-            tarea.UsuarioEspaciosIds = dto.UsuarioEspaciosIds ?? tarea.UsuarioEspaciosIds;
-            tarea.Foto = dto.Foto ?? tarea.Foto;
-            tarea.Prorroga = dto.Prorroga ?? tarea.Prorroga;
-            tarea.FacturaId = dto.FacturaId ?? tarea.FacturaId;
-
-            // falta descripcio enllaçar en plantillatarea, i eliminar nullable plantillaid als dtos
+            if (!string.IsNullOrWhiteSpace(dto.PlantillaId)) tarea.PlantillaId = dto.PlantillaId;
+            if (!string.IsNullOrWhiteSpace(dto.SalaId)) tarea.SalaId = dto.SalaId;
 
             await _repository.UpdateAsync(id, tarea);
             var tareaDto = _mapper.Map<TareaDto>(tarea);
             return tareaDto;
-
         }
 
         public async Task<bool> DeleteAsync(string espacioid, string id)

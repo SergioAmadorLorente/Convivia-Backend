@@ -13,11 +13,9 @@ namespace Convivia.Shared.DTOs
 
         public int karma { get; set; }
 
-        public bool Disponible { get; set; }
-
         public List<int> DiasRepeticion { get; set; }
 
-        public List<string> TareasId { get; set; }
+        public List<string> TareasId { get; set; } = new();
 
     }
 }

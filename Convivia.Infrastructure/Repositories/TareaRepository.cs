@@ -11,14 +11,12 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Convivia.Infrastructure.Repositories
 {
     public class TareaRepository : ITareaRepository
     {
-        private const string COLLECTION = "tareas";
         private readonly IFirebaseService _firebase;
         private readonly ILogger<TareaRepository> _logger;
 
@@ -28,26 +26,36 @@ namespace Convivia.Infrastructure.Repositories
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        private string GetSubcollectionPath(string plantillaId)
+        {
+            if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("plantillaId requerido", nameof(plantillaId));
+            return $"plantillatareas/{plantillaId}/tareas";
+        }
+
         public async Task<string> AddAsync(Tarea tarea, CancellationToken ct = default)
         {
             if (tarea == null) throw new ArgumentNullException(nameof(tarea));
+            if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
+
             var firestoreEntity = tarea.Adapt<FirestoreTarea>();
-            await _firebase.AddAsync(COLLECTION, firestoreEntity.Id, firestoreEntity);
-            return firestoreEntity.Id;
+            var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
+            await _firebase.AddAsync(subcollectionPath, firestoreEntity, ct);
+            return tarea.Id;
         }
 
         public async Task<Tarea?> GetAsync(string espacioid, string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentException("espacioid requerido", nameof(espacioid));
 
+            // Query collection group 'tareas' across all plantillas where EspacioId == espacioid and Id == id
             var conditions = new (string field, object val)[]
             {
                 (nameof(FirestoreTarea.EspacioId), espacioid),
                 (nameof(FirestoreTarea.Id), id)
             };
 
-            var firestoreEntities = await _firebase.QueryMultipleConditionsAsync<FirestoreTarea>(COLLECTION, conditions, ct);
+            var firestoreEntities = await _firebase.QueryMultipleConditionsAsync<FirestoreTarea>("plantillatareas/*/tareas", conditions, ct);
             var firestoreEntity = firestoreEntities?.FirstOrDefault();
             var entity = firestoreEntity?.Adapt<Tarea>();
             return entity;
@@ -55,18 +63,19 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task<List<Tarea?>> GetAllByEspacioIdAsync(string espacioid, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentException("espacioid requerido", nameof(espacioid));
 
-            if(string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
-            var entidadesEspacio = await _firebase.QueryAsync<FirestoreTarea>(COLLECTION, nameof(FirestoreTarea.EspacioId), espacioid);
-            List<Tarea> lista = new List<Tarea>();
-            if (!entidadesEspacio.Any())
+            // Use collection group to query all tareas across all plantillas by EspacioId
+            var firestoreEntities = await _firebase.QueryCollectionGroupAsync<FirestoreTarea>("tareas", nameof(FirestoreTarea.EspacioId), espacioid, ct);
+            var lista = new List<Tarea?>();
+
+            if (firestoreEntities == null || !firestoreEntities.Any())
                 return lista;
-            foreach(var pte in entidadesEspacio)
+
+            foreach (var entity in firestoreEntities)
             {
-
-                var entidadmapeada = pte.Adapt<Tarea>();
-                lista.Add(entidadmapeada);
-
+                var mappedEntity = entity.Adapt<Tarea>();
+                lista.Add(mappedEntity);
             }
 
             return lista;
@@ -74,17 +83,17 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task<List<Tarea>> GetAllAsync(CancellationToken ct = default)
         {
-            var firestoreEntities = await _firebase.GetAllAsync<FirestoreTarea>(COLLECTION);
-
-            List<Tarea> lista = new List<Tarea>();
+            // Return all tareas across all plantillas using collection group
+            var firestoreEntities = await _firebase.QueryCollectionGroupAllAsync<FirestoreTarea>("tareas", ct);
+            var lista = new List<Tarea>();
 
             if (firestoreEntities == null || !firestoreEntities.Any())
                 return lista;
 
             foreach (var entity in firestoreEntities)
             {
-                var entitytarea = entity.Adapt<Tarea>();
-                lista.Add(entitytarea);
+                var mappedEntity = entity.Adapt<Tarea>();
+                lista.Add(mappedEntity);
             }
 
             return lista;
@@ -92,17 +101,29 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task UpdateAsync(string id, Tarea tarea, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
             if (tarea == null) throw new ArgumentNullException(nameof(tarea));
+            if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
 
             var firestoreEntity = tarea.Adapt<FirestoreTarea>();
-            await _firebase.UpdateAsync(COLLECTION, firestoreEntity.Id, firestoreEntity);
-
+            var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
+            await _firebase.UpdateAsync(subcollectionPath, id, firestoreEntity, cancellationToken: ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            await _firebase.DeleteAsync(COLLECTION, id);
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+
+            // Find the tarea in collection group to obtain plantillaId
+            var matches = await _firebase.QueryCollectionGroupAsync<FirestoreTarea>("tareas", nameof(FirestoreTarea.Id), id, ct);
+            var found = matches?.FirstOrDefault();
+            if (found == null) throw new KeyNotFoundException($"Tarea {id} no encontrada");
+
+            var plantillaId = found.PlantillaId;
+            if (string.IsNullOrWhiteSpace(plantillaId)) throw new InvalidOperationException("PlantillaId no presente en el documento de tarea.");
+
+            var subcollectionPath = GetSubcollectionPath(plantillaId);
+            await _firebase.DeleteAsync(subcollectionPath, id, ct);
         }
     }
 }

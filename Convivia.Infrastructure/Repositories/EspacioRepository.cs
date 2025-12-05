@@ -28,12 +28,6 @@ namespace Convivia.Infrastructure.Repositories
             var espacioDomain = espacio.Adapt<Espacio>();
             var espacioPersist = espacioDomain.Adapt<FireStoreEspacio>();
 
-            if (string.IsNullOrWhiteSpace(espacioPersist.Id))
-            {
-                var generatedId = await _firebase.AddAsync(Collection, espacioPersist, ct);
-                return generatedId;
-            }
-
             await _firebase.AddAsync(Collection, espacioPersist.Id, espacioPersist, ct);
             return espacioPersist.Id;
         }

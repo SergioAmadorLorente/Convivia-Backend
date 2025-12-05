@@ -12,8 +12,6 @@ namespace Convivia.Shared.DTOs
 
         public int? karma { get; set; }
 
-        public bool? Estado { get; set; }
-
         public List<int>? DiasRepeticion { get; set; }
 
     }

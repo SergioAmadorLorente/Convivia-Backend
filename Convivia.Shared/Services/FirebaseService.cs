@@ -31,15 +31,13 @@ namespace Convivia.Infrastructure.Services
         }
 
         // Dejar que Firestore genere id y devolverlo (y asignarlo si la entidad tiene propiedad Id)
-        public async Task<string> AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
+        public async Task AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
             if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-            var docRef = await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
-            var id = docRef.Id;
-            SetIdIfPossible(entity, id);
-            return id;
+            await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
+
         }
 
         // Método que exige la interfaz original
@@ -167,6 +165,55 @@ namespace Convivia.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
             var snap = await _db.Collection(collection).GetSnapshotAsync(cancellationToken);
             return snap.Documents.Count;
+        }
+
+        public async Task<List<T>> QueryCollectionGroupAsync<T>(string subcollectionName, string field, object value, CancellationToken cancellationToken = default) where T : class
+        {
+            if (string.IsNullOrWhiteSpace(subcollectionName)) throw new ArgumentException("subcollection required", nameof(subcollectionName));
+            if (string.IsNullOrWhiteSpace(field)) throw new ArgumentException("field required", nameof(field));
+
+            var q = _db.CollectionGroup(subcollectionName).WhereEqualTo(field, value);
+            var snap = await q.GetSnapshotAsync(cancellationToken);
+            var result = new List<T>();
+            foreach (var doc in snap.Documents)
+            {
+                try
+                {
+                    var entity = doc.ConvertTo<T>();
+                    SetIdIfPossible(entity, doc.Id);
+                    if (entity != null) result.Add(entity);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error converting document {DocumentId} in QueryCollectionGroupAsync", doc.Id);
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<List<T>> QueryCollectionGroupAllAsync<T>(string subcollectionName, CancellationToken cancellationToken = default) where T : class
+        {
+            if (string.IsNullOrWhiteSpace(subcollectionName)) throw new ArgumentException("subcollection required", nameof(subcollectionName));
+
+            var q = _db.CollectionGroup(subcollectionName);
+            var snap = await q.GetSnapshotAsync(cancellationToken);
+            var result = new List<T>();
+            foreach (var doc in snap.Documents)
+            {
+                try
+                {
+                    var entity = doc.ConvertTo<T>();
+                    SetIdIfPossible(entity, doc.Id);
+                    if (entity != null) result.Add(entity);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error converting document {DocumentId} in QueryCollectionGroupAllAsync", doc.Id);
+                }
+            }
+
+            return result;
         }
 
         // Helper: intenta asignar la propiedad Id si existe

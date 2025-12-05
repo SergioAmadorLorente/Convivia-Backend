@@ -22,8 +22,6 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public int karma { get; set; } = 10;
         [FirestoreProperty]
-        public bool Estado { get; set; } = true;
-        [FirestoreProperty]
         public List<int> DiasRepeticion { get; set; } = new();
         [FirestoreProperty]
         public List<string> TareasId { get; set; } = new();

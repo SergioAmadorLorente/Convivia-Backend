@@ -28,12 +28,6 @@ namespace Convivia.Infrastructure.Repositories
             var peticionDomain = peticion.Adapt<Peticion>();
             var peticionPersist = peticionDomain.Adapt<FireStorePeticion>();
 
-            if (string.IsNullOrWhiteSpace(peticionPersist.Id))
-            {
-                var generatedId = await _firebase.AddAsync(Collection, peticionPersist, ct);
-                return generatedId;
-            }
-
             await _firebase.AddAsync(Collection, peticionPersist.Id, peticionPersist, ct);
             return peticionPersist.Id;
         }

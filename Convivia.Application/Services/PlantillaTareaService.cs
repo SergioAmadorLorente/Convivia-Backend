@@ -22,12 +22,10 @@ namespace Convivia.Application.Services
 
         public async Task<string> AddAsync(CreatePlantillaTareaDto dto)
         {
-
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             var plantillaTarea = _mapper.Map<PlantillaTarea>(dto);
             var plantillanovaid = await _repository.AddAsync(plantillaTarea);
             return plantillanovaid;
-
         }
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAsync()
@@ -38,28 +36,23 @@ namespace Convivia.Application.Services
 
         public async Task<PlantillaTareaDto?> GetByIdAsync(string id)
         {
-
             var plantilla = await _repository.GetAsync(id);
             if (plantilla == null) return null;
             return _mapper.Map<PlantillaTareaDto>(plantilla);
-
         }
 
         public async Task<PlantillaTareaDto> UpdateAsync(string id, UpdatePlantillaTareaDto dto)
         {
-
             var plantilla = await _repository.GetAsync(id);
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             plantilla.Nombre = dto.Nombre ?? plantilla.Nombre;
             plantilla.karma = dto.karma ?? plantilla.karma;
-            plantilla.Estado = dto.Estado ?? plantilla.Estado;
             plantilla.DiasRepeticion = dto.DiasRepeticion ?? plantilla.DiasRepeticion;
             await _repository.UpdateAsync(id, plantilla);
 
             var plantillaDto = _mapper.Map<PlantillaTareaDto>(plantilla);
             return plantillaDto;
-
         }
 
         public async Task<bool> DeleteAsync(string id)
@@ -69,6 +62,5 @@ namespace Convivia.Application.Services
             await _repository.DeleteAsync(id);
             return true;
         }
-
     }
 }

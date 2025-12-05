@@ -33,12 +33,6 @@ namespace Convivia.Infrastructure.Repositories
             var permisoDomain = permiso.Adapt<Permiso>();
             var permisoPersist = permisoDomain.Adapt<FireStorePermiso>();
             
-            if (string.IsNullOrWhiteSpace(permisoPersist.Id))
-            {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, permisoPersist, ct);
-                return generatedId;
-            }
 
             // Si ya tiene id, lo usamos para crear el documento con ese id
             await _firebase.AddAsync(Collection, permisoPersist.Id, permisoPersist, ct);

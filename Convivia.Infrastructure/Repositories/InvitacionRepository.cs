@@ -32,13 +32,6 @@ namespace Convivia.Infrastructure.Repositories
             // Convertir InvitacionDto → Invitacion (Domain) → FireStoreInvitacion (Firestore)
             var invitacionDomain = invitacion.Adapt<Invitacion>();
             var invitacionPersist = invitacionDomain.Adapt<FireStoreInvitacion>();
-            
-            if (string.IsNullOrWhiteSpace(invitacionPersist.Id))
-            {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, invitacionPersist, ct);
-                return generatedId;
-            }
 
             // Si ya tiene id, lo usamos para crear el documento con ese id
             await _firebase.AddAsync(Collection, invitacionPersist.Id, invitacionPersist, ct);

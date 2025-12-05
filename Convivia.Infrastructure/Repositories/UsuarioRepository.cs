@@ -31,13 +31,6 @@ namespace Convivia.Infrastructure.Repositories
             // Convertir UsuarioDto → Usuario (Domain) → FireStoreUsuario (Firestore)
             var usuarioDomain = usuario.Adapt<Usuario>();
             var usuarioPersist = usuarioDomain.Adapt<FireStoreUsuario>();
-            
-            if (string.IsNullOrWhiteSpace(usuarioPersist.Id))
-            {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, usuarioPersist, ct);
-                return generatedId;
-            }
 
             // Si ya tiene id, lo usamos para crear el documento con ese id
             await _firebase.AddAsync(Collection, usuarioPersist.Id, usuarioPersist, ct);
