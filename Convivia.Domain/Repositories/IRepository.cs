@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Convivia.Infrastructure.Repositories
+namespace Convivia.Domain.Repositories
 {
     public interface IRepository<T> where T : class
     {
