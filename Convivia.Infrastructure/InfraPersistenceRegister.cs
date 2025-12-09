@@ -39,6 +39,10 @@ namespace Convivia.Infrastructure.Mappers
             // UsuarioEspacio
             config.NewConfig<FireStoreUsuarioEspacio, UsuarioEspacio>();
             config.NewConfig<UsuarioEspacio, FireStoreUsuarioEspacio>();
+            // Factura
+            config.NewConfig<FireStoreFactura, Factura>();
+            config.NewConfig<Factura, FireStoreFactura>();
         }
+
     }
 }
