@@ -19,6 +19,9 @@ namespace Convivia.Application.Mappers
             // Usuario mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Usuario, UsuarioDto, CreateUsuarioDto, UpdateUsuarioDto>(config);
 
+            // Rol mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Rol, RolDto, CreateRolDto, UpdateRolDto>(config);
+
             // Permiso mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Permiso, PermisoDto, CreatePermisoDto, UpdatePermisoDto>(config);
 
@@ -35,6 +38,7 @@ namespace Convivia.Application.Mappers
             Config.MapsterConfig.RegisterPair<PlantillaTarea, PlantillaTareaDto, CreatePlantillaTareaDto, UpdatePlantillaTareaDto>(config);
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
+            // Auto-registers: RolTypeConverter (string<->Rol), PermisoMappingConfig, and other mapping configs
             try
             {
                 var infraAssembly = Assembly.Load("Convivia.Infrastructure");
