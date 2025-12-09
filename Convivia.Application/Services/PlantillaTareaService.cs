@@ -25,14 +25,15 @@ namespace Convivia.Application.Services
 
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             var plantillaTarea = _mapper.Map<PlantillaTarea>(dto);
-            var plantillanovaid = await _repository.AddAsync(plantillaTarea);
-            return plantillanovaid;
+            plantillaTarea.PlantillaId = Guid.NewGuid().ToString("N");
+            await _repository.AddAsync(plantillaTarea);
+            return _mapper.Map<PlantillaTareaDto>(plantillaTarea);
 
         }
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAsync()
         {
-            var plantillas = await _repository.GetAllAsync();
+            var plantillas = await _repository.GetAllAsync();   
             return _mapper.Map<IEnumerable<PlantillaTareaDto>>(plantillas);
         }
 
