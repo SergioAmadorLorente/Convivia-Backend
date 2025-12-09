@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Convivia.Shared.DTOs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,9 +11,9 @@ namespace Convivia.Shared.DTOs
     {
         public string? Nombre { get; set; }
         public decimal? Precio { get; set; }
-        public Dictionary<string, decimal>? Reparto { get; private set; } = new Dictionary<string, decimal>();
-        public bool? Pagado { get; private set; }
-        public byte[]? DocumentoUrl { get; private set; }
-        public string? TareaId { get; private set; }
+        public Dictionary<string, float>? Reparto { get; set; } = new Dictionary<string, float>();
+        public bool? Pagado { get; set; }
+        public byte[]? DocumentoUrl { get; set; }
+        public string? TareaId { get; set; }
     }
 }
