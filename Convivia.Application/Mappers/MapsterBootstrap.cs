@@ -38,6 +38,10 @@ namespace Convivia.Application.Mappers
             Config.MapsterConfig.RegisterPair<UsuarioEspacio, UsuarioEspacioDto, CreateUsuarioEspacioDto, UpdateUsuarioEspacioDto>(config);
 
 
+            // Factura mappings 
+            Config.MapsterConfig.RegisterPair<Factura, FacturaDto, CreateFacturaDto, UpdateFacturaDto>(config);
+
+
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try
             {
