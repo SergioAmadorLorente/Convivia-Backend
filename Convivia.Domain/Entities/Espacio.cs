@@ -1,4 +1,5 @@
-﻿using Convivia.Domain.Entities;
+﻿
+using Convivia.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Text.Json.Serialization;
 namespace Convivia.Domain.Entities
 {
     /// <summary>
-    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones         e invitaciones.
+    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticionese invitaciones.
     /// </summary>
     public class Espacio
     {
