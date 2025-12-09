@@ -23,6 +23,7 @@ namespace Convivia.Application.Extensions
             services.AddScoped<PermisoService>();
             services.AddScoped<UsuarioEspacioService>();
 
+            services.AddScoped<FacturaService>();
 
             // Centralizar Mapster configuration
             MapsterBootstrap.Configure(TypeAdapterConfig.GlobalSettings);
