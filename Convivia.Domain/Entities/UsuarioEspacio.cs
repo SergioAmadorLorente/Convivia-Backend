@@ -15,6 +15,17 @@ namespace Convivia.Domain.Entities
 
         public string Rol { get; set; }
 
+        public string EspacioId { get; set; } = string.Empty;
+
+        public string UsuarioId { get; set; } = string.Empty;
+
+        public List<string> TareasId { get; set; } = new();
+
+        public string PermisoId { get; set; } = string.Empty;
+
+        public List<string> FacturasId { get; set; } = new();
+
+        // Propiedades de navegación (para cuando se necesiten los objetos completos)
         public Espacio Espacio { get; set; }
 
         public Usuario Usuario { get; set; }
@@ -26,8 +37,6 @@ namespace Convivia.Domain.Entities
         public List<Factura> Facturas { get; set; } = new();
 
 
-        // ?
-
         // Constructor por defecto vacio para pruebas
         public UsuarioEspacio()
         {
@@ -38,7 +47,9 @@ namespace Convivia.Domain.Entities
         {
             Id_UsuarioEspacio = Guid.NewGuid().ToString();
             this.Usuario = usuario;
+            this.UsuarioId = usuario?.Id ?? string.Empty;
             this.Espacio = espacio;
+            this.EspacioId = espacio?.Id ?? string.Empty;
             this.Ausente = ausente;
             this.Karma = karma;
 
@@ -51,6 +62,7 @@ namespace Convivia.Domain.Entities
                 // Por defecto asignar rol Usuario
                 this.Permiso = Permiso.Usuario;
             }
+            this.PermisoId = this.Permiso?.Id ?? string.Empty;
         }
 
         // Constructor que recibe un objeto Permiso directamente
@@ -58,10 +70,13 @@ namespace Convivia.Domain.Entities
         {
             Id_UsuarioEspacio = Guid.NewGuid().ToString();
             this.Usuario = usuario;
+            this.UsuarioId = usuario?.Id ?? string.Empty;
             this.Espacio = espacio;
+            this.EspacioId = espacio?.Id ?? string.Empty;
             this.Ausente = ausente;
             this.Karma = karma;
             this.Permiso = permiso;
+            this.PermisoId = permiso?.Id ?? string.Empty;
         }
     }
 }

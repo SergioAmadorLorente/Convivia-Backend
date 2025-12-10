@@ -1,15 +1,16 @@
 ﻿using Convivia.Domain.Entities;
 using Google.Cloud.Firestore;
 using System.Text.Json.Serialization;
-namespace Convivia.Domain.Entities
+
+namespace Convivia.Infrastructure.Models
 {
 
 
     [FirestoreData]
     public class FireStoreUsuarioEspacio
     {
-        [FirestoreDocumentId]
-        public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString();
+        [FirestoreProperty("Id_UsuarioEspacio")]
+        public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString("N");
 
         [FirestoreProperty("Ausente")]
         public bool Ausente { get; set; }
@@ -20,19 +21,19 @@ namespace Convivia.Domain.Entities
         [FirestoreProperty("Rol")]
         public string Rol { get; set; }
 
-        [FirestoreProperty("EspacioId")]
+        [FirestoreProperty("EspacioRef")]
         public string EspacioId { get; set; }
 
-        [FirestoreProperty("UsuarioId")]
-        public string Usuarioíd { get; set; }
+        [FirestoreProperty("UsuarioRef")]
+        public string UsuarioId { get; set; }
 
-        [FirestoreProperty("tareasId")]
-        public List<string> tareasId { get; set; } = new();
-   
-        [FirestoreProperty("PermisoId")]
+        [FirestoreProperty("tareas")]
+        public List<string> TareasId { get; set; } = new();
+
+        [FirestoreProperty("PermisoRef")]
         public string PermisoId { get; set; }
 
-        [FirestoreProperty("FacturasId")]
+        [FirestoreProperty("FacturasRefs")]
         public List<string> FacturasId { get; set; } = new();
 
     }

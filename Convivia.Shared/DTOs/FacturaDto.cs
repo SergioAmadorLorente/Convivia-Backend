@@ -17,14 +17,14 @@ namespace Convivia.Shared.DTOs
 
         public float Precio { get; set; }
 
-        public Dictionary<string, decimal> Reparto { get; private set; } = new Dictionary<string, decimal>();
+        public Dictionary<string, float> Reparto { get; set; } = new Dictionary<string, float>();
 
-        public bool Pagado { get; private set; }
+        public bool Pagado { get; set; }
 
-        public byte[]? DocumentoUrl { get; private set; }
+        public byte[]? DocumentoUrl { get; set; }
 
-        public string? TareaId { get; private set; }
+        public string? TareaId { get; set; }
 
-        public DateTime FechaCreacion { get; private set; } = DateTime.UtcNow;
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     }
 }
