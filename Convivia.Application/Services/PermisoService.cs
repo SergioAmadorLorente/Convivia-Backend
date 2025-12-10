@@ -33,51 +33,13 @@ namespace Convivia.Application.Services
                 throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
             }
 
-            // Crear permiso con el rol apropiado
-            Permiso permisoDomain;
-            Rol rolDomain = new Rol();
-            
-            if (dto.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-            {
-                rolDomain.SetConfigurarcionAdmin();
-                permisoDomain = new Permiso(
-                    rolDomain,
-                    crearTarea: rolDomain.CrearTarea,
-                    eliminarTarea: rolDomain.EliminarTarea,
-                    editarTarea: rolDomain.EditarTarea,
-                    añadirUsuario: rolDomain.AñadirUsuario,
-                    eliminarUsuario: rolDomain.EliminarUsuario,
-                    asignarTarea: rolDomain.AsignarTarea,
-                    asignarseTarea: rolDomain.AsignarseTarea
-                );
-            }
-            else // Usuario por defecto
-            {
-                rolDomain.SetConfigurarcionUsuario();
-                permisoDomain = new Permiso(
-                    rolDomain,
-                    crearTarea: rolDomain.CrearTarea,
-                    eliminarTarea: rolDomain.EliminarTarea,
-                    editarTarea: rolDomain.EditarTarea,
-                    añadirUsuario: rolDomain.AñadirUsuario,
-                    eliminarUsuario: rolDomain.EliminarUsuario,
-                    asignarTarea: rolDomain.AsignarTarea,
-                    asignarseTarea: rolDomain.AsignarseTarea
-                );
-            }
+            // Mapster maneja automáticamente:
+            // 1. string -> Rol usando RolTypeConverter
+            // 2. Copia permisos del Rol a Permiso usando AfterMapping en MapsterBootstrap
+            var permisoDomain = dto.Adapt<Permiso>();
 
-            var permisoDto = new PermisoDto
-            {
-                Id = permisoDomain.Id,
-                Rol = permisoDomain.Rol.Nombre,
-                CrearTarea = permisoDomain.CrearTarea,
-                EliminarTarea = permisoDomain.EliminarTarea,
-                EditarTarea = permisoDomain.EditarTarea,
-                AñadirUsuario = permisoDomain.AñadirUsuario,
-                EliminarUsuario = permisoDomain.EliminarUsuario,
-                AsignarTarea = permisoDomain.AsignarTarea,
-                AsignarseTarea = permisoDomain.AsignarseTarea
-            };
+            // Mapster maneja automáticamente Permiso -> PermisoDto (Rol objeto -> string)
+            var permisoDto = permisoDomain.Adapt<PermisoDto>();
 
             try
             {
@@ -146,13 +108,12 @@ namespace Convivia.Application.Services
             var existing = await ObtenerPorIdAsync(id, ct);
             if (existing == null) throw new KeyNotFoundException("Permiso no encontrado");
 
-            // Validar rol si se está actualizando
             if (dto.Rol != null && !EsRolValido(dto.Rol))
             {
                 throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
             }
 
-            // Si se está cambiando el rol, aplicar la configuración predefinida
+            // Si se cambia el rol, actualizar todo según la configuración del rol
             if (dto.Rol != null && dto.Rol != existing.Rol)
             {
                 var rolDomain = new Rol();
@@ -176,7 +137,7 @@ namespace Convivia.Application.Services
             }
             else
             {
-                // Actualizar solo campos no nulos si no se está cambiando el rol
+                // Si no se cambia el rol, permitir actualizar permisos individuales
                 if (dto.CrearTarea.HasValue) existing.CrearTarea = dto.CrearTarea.Value;
                 if (dto.EliminarTarea.HasValue) existing.EliminarTarea = dto.EliminarTarea.Value;
                 if (dto.EditarTarea.HasValue) existing.EditarTarea = dto.EditarTarea.Value;
