@@ -41,37 +41,20 @@ namespace Convivia.Domain.Entities
             this.Espacio = espacio;
             this.Ausente = ausente;
             this.Karma = karma;
+            this.Rol = rol;
 
             if (rol == "admin")
             {
                 var rolAdmin = new Rol();
                 rolAdmin.SetConfigurarcionAdmin();
-                this.Permiso = new Permiso(
-                    rolAdmin,
-                    crearTarea: rolAdmin.CrearTarea,
-                    eliminarTarea: rolAdmin.EliminarTarea,
-                    editarTarea: rolAdmin.EditarTarea,
-                    añadirUsuario: rolAdmin.AñadirUsuario,
-                    eliminarUsuario: rolAdmin.EliminarUsuario,
-                    asignarTarea: rolAdmin.AsignarTarea,
-                    asignarseTarea: rolAdmin.AsignarseTarea
-                );
+                this.Permiso = new Permiso(rolAdmin);
             }
             else
             {
                 // Por defecto asignar rol Usuario
                 var rolUsuario = new Rol();
                 rolUsuario.SetConfigurarcionUsuario();
-                this.Permiso = new Permiso(
-                    rolUsuario,
-                    crearTarea: rolUsuario.CrearTarea,
-                    eliminarTarea: rolUsuario.EliminarTarea,
-                    editarTarea: rolUsuario.EditarTarea,
-                    añadirUsuario: rolUsuario.AñadirUsuario,
-                    eliminarUsuario: rolUsuario.EliminarUsuario,
-                    asignarTarea: rolUsuario.AsignarTarea,
-                    asignarseTarea: rolUsuario.AsignarseTarea
-                );
+                this.Permiso = new Permiso(rolUsuario);
             }
         }
 

@@ -96,16 +96,7 @@ namespace Convivia.Domain.Entities
 
             var rolUsuario = new Rol();
             rolUsuario.SetConfigurarcionUsuario();
-            var permisoUsuario = new Permiso(
-                rolUsuario,
-                crearTarea: rolUsuario.CrearTarea,
-                eliminarTarea: rolUsuario.EliminarTarea,
-                editarTarea: rolUsuario.EditarTarea,
-                añadirUsuario: rolUsuario.AñadirUsuario,
-                eliminarUsuario: rolUsuario.EliminarUsuario,
-                asignarTarea: rolUsuario.AsignarTarea,
-                asignarseTarea: rolUsuario.AsignarseTarea
-            );
+            var permisoUsuario = new Permiso(rolUsuario);
 
             UsuarioEspacio usuarioEspacio = new UsuarioEspacio
             {
