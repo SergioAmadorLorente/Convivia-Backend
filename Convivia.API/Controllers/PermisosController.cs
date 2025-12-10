@@ -69,7 +69,7 @@ namespace Convivia.API.Controllers
         }
 
         // GET api/permisos/rol/{rol}
-        [HttpGet("rol/{rol}")]
+        [HttpGet("{rol}")]
         public async Task<IActionResult> GetByRol(string rol, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(rol)) return BadRequest("Rol es requerido.");
