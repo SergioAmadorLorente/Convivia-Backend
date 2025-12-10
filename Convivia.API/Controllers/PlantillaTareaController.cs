@@ -22,12 +22,12 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        [HttpPost]
+        /*[HttpPost]
         public async Task<ActionResult<string>> CreatePlantilla(CreatePlantillaTareaDto dto)
         {
             var plantillaDtoId = await _service.AddAsync(dto);
             return plantillaDtoId;
-        }
+        }*/
 
         [HttpGet]
         public async Task<ActionResult<List<PlantillaTareaDto>>> GetAllPlantillas()

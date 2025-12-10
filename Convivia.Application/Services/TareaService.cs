@@ -1,18 +1,7 @@
-using Convivia.Application.Mappers;
-using Convivia.Application.Services;
 using Convivia.Domain.Entities;
-using Convivia.Domain.Models;
 using Convivia.Domain.Repositories;
-using Convivia.Infrastructure.Services;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
-using Convivia.Shared.Services;
-using Google.Apis.Util;
-using Mapster;
 using MapsterMapper;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Convivia.Application.Services
 {
@@ -26,7 +15,7 @@ namespace Convivia.Application.Services
         {
             _repository = tarea ?? throw new ArgumentNullException(nameof(tarea));
             this._mapper = _mapper ?? throw new ArgumentNullException(nameof(_mapper));
-            _ptservice = ptservice ?? throw new ArgumentNullException(nameof(_mapper));
+            _ptservice = ptservice ?? throw new ArgumentNullException(nameof(ptservice));
         }
 
         public async Task<List<string>> AddAsync(string espacioid, CreateTareaDto dto)
@@ -35,15 +24,14 @@ namespace Convivia.Application.Services
 
             var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
 
-            var plantillaId = await _ptservice.AddAsync(createPlantilla);
+            var plantillaId = await _ptservice.AddAsync(createPlantilla, espacioid);
 
             var tareas = new List<Tarea>();
 
             foreach (int dia in createPlantilla.DiasRepeticion)
-                            {
+            {
                 if (dia < 0 || dia > 6) throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Domingo, 6=Sábado).");
                 var tarea = _mapper.Map<Tarea>(dto);
-                tarea.EspacioId = espacioid;
                 tarea.PlantillaId = plantillaId;
                 tarea.DiaSemana = dia;
                 tareas.Add(tarea);
@@ -56,52 +44,77 @@ namespace Convivia.Application.Services
             {
                 foreach (var id in ids)
                     plantilla.TareasId.Add(id);
-                await _ptservice.UpdateAsync(plantilla.PlantillaId, new UpdatePlantillaTareaDto { Nombre = plantilla.Nombre, karma = plantilla.karma, DiasRepeticion = plantilla.DiasRepeticion, TareasId = plantilla.TareasId});
+                await _ptservice.UpdateAsync(plantilla.PlantillaId, new UpdatePlantillaTareaDto
+                {
+                    Nombre = plantilla.Nombre,
+                    karma = plantilla.karma,
+                    DiasRepeticion = plantilla.DiasRepeticion,
+                    TareasId = plantilla.TareasId
+                });
             }
 
             return ids;
         }
 
-        public async Task<IEnumerable<TareaDto>> GetAsync()
+        public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
         {
-            var tareas = await _repository.GetAllAsync();
-            return _mapper.Map<IEnumerable<TareaDto>>(tareas);
+            var pttareas = await _ptservice.GetAllByEspacioAsync(espacioid);
+            if (pttareas.Any() == false)
+            {
+                return Enumerable.Empty<PlantillaTareaDto>();
+            }
+            return _mapper.Map<IEnumerable<PlantillaTareaDto>>(pttareas);
         }
 
-        public async Task<IEnumerable<TareaDto>> GetAllByEspacioAsync(string espacioid)
+        public async Task<PlantillaTareaDto> GetByEspacioAndIdAsync(string espacioid, string id)
         {
-            var tareas = await _repository.GetAllByEspacioIdAsync(espacioid);
-            return _mapper.Map<IEnumerable<TareaDto>>(tareas);
+            var pttarea = await _ptservice.GetByEspacioAndIdAsync(espacioid, id);
+            if (pttarea == null) throw new ArgumentException("La plantilla no existe o no pertenece al espacio especificado.", nameof(id));
+            return _mapper.Map<PlantillaTareaDto>(pttarea);
         }
-        
 
-        public async Task<TareaDto?> GetByIdAsync(string espacioid, string id)
+        public async Task<TareaDto?> GetByEspacioAndPlantillaAndTareaAsync(string espacioid, string plantillaId, string tareaId)
         {
-            var tarea = await _repository.GetAsync(espacioid, id);
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentNullException(nameof(plantillaId));
+            if (string.IsNullOrWhiteSpace(tareaId)) throw new ArgumentNullException(nameof(tareaId));
+
+            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaId);
+            if (plantilla == null) return null;
+
+            var tarea = await _repository.GetAsync(plantillaId, tareaId);
             if (tarea == null) return null;
-            return _mapper.Map<TareaDto>(tarea);
-        }
 
-        public async Task<TareaDto> UpdateAsync(string espacioid, string id, UpdateTareaDto dto)
-        {
-            var tarea = await _repository.GetAsync(espacioid, id);
-            if (tarea == null) throw new ArgumentNullException(nameof(tarea));
-            tarea = _mapper.Map<Tarea>(dto);
+            var plantillaytarea = _mapper.Map<TareaDto>(tarea);
 
-            if (!string.IsNullOrWhiteSpace(dto.PlantillaId)) tarea.PlantillaId = dto.PlantillaId;
-            if (!string.IsNullOrWhiteSpace(dto.SalaId)) tarea.SalaId = dto.SalaId;
+            plantillaytarea.Nombre = plantilla.Nombre;
+            plantillaytarea.Descripcion = plantilla.Descripcion;
 
-            await _repository.UpdateAsync(id, tarea);
-            var tareaDto = _mapper.Map<TareaDto>(tarea);
-            return tareaDto;
+            return plantillaytarea;
         }
 
         public async Task<bool> DeleteAsync(string espacioid, string id)
         {
-            var tarea = await _repository.GetAsync(espacioid, id);
-            if (tarea == null) return false;
-            await _repository.DeleteAsync(id);
-            return true;
+            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, id);
+            if (plantilla == null) return false;
+            var resultat = await _ptservice.DeleteAsync(id);
+            return resultat;
+
         }
+
+        // TODO
+
+        public async Task<TareaDto> UpdateAsync(string espacioid, string id, UpdateTareaDto dto)
+        {
+            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, id);
+            if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
+            var tareas = await _repository.GetAllAsync(id);
+            var plantillaupdatedto = _mapper.Map<UpdatePlantillaTareaDto>(dto);
+            var tareaactualizada = _mapper.Map<Tarea>(dto);
+            await _ptservice.UpdateAsync(id, plantillaupdatedto);
+            await _repository.UpdateAsyncList(tareas, tareaactualizada);
+            return _mapper.Map<TareaDto>(plantillaupdatedto);
+        }
+
     }
 }

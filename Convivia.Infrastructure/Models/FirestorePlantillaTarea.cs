@@ -25,5 +25,7 @@ namespace Convivia.Infrastructure.Models
         public List<int> DiasRepeticion { get; set; } = new();
         [FirestoreProperty]
         public List<string> TareasId { get; set; } = new();
+        [FirestoreProperty]
+        public string EspacioId { get; set; }
     }
 }

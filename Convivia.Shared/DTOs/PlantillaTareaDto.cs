@@ -17,5 +17,9 @@ namespace Convivia.Shared.DTOs
 
         public List<string> TareasId { get; set; } = new();
 
+        public string EspacioId { get; set; }
+
+        public string Descripcion { get; set; }
+
     }
 }

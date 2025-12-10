@@ -24,7 +24,7 @@ namespace Convivia.Shared.DTOs
 
         public string? FacturaId { get; set; } // Referencia a la factura asociada
 
-        public string PlantillaId { get; set; }
+        public string? PlantillaId { get; set; }
 
         public string? SalaId { get; set; }
 

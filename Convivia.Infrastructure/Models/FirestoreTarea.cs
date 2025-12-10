@@ -31,9 +31,6 @@ namespace Convivia.Infrastructure.Models
         public bool Estado { get; set; }
 
         [FirestoreProperty]
-        public string EspacioId { get; set; }
-
-        [FirestoreProperty]
         public string? FacturaId { get; set; }
 
         [FirestoreProperty]

@@ -20,10 +20,13 @@ namespace Convivia.Application.Services
             this._mapper = _mapper ?? throw new ArgumentNullException(nameof(_mapper));
         }
 
-        public async Task<string> AddAsync(CreatePlantillaTareaDto dto)
+        public async Task<string> AddAsync(CreatePlantillaTareaDto dto, string espacioid)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             var plantillaTarea = _mapper.Map<PlantillaTarea>(dto);
+            if (espacioid != null) { 
+                plantillaTarea.EspacioId = espacioid;
+            }
             var plantillanovaid = await _repository.AddAsync(plantillaTarea);
             return plantillanovaid;
         }
@@ -49,6 +52,7 @@ namespace Convivia.Application.Services
             plantilla.Nombre = dto.Nombre ?? plantilla.Nombre;
             plantilla.karma = dto.karma ?? plantilla.karma;
             plantilla.DiasRepeticion = dto.DiasRepeticion ?? plantilla.DiasRepeticion;
+            plantilla.TareasId = dto.TareasId ?? plantilla.TareasId;
             await _repository.UpdateAsync(id, plantilla);
 
             var plantillaDto = _mapper.Map<PlantillaTareaDto>(plantilla);
@@ -62,5 +66,19 @@ namespace Convivia.Application.Services
             await _repository.DeleteAsync(id);
             return true;
         }
+
+        public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
+        {
+            var plantillas = await _repository.GetAllAsync();
+            var filtered = plantillas.Where(p => p.EspacioId == espacioid);
+            return _mapper.Map<IEnumerable<PlantillaTareaDto>>(filtered);
+        }
+
+        public async Task<PlantillaTareaDto?> GetByEspacioAndIdAsync(string espacioid, string id)
+        {
+            var plantilla = await _repository.GetByEspacioAndIdAsync(espacioid, id);
+            return plantilla == null ? null : _mapper.Map<PlantillaTareaDto>(plantilla);
+        }
+
     }
 }

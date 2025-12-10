@@ -49,6 +49,22 @@ namespace Convivia.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
             if (entity == null) throw new ArgumentNullException(nameof(entity));
 
+            // Try read existing Id property from entity
+            string? existingId = null;
+            try
+            {
+                var prop = typeof(T).GetProperty("Id");
+                if (prop != null && prop.CanRead)
+                {
+                    var val = prop.GetValue(entity) as string;
+                    if (!string.IsNullOrWhiteSpace(val)) existingId = val;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Could not read Id property from entity of type {TypeName}", typeof(T).FullName);
+            }
+
             if (collection.Contains("/"))
             {
                 var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -57,12 +73,29 @@ namespace Convivia.Infrastructure.Services
                     var parentCollection = parts[0];
                     var parentId = parts[1];
                     var subcollection = parts[2];
-                    var docRef = await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).AddAsync(entity, cancellationToken: cancellationToken);
 
+                    if (!string.IsNullOrWhiteSpace(existingId))
+                    {
+                        // Use provided id to create document with same name
+                        await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(existingId).SetAsync(entity, cancellationToken: cancellationToken);
+                        return;
+                    }
+
+                    var docRef = await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).AddAsync(entity, cancellationToken: cancellationToken);
+                    // Assign generated id back to entity if possible
+                    SetIdIfPossible(entity, docRef.Id);
+                    return;
                 }
             }
 
-            await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
+            if (!string.IsNullOrWhiteSpace(existingId))
+            {
+                await _db.Collection(collection).Document(existingId).SetAsync(entity, cancellationToken: cancellationToken);
+                return;
+            }
+
+            var newDoc = await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
+            SetIdIfPossible(entity, newDoc.Id);
         }
 
         // Método que exige la interfaz original

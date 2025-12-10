@@ -14,6 +14,10 @@
 
         public List<int> DiasRepeticion { get; set; } = new List<int>();
 
+        public string EspacioId { get; set; }
+
+        public List<string> TareasId { get; set; } = new List<string>();
+
         // public List<Tarea> tareas { get; set; } = new List<Tarea>();
 
         public PlantillaTarea()

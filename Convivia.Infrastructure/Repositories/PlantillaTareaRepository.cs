@@ -75,5 +75,20 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await _firebase.DeleteAsync(COLLECTION, id);
         }
+        public async Task<PlantillaTarea?> GetByEspacioAndIdAsync(string espacioid, string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentException("espacioid requerido", nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+            var conditions = new (string field, object val)[]
+            {
+                (nameof(FirestorePlantillaTarea.EspacioId), espacioid),
+                (nameof(FirestorePlantillaTarea.PlantillaId), id)
+            };
+
+            // Use collection group to query all tareas across all plantillas by EspacioId
+            var firestoreEntity = await _firebase.QueryMultipleConditionsAsync<FirestorePlantillaTarea>(COLLECTION, conditions, ct);
+            var firestoreprimero = firestoreEntity.FirstOrDefault();
+            return firestoreprimero.Adapt<PlantillaTarea>();
+        }
     }
 }

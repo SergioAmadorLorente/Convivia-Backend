@@ -24,17 +24,24 @@ namespace Convivia.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<string>> CreateTarea(string espacioid, CreateTareaDto dto)
+        public async Task<ActionResult<List<string>>> CreateTarea(string espacioid, CreateTareaDto dto)
         {
-            var tareaId = await _service.AddAsync(espacioid, dto);
-            return CreatedAtAction(nameof(GetTareaById), new { espacioid = espacioid, id = tareaId }, tareaId);
+            var tareaIds = await _service.AddAsync(espacioid, dto);
+            return CreatedAtAction(nameof(GetTareasByEspacioId), new { espacioid = espacioid }, tareaIds);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<TareaDto>> GetTareaById(string espacioid, string id)
+        [HttpGet("{plantillaId}/{tareaId}")]
+        public async Task<ActionResult<TareaDto>> GetTareaById(string espacioid, string plantillaId, string tareaId)
         {
-            var tareaDto = await _service.GetByIdAsync(espacioid, id);
+            var tareaDto = await _service.GetByEspacioAndPlantillaAndTareaAsync(espacioid, plantillaId, tareaId);
             return tareaDto != null ? Ok(tareaDto) : NotFound();
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<PlantillaTareaDto>>> GetTareasByEspacioId(string espacioid)
+        {
+            var list = await _service.GetAllByEspacioAsync(espacioid);
+            return !list.Any() ? NotFound() : Ok(list);
         }
 
         [HttpDelete("{id}")]
@@ -49,13 +56,6 @@ namespace Convivia.API.Controllers
         {
             var tareaDto = await _service.UpdateAsync(espacioid, id, dto);
             return tareaDto != null ? Ok(tareaDto) : NotFound();
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<TareaDto>>> GetTareasByEspacioId(string espacioid)
-        {
-            var list = await _service.GetAllByEspacioAsync(espacioid);
-            return !list.Any() ? NotFound() : Ok(list);
         }
     }
 }
