@@ -32,7 +32,7 @@ namespace Convivia.Domain.Entities
 
         public Factura? Factura { get; set; }
 
-        public List<int> DiasRepeticion { get; set; } = new();
+        public int DiaSemana { get; set; }
 
         public int karma { get; set; }
 

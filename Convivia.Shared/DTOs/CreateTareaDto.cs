@@ -14,7 +14,7 @@ namespace Convivia.Shared.DTOs
 
         [Required]
         public int karma { get; set; }
-
+        // eliminar diasrepeticion
         public List<int> DiasRepeticion { get; set; } = new();
 
         [Required]
@@ -26,7 +26,6 @@ namespace Convivia.Shared.DTOs
         public byte[]? Foto { get; set; }
 
         public DateTime? Prorroga { get; set; }
-
 
         public string? SalaId { get; set; }
     }

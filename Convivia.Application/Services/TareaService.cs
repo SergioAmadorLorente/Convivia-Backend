@@ -29,7 +29,7 @@ namespace Convivia.Application.Services
             _ptservice = ptservice ?? throw new ArgumentNullException(nameof(_mapper));
         }
 
-        public async Task<string> AddAsync(string espacioid, CreateTareaDto dto)
+        public async Task<List<string>> AddAsync(string espacioid, CreateTareaDto dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
@@ -37,20 +37,29 @@ namespace Convivia.Application.Services
 
             var plantillaId = await _ptservice.AddAsync(createPlantilla);
 
-            var tarea = _mapper.Map<Tarea>(dto);
-            tarea.EspacioId = espacioid;
-            tarea.PlantillaId = plantillaId;
+            var tareas = new List<Tarea>();
 
-            var id = await _repository.AddAsync(tarea);
+            foreach (int dia in createPlantilla.DiasRepeticion)
+                            {
+                if (dia < 0 || dia > 6) throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Domingo, 6=Sábado).");
+                var tarea = _mapper.Map<Tarea>(dto);
+                tarea.EspacioId = espacioid;
+                tarea.PlantillaId = plantillaId;
+                tarea.DiaSemana = dia;
+                tareas.Add(tarea);
+            }
+
+            var ids = await _repository.AddAsyncList(tareas);
 
             var plantilla = await _ptservice.GetByIdAsync(plantillaId);
             if (plantilla != null)
             {
-                plantilla.TareasId.Add(id);
-                await _ptservice.UpdateAsync(plantilla.PlantillaId, new UpdatePlantillaTareaDto { Nombre = plantilla.Nombre, karma = plantilla.karma, DiasRepeticion = plantilla.DiasRepeticion });
+                foreach (var id in ids)
+                    plantilla.TareasId.Add(id);
+                await _ptservice.UpdateAsync(plantilla.PlantillaId, new UpdatePlantillaTareaDto { Nombre = plantilla.Nombre, karma = plantilla.karma, DiasRepeticion = plantilla.DiasRepeticion, TareasId = plantilla.TareasId});
             }
 
-            return id;
+            return ids;
         }
 
         public async Task<IEnumerable<TareaDto>> GetAsync()

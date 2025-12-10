@@ -8,6 +8,7 @@ namespace Convivia.Domain.Repositories
     public interface ITareaRepository
     {
         Task<string> AddAsync(Tarea tarea, CancellationToken ct = default);
+        Task<List<string>> AddAsyncList(List<Tarea> tareas, CancellationToken ct = default);
         Task<Tarea?> GetAsync(string espacioid, string id, CancellationToken ct = default);
         Task<List<Tarea>> GetAllAsync(CancellationToken ct = default);
         Task UpdateAsync(string id, Tarea tarea, CancellationToken ct = default);

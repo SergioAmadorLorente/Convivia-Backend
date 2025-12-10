@@ -43,6 +43,22 @@ namespace Convivia.Infrastructure.Repositories
             return tarea.Id;
         }
 
+        public async Task<List<string>> AddAsyncList(List<Tarea> tareas, CancellationToken ct = default)
+        {
+            if (tareas == null) throw new ArgumentNullException(nameof(tareas));
+            var ids = new List<string>();
+            foreach (var tarea in tareas)
+            {
+                if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
+                var firestoreEntity = tarea.Adapt<FirestoreTarea>();
+                var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
+                await _firebase.AddAsync(subcollectionPath, firestoreEntity, ct);
+                ids.Add(tarea.Id);
+            }
+            
+            return ids;
+        }
+
         public async Task<Tarea?> GetAsync(string espacioid, string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));

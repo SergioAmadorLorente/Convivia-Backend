@@ -14,5 +14,7 @@ namespace Convivia.Shared.DTOs
 
         public List<int>? DiasRepeticion { get; set; }
 
+        public List<string> TareasId { get; set; } = new List<string>();
+
     }
 }
