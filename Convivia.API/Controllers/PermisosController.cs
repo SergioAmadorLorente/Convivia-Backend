@@ -29,7 +29,6 @@ namespace Convivia.API.Controllers
                 return BadRequest("Rol es requerido.");
             }
 
-            // Validar que el rol sea válido
             if (!EsRolValido(model.Rol))
             {
                 return BadRequest(new
@@ -69,28 +68,12 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // GET api/permisos/roles-validos
-        [HttpGet("roles-validos")]
-        public IActionResult GetRolesValidos()
-        {
-            return Ok(new
-            {
-                roles = RolesValidos,
-                descripcion = new
-                {
-                    Usuario = "Puede crear y editar tareas, y asignarse tareas",
-                    Admin = "Tiene todos los permisos disponibles"
-                }
-            });
-        }
-
-        // GET api/permisos/por-rol/{rol}
+        // GET api/permisos/rol/{rol}
         [HttpGet("rol/{rol}")]
         public async Task<IActionResult> GetByRol(string rol, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(rol)) return BadRequest("Rol es requerido.");
 
-            // Validar que el rol sea válido
             if (!EsRolValido(rol))
             {
                 return BadRequest(new
@@ -118,7 +101,6 @@ namespace Convivia.API.Controllers
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
 
-            // Validar rol si se está actualizando
             if (model.Rol != null && !EsRolValido(model.Rol))
             {
                 return BadRequest(new
