@@ -36,6 +36,10 @@ namespace Convivia.Infrastructure.Mappers
             config.NewConfig<FirestoreTarea, Tarea>();
             config.NewConfig<Tarea, FirestoreTarea>();
 
+            // Reserva
+            config.NewConfig<FireStoreReserva, Reserva>();
+            config.NewConfig<Reserva, FireStoreReserva>();
+
             // UsuarioEspacio
             config.NewConfig<FireStoreUsuarioEspacio, UsuarioEspacio>();
             config.NewConfig<UsuarioEspacio, FireStoreUsuarioEspacio>();

@@ -21,6 +21,7 @@ namespace Convivia.Application.Extensions
             services.AddScoped<PeticionService>();
             services.AddScoped<TareaService>();
             services.AddScoped<PermisoService>();
+            services.AddScoped<ReservaService>();
             services.AddScoped<UsuarioEspacioService>();
 
             services.AddScoped<FacturaService>();
