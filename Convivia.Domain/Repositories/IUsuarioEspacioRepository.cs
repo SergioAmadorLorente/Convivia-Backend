@@ -1,4 +1,4 @@
-using Convivia.Infrastructure.Repositories;
+using Convivia.Domain.Repositories;
 using Convivia.Domain.Entities;
 using System.Collections.Generic;
 using System.Threading;
