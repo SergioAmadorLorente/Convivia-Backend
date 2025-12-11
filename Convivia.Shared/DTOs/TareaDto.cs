@@ -7,7 +7,7 @@ namespace Convivia.Shared.DTOs
     {
         public string Id { get; set; }
         public string Nombre { get; set; }
-        public DateTime HoraLimite { get; set; }
+        public DateTime? HoraLimite { get; set; }
         public string? Descripcion { get; set; }
         public List<string> UsuarioEspaciosIds { get; set; }
         public int karma { get; set; }

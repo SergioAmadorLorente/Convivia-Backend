@@ -7,7 +7,7 @@ namespace Convivia.Domain.Entities
 
     public class Tarea
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        public string? Id { get; set; } = Guid.NewGuid().ToString("N");
 
         public string Nombre { get; set; }
 
@@ -15,7 +15,7 @@ namespace Convivia.Domain.Entities
         
         public DateTime? FechaRealizacion { get; set; }
 
-        public DateTime HoraLimite { get; set; }
+        public string TimeZoneId { get; set; } = "Europe/Madrid";
 
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
 
@@ -43,7 +43,7 @@ namespace Convivia.Domain.Entities
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(string nombre, List<string> usuarioEspaciosIds, DateTime horaLimite, int karma, string plantillaId, string? facturaId = null)
+        public Tarea(string nombre, List<string> usuarioEspaciosIds, int karma, string plantillaId, string? facturaId = null)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
             if (karma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
@@ -51,7 +51,6 @@ namespace Convivia.Domain.Entities
 
             Nombre = nombre;
             UsuarioEspaciosIds = usuarioEspaciosIds;
-            HoraLimite = horaLimite;
             this.karma = karma;
             Estado = false; // Por defecto, la tarea está incompleta
             PlantillaId = plantillaId;

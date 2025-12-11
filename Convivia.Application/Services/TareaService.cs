@@ -102,15 +102,38 @@ namespace Convivia.Application.Services
 
         }
 
-        // TODO
+        // TODO - delete pantalla edicio al canviar els dies en que es repeteix la tasca.
 
         public async Task<TareaDto> UpdateAsync(string espacioid, string id, UpdateTareaDto dto)
         {
             var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, id);
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
             var tareas = await _repository.GetAllAsync(id);
-            var plantillaupdatedto = _mapper.Map<UpdatePlantillaTareaDto>(dto);
-            var tareaactualizada = _mapper.Map<Tarea>(dto);
+            var plantillaupdatedto = new UpdatePlantillaTareaDto
+            {
+                Nombre = dto.Nombre ?? plantilla.Nombre,
+                karma = dto.karma ?? plantilla.karma,
+                DiasRepeticion = plantilla.DiasRepeticion,
+                TareasId = plantilla.TareasId
+            };
+
+            var tareaactualizada = new Tarea
+            {
+                Nombre = dto.Nombre ?? tareas[0].Nombre,
+                karma = dto.karma ?? tareas[0].karma,
+                Estado = dto.Estado ?? tareas[0].Estado,
+
+                // Campos adicionales según tu modelo FirestoreTarea:
+                UsuarioEspaciosIds = dto.UsuarioEspaciosIds ?? tareas[0].UsuarioEspaciosIds,
+                FechaRealizacion = dto.FechaRealizacion ?? null, // puede ser null
+                Foto = dto.Foto ?? tareas[0].Foto, // si tu DTO lo soporta
+                Prorroga = dto.Prorroga ?? tareas[0].Prorroga, // puede ser null
+                FacturaId = tareas[0].FacturaId,
+                DiaSemana = tareas[0].DiaSemana,
+                SalaId = tareas[0].SalaId,
+                PlantillaId = tareas[0].PlantillaId
+            };
+
             await _ptservice.UpdateAsync(id, plantillaupdatedto);
             await _repository.UpdateAsyncList(tareas, tareaactualizada);
             return _mapper.Map<TareaDto>(plantillaupdatedto);

@@ -14,6 +14,8 @@ namespace Convivia.Shared.DTOs
 
         public List<string>? UsuarioEspaciosIds { get; set; }
 
+        public DateTime? FechaRealizacion { get; set; }
+
         public int? karma { get; set; } = 10;
 
         public byte[]? Foto { get; set; }
@@ -23,8 +25,6 @@ namespace Convivia.Shared.DTOs
         public bool? Estado { get; set; }
 
         public string? FacturaId { get; set; } // Referencia a la factura asociada
-
-        public string? PlantillaId { get; set; }
 
         public string? SalaId { get; set; }
 

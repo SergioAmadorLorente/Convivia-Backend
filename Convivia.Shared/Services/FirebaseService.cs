@@ -51,7 +51,6 @@ namespace Convivia.Infrastructure.Services
             if (!snap.Exists) return null;
 
             var entity = snap.ConvertTo<T>();
-            SetIdIfPossible(entity, snap.Id);
             return entity;
         }
 
