@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Cloud.Firestore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -14,7 +15,9 @@ namespace Convivia.Shared.DTOs
 
         public List<int>? DiasRepeticion { get; set; }
 
-        public List<string> TareasId { get; set; } = new List<string>();
+        public List<string>? TareasId { get; set; } = new List<string>();
+
+        public TimeOnly? HoraLimite { get; set; }
 
     }
 }

@@ -24,7 +24,7 @@ namespace Convivia.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<List<string>>> CreateTarea(string espacioid, CreateTareaDto dto)
+        public async Task<ActionResult<List<string>>> CreateTarea(string espacioid, [FromBody] CreateTareaDto dto)
         {
             var tareaIds = await _service.AddAsync(espacioid, dto);
             return CreatedAtAction(nameof(GetTareasByEspacioId), new { espacioid = espacioid }, tareaIds);
@@ -52,7 +52,7 @@ namespace Convivia.API.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<ActionResult<TareaDto>> UpdateTarea(string espacioid, string id, UpdateTareaDto dto)
+        public async Task<ActionResult<TareaDto>> UpdateTarea(string espacioid,string id, [FromBody] UpdateTareaDto dto)
         {
             var tareaDto = await _service.UpdateAsync(espacioid, id, dto);
             return tareaDto != null ? Ok(tareaDto) : NotFound();

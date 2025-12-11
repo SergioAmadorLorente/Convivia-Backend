@@ -18,7 +18,7 @@ namespace Convivia.Shared.DTOs
         public List<int> DiasRepeticion { get; set; } = new();
 
         [Required]
-        public DateTime HoraLimite { get; set; }
+        public TimeOnly HoraLimite { get; set; }
 
         [Required]
         public List<string> UsuarioEspaciosIds { get; set; } = new();

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Cloud.Firestore;
+using System;
 using System.Collections.Generic;
 
 namespace Convivia.Shared.DTOs
@@ -20,6 +21,8 @@ namespace Convivia.Shared.DTOs
         public string EspacioId { get; set; }
 
         public string Descripcion { get; set; }
+
+        public TimeOnly HoraLimite { get; set; }
 
     }
 }

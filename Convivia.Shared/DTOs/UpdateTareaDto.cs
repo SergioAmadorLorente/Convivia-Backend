@@ -8,7 +8,7 @@ namespace Convivia.Shared.DTOs
     {
         public string? Nombre { get; set; }
 
-        public DateTime? HoraLimite { get; set; }
+        public TimeOnly? HoraLimite { get; set; }
 
         public string? Descripcion { get; set; }
 
@@ -16,13 +16,15 @@ namespace Convivia.Shared.DTOs
 
         public DateTime? FechaRealizacion { get; set; }
 
-        public int? karma { get; set; } = 10;
+        public int? karma { get; set; }
 
         public byte[]? Foto { get; set; }
 
         public DateTime? Prorroga { get; set; }
 
-        public bool? Estado { get; set; }
+        public bool? Disponible { get; set; }
+
+        public bool? Completada { get; set; }
 
         public string? FacturaId { get; set; } // Referencia a la factura asociada
 

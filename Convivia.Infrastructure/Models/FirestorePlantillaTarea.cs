@@ -1,4 +1,5 @@
 ﻿using Google.Cloud.Firestore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using System;
 using System.Collections.Generic;
 
@@ -27,5 +28,19 @@ namespace Convivia.Infrastructure.Models
         public List<string> TareasId { get; set; } = new();
         [FirestoreProperty]
         public string EspacioId { get; set; }
+        [FirestoreProperty]
+        public int IntervalWeeks { get; set; }
+        [FirestoreProperty]
+        public string HoraLimite { get; set; }
+        [FirestoreProperty]
+        public string TimeZoneId { get; set; } = "Europe/Madrid";
+        [FirestoreProperty]
+        public int? GracePeriodMinutes { get; set; }
+        [FirestoreProperty]
+        public DateOnly? StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+        [FirestoreProperty]
+        public DateOnly? EndDate { get; set; } = null;
+
+
     }
 }

@@ -19,5 +19,7 @@ namespace Convivia.Shared.DTOs
 
         public List<string> TareasId { get; set; } = new();
 
+        public TimeOnly HoraLimite { get; set; }
+
     }
 }

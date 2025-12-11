@@ -15,20 +15,16 @@ namespace Convivia.Domain.Entities
         
         public DateTime? FechaRealizacion { get; set; }
 
-        public string TimeZoneId { get; set; } = "Europe/Madrid";
-
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
 
         public DateTime? Prorroga { get; set; } // Puede ser null
 
-        public bool Estado { get; set; }
-
-        public Espacio espacio { get; set; }
+        public bool Disponible { get; set; }
+        public bool Completada { get; set; }
 
         public string? FacturaId { get; set; }
         public string PlantillaId { get; set; } = string.Empty; // obligatorio
         public List<string> UsuarioEspaciosIds { get; set; } = new();
-
         public Factura? Factura { get; set; }
 
         public int DiaSemana { get; set; }
@@ -52,9 +48,11 @@ namespace Convivia.Domain.Entities
             Nombre = nombre;
             UsuarioEspaciosIds = usuarioEspaciosIds;
             this.karma = karma;
-            Estado = false; // Por defecto, la tarea está incompleta
+            Disponible = false; // Por defecto, la tarea está incompleta
             PlantillaId = plantillaId;
             FacturaId = facturaId;
         }
+
     }
+
 }

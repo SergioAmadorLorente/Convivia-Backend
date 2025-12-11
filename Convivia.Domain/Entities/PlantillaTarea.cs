@@ -1,4 +1,6 @@
-﻿namespace Convivia.Domain.Entities
+﻿using Google.Cloud.Firestore;
+
+namespace Convivia.Domain.Entities
 {
     public class PlantillaTarea
     {
@@ -7,6 +9,8 @@
         public string Nombre { get; set; }
 
         public string Descripcion { get; set; }
+
+        public string TimeZoneId { get; set; } = "Europe/Madrid";
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
@@ -18,7 +22,10 @@
 
         public List<string> TareasId { get; set; } = new List<string>();
 
-        // public List<Tarea> tareas { get; set; } = new List<Tarea>();
+        public TimeOnly HoraLimite { get; set; }
+        // public string TimeZoneId { get; set; } = "Europe/Madrid";
+
+        public int? GracePeriodMinutes { get; set; } = 30;
 
         public PlantillaTarea()
         {

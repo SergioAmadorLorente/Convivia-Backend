@@ -25,7 +25,9 @@ namespace Convivia.Infrastructure.Models
         public DateTime? Prorroga { get; set; } // Puede ser null
 
         [FirestoreProperty]
-        public bool Estado { get; set; }
+        public bool Disponible { get; set; }
+        [FirestoreProperty]
+        public bool Completada { get; set; }
 
         [FirestoreProperty]
         public string? FacturaId { get; set; }
