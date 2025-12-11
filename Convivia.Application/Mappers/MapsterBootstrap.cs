@@ -8,6 +8,18 @@ namespace Convivia.Application.Mappers
     {
         public static void Configure(TypeAdapterConfig config)
         {
+            // IMPORTANTE: Escanear primero Infrastructure para cargar RolTypeConverter
+            // antes de configurar los mapeos que lo necesitan
+            try
+            {
+                var infraAssembly = Assembly.Load("Convivia.Infrastructure");
+                config.Scan(infraAssembly);
+            }
+            catch
+            {
+                // ignore if assembly not available during design-time operations
+            }
+
             // Register application-level mappings (DTO <-> Domain)
             
             // Espacio mappings (DTO <-> Domain)
@@ -31,9 +43,8 @@ namespace Convivia.Application.Mappers
             // Expandir las propiedades del Rol en el DTO para facilitar consumo en API
             config.NewConfig<Permiso, PermisoDto>()
                 .Map(dest => dest.Id, src => src.Id)
-                .Map(dest => dest.Rol, src => src.Rol.Nombre)
-                // Mapear automáticamente todas las propiedades de Rol a PermisoDto
-                .Map(dest => dest, src => src.Rol);
+                .Map(dest => dest.Rol, src => src.Rol != null ? src.Rol.Nombre : string.Empty)
+                .Map(dest => dest, src => src.Rol); // Mapster copia automáticamente propiedades coincidentes
 
             // Invitacion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Invitacion, InvitacionDto, CreateInvitacionDto, UpdateInvitacionDto>(config);
@@ -46,18 +57,6 @@ namespace Convivia.Application.Mappers
 
             // PlantillaTarea mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<PlantillaTarea, PlantillaTareaDto, CreatePlantillaTareaDto, UpdatePlantillaTareaDto>(config);
-
-            // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
-            // Auto-registers: RolTypeConverter (string<->Rol), PermisoMappingConfig, and other mapping configs
-            try
-            {
-                var infraAssembly = Assembly.Load("Convivia.Infrastructure");
-                config.Scan(infraAssembly);
-            }
-            catch
-            {
-                // ignore if assembly not available during design-time operations
-            }
         }
     }
 }

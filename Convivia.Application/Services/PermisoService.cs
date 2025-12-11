@@ -33,13 +33,24 @@ namespace Convivia.Application.Services
                 throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
             }
 
-            // Mapster maneja automáticamente:
-            // 1. string -> Rol usando RolTypeConverter
-            // 2. Copia permisos del Rol a Permiso usando AfterMapping en MapsterBootstrap
+            // Mapster convierte CreatePermisoDto -> Permiso
+            // RolTypeConverter maneja string -> Rol automáticamente
             var permisoDomain = dto.Adapt<Permiso>();
 
-            // Mapster maneja automáticamente Permiso -> PermisoDto (Rol objeto -> string)
+            // DEBUG: Verificar que el Rol esté correctamente configurado
+            _logger.LogInformation("Permiso creado - Rol.Nombre: {Nombre}, CrearTarea: {CrearTarea}, EliminarTarea: {EliminarTarea}", 
+                permisoDomain.Rol?.Nombre, 
+                permisoDomain.Rol?.CrearTarea, 
+                permisoDomain.Rol?.EliminarTarea);
+
+            // Mapster convierte Permiso -> PermisoDto
             var permisoDto = permisoDomain.Adapt<PermisoDto>();
+
+            // DEBUG: Verificar que el DTO tenga los valores correctos
+            _logger.LogInformation("PermisoDto - Rol: {Rol}, CrearTarea: {CrearTarea}, EliminarTarea: {EliminarTarea}", 
+                permisoDto.Rol, 
+                permisoDto.CrearTarea, 
+                permisoDto.EliminarTarea);
 
             try
             {

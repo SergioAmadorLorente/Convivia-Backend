@@ -6,8 +6,9 @@ using Convivia.Shared.DTOs;
 namespace Convivia.Infrastructure.Mappers
 {
     /// <summary>
-    /// Mapster configuration for Permiso mappings between Domain, DTO and Persistence layers
+    /// Mapster configuration for Permiso mappings between Domain and Persistence layers
     /// El mapeo de Rol (string <-> objeto) se gestiona automáticamente por RolTypeConverter
+    /// Los mapeos PermisoDto <-> Permiso están configurados en MapsterBootstrap (Application layer)
     /// </summary>
     public class PermisoMappingConfig : IRegister
     {
@@ -21,13 +22,8 @@ namespace Convivia.Infrastructure.Mappers
             // El mapeo de Rol se aplica automáticamente gracias al convertidor global
             config.NewConfig<Permiso, FireStorePermiso>();
 
-            // PermisoDto -> Permiso (Domain)
-            // El mapeo de Rol se aplica automáticamente gracias al convertidor global
-            config.NewConfig<PermisoDto, Permiso>();
-
-            // Permiso (Domain) -> PermisoDto
-            // El mapeo de Rol se aplica automáticamente gracias al convertidor global
-            config.NewConfig<Permiso, PermisoDto>();
+            // NOTA: Los mapeos PermisoDto <-> Permiso están en MapsterBootstrap.cs
+            // para evitar conflictos con la expansión de propiedades del Rol
         }
     }
 }
