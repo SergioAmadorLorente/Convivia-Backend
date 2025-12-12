@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Convivia.Infrastructure.Helpers
+﻿namespace Convivia.Infrastructure.Helpers
 {
     public static class BatchHelper
     {

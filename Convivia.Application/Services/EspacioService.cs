@@ -1,23 +1,31 @@
+// Application/Services/EspacioService.cs
+using Convivia.Domain.Entities;
+using Convivia.Domain.Repositories;
+using Convivia.Infrastructure.Helpers;
+using Convivia.Shared.DTOs;
+using Convivia.Shared.Repositories;
+using Mapster;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Shared.DTOs;
-using Microsoft.Extensions.Logging;
-using Convivia.Shared.Repositories;
-using Convivia.Shared.Services;
-using Mapster;
 
 namespace Convivia.Application.Services
 {
     public class EspacioService
     {
         private readonly IEspacioRepository _repo;
+        private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
         private readonly ILogger<EspacioService> _logger;
 
-        public EspacioService(IEspacioRepository repo, ILogger<EspacioService> logger)
+        public EspacioService(
+            IEspacioRepository repo,
+            IUsuarioEspacioRepository usuarioEspacioRepo,
+            ILogger<EspacioService> logger)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _usuarioEspacioRepo = usuarioEspacioRepo ?? throw new ArgumentNullException(nameof(usuarioEspacioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -26,118 +34,87 @@ namespace Convivia.Application.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre requerido");
 
-            // Usar Mapster para mapear CreateEspacioDto -> EspacioDto
             var espacio = dto.Adapt<EspacioDto>();
             espacio.Id = Guid.NewGuid().ToString("N");
-
-            try
-            {
-                return await _repo.AddAsync(espacio, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creando espacio");
-                throw;
-            }
+            return await _repo.AddAsync(espacio, ct);
         }
 
         public async Task<EspacioDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                return await _repo.GetByIdAsync(id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
-                throw;
-            }
-        }
-
-        public async Task<IEnumerable<EspacioDto>> ObtenerPorDireccionAsync(string direccion, CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(direccion)) return Enumerable.Empty<EspacioDto>();
-            try
-            {
-                return await _repo.GetByDireccionAsync(direccion, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorDireccion {Direccion}", direccion);
-                throw;
-            }
+            return await _repo.GetByIdAsync(id, ct);
         }
 
         public async Task ActualizarAsync(string id, CreateEspacioDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            try
-            {
-                var espacioExistente = await _repo.GetByIdAsync(id, ct);
-                if (espacioExistente == null) throw new KeyNotFoundException($"Espacio con Id {id} no encontrado");
 
-                espacioExistente.Nombre = dto.Nombre ?? espacioExistente.Nombre;
-                espacioExistente.Direccion = dto.Direccion ?? espacioExistente.Direccion;
+            var espacioExistente = await _repo.GetByIdAsync(id, ct);
+            if (espacioExistente == null) throw new KeyNotFoundException($"Espacio con Id {id} no encontrado");
 
-                await _repo.UpdateAsync(id, espacioExistente, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error actualizando espacio {Id}", id);
-                throw;
-            }
+            // Si el Id no cambia, actualizar campos normales
+            espacioExistente.Nombre = dto.Nombre ?? espacioExistente.Nombre;
+            espacioExistente.Direccion = dto.Direccion ?? espacioExistente.Direccion;
+
+            await _repo.UpdateAsync(id, espacioExistente, ct);
         }
 
+        /// <summary>
+        /// Eliminar espacio con política RESTRICT: si existen UsuarioEspacio asociados, lanzar InvalidOperationException.
+        /// </summary>
         public async Task EliminarAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
-            try
+
+            var usuariosEnEspacio = await _usuarioEspacioRepo.GetByEspacioIdAsync(id, ct);
+            if (usuariosEnEspacio != null && usuariosEnEspacio.Any())
             {
-                await _repo.DeleteAsync(id, ct);
+                throw new InvalidOperationException($"No se puede eliminar el espacio {id}: existen {usuariosEnEspacio.Count()} usuarios asociados.");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error eliminando espacio {Id}", id);
-                throw;
-            }
+
+            await _repo.DeleteAsync(id, ct);
         }
 
-        public async Task<bool> ParcialActualizarAsync(string id, UpdateEspacioDto dto, CancellationToken ct = default)
+        /// <summary>
+        /// Cambia el Id de un Espacio y propaga el nuevo Id a todos los UsuarioEspacio (ON UPDATE CASCADE).
+        /// Nota: renombrar Id en Firestore implica crear nuevo documento y borrar el antiguo.
+        /// </summary>
+        public async Task ChangeEspacioIdCascadeAsync(string oldId, string newId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            if (string.IsNullOrWhiteSpace(oldId)) throw new ArgumentException("oldId requerido");
+            if (string.IsNullOrWhiteSpace(newId)) throw new ArgumentException("newId requerido");
+            if (oldId == newId) return;
 
-            try
-            {
-                var espacio = await _repo.GetByIdAsync(id, ct);
-                if (espacio == null) return false;
+            var espacio = await _repo.GetByIdAsync(oldId, ct);
+            if (espacio == null) throw new KeyNotFoundException($"Espacio {oldId} no encontrado");
 
-                var changed = false;
+            // 1) Crear nuevo documento con newId
+            espacio.Id = newId;
+            await _repo.AddAsync(espacio, ct);
 
-                if (!string.IsNullOrWhiteSpace(dto.Nombre) && dto.Nombre != espacio.Nombre)
+            // 2) Obtener todos los UsuarioEspacio que referencian oldId
+            var usuarios = (await _usuarioEspacioRepo.GetByEspacioIdAsync(oldId, ct)).ToList();
+
+            // 3) Actualizar en batches usando BatchHelper para no saturar
+            await BatchHelper.ProcessInBatchesAsync<UsuarioEspacio>(
+                usuarios,
+                async (batch, token) =>
                 {
-                    espacio.Nombre = dto.Nombre;
-                    changed = true;
-                }
+                    foreach (var ue in batch)
+                    {
+                        ue.EspacioId = newId;
+                        await _usuarioEspacioRepo.UpdateAsync(ue.Id_UsuarioEspacio, ue, token);
+                    }
+                },
+                batchSize: 500,
+                maxRetries: 3,
+                retryDelay: TimeSpan.FromSeconds(2),
+                ct: ct
+            );
 
-                if (dto.Direccion != null && dto.Direccion != espacio.Direccion)
-                {
-                    espacio.Direccion = dto.Direccion;
-                    changed = true;
-                }
-
-                if (!changed) return true;
-
-                await _repo.UpdateAsync(id, espacio, ct);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error parcial actualizando espacio {Id}", id);
-                throw;
-            }
+            // 4) Borrar documento antiguo
+            await _repo.DeleteAsync(oldId, ct);
         }
     }
 }
