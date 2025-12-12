@@ -7,18 +7,30 @@ using Microsoft.Extensions.Logging;
 using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
 using Mapster;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Convivia.Application.Services
 {
     public class EspacioService
     {
         private readonly IEspacioRepository _repo;
+        private readonly IUsuarioRepository _usuarioRepo;
         private readonly ILogger<EspacioService> _logger;
+        private readonly IMemoryCache _cache;
+        private readonly UsuarioEspacioService _usuarioEspacioService;
 
-        public EspacioService(IEspacioRepository repo, ILogger<EspacioService> logger)
+        public EspacioService(
+            IEspacioRepository repo,
+            IUsuarioRepository usuarioRepo,
+            ILogger<EspacioService> logger, 
+            IMemoryCache cache,
+            UsuarioEspacioService usuarioEspacioService)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _usuarioRepo = usuarioRepo ?? throw new ArgumentNullException(nameof(usuarioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _usuarioEspacioService = usuarioEspacioService ?? throw new ArgumentNullException(nameof(usuarioEspacioService));
         }
 
         public async Task<string> CrearAsync(CreateEspacioDto dto, CancellationToken ct = default)
@@ -138,6 +150,94 @@ namespace Convivia.Application.Services
                 _logger.LogError(ex, "Error parcial actualizando espacio {Id}", id);
                 throw;
             }
+        }
+
+        public async Task<string> GenerarCodigoInvitacionAsync(string espacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentException("Id requerido");
+
+            var espacio = await _repo.GetByIdAsync(espacioId, ct);
+            if (espacio == null) throw new KeyNotFoundException($"Espacio con Id {espacioId} no encontrado");
+
+            // Verificar si ya existe un código válido para este espacio
+            var espacioKey = $"EspacioId_{espacioId}";
+            if (_cache.TryGetValue(espacioKey, out string codigoExistente))
+            {
+                _logger.LogInformation("Código de invitación existente {Codigo} devuelto para espacio {EspacioId}", codigoExistente, espacioId);
+                return codigoExistente;
+            }
+
+            // Generar un nuevo código único
+            string codigo;
+            do
+            {
+                codigo = GenerarCodigoAleatorio();
+            } while (_cache.TryGetValue($"InvitacionCode_{codigo}", out _));
+
+            var cacheKey = $"InvitacionCode_{codigo}";
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromHours(1));
+
+            // Guardar el código con el espacioId y viceversa
+            _cache.Set(cacheKey, espacioId, cacheOptions);
+            _cache.Set(espacioKey, codigo, cacheOptions);
+
+            _logger.LogInformation("Código de invitación {Codigo} generado para espacio {EspacioId}", codigo, espacioId);
+            return codigo;
+        }
+
+        public async Task<UsuarioEspacioDto> UnirUsuarioPorCodigoAsync(string codigo, string usuarioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(codigo)) throw new ArgumentException("Código requerido");
+            if (string.IsNullOrWhiteSpace(usuarioId)) throw new ArgumentException("UsuarioId requerido");
+
+            var cacheKey = $"InvitacionCode_{codigo}";
+            if (!_cache.TryGetValue(cacheKey, out string espacioId))
+            {
+                _logger.LogWarning("Código de invitación {Codigo} no válido o expirado", codigo);
+                return null;
+            }
+
+            var espacio = await _repo.GetByIdAsync(espacioId, ct);
+            if (espacio == null)
+            {
+                _logger.LogWarning("Espacio {EspacioId} no encontrado para código {Codigo}", espacioId, codigo);
+                return null;
+            }
+
+            var usuariosEspaciosExistentes = await _usuarioEspacioService.ObtenerPorEspacioAsync(espacioId, ct);
+            if (usuariosEspaciosExistentes.Any(ue => ue.UsuarioId == usuarioId))
+            {
+                _logger.LogWarning("Usuario {UsuarioId} ya está en el espacio {EspacioId}", usuarioId, espacioId);
+                return null;
+            }
+
+            var createDto = new CreateUsuarioEspacioDto
+            {
+                UsuarioId = usuarioId,
+                EspacioId = espacioId,
+                Ausente = false,
+                Karma = 0,
+                Rol = "Usuario"
+            };
+
+            var usuarioEspacio = await _usuarioEspacioService.AddAsync(createDto, ct);
+
+            if (usuarioEspacio != null)
+            {
+                // Actualizar las listas de referencias en Usuario y Espacio
+                await _repo.AddUsuarioEspacioIdAsync(espacioId, usuarioEspacio.Id_UsuarioEspacio, ct);
+                await _usuarioRepo.AddUsuarioEspacioIdAsync(usuarioId, usuarioEspacio.Id_UsuarioEspacio, ct);
+                _logger.LogInformation("Usuario {UsuarioId} se unió al espacio {EspacioId} usando código {Codigo}. UsuarioEspacioId: {UsuarioEspacioId}", usuarioId, espacioId, codigo, usuarioEspacio.Id_UsuarioEspacio);
+            }
+
+            return usuarioEspacio;
+        }
+
+        private string GenerarCodigoAleatorio()
+        {
+            var random = new Random();
+            return random.Next(100000, 999999).ToString();
         }
     }
 }

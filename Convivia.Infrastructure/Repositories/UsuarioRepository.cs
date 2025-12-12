@@ -116,5 +116,33 @@ namespace Convivia.Infrastructure.Repositories
                 throw;
             }
         }
+
+        public async Task AddUsuarioEspacioIdAsync(string usuarioId, string usuarioEspacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioId)) throw new ArgumentException("usuarioId requerido", nameof(usuarioId));
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId)) throw new ArgumentException("usuarioEspacioId requerido", nameof(usuarioEspacioId));
+
+            try
+            {
+                var usuario = await _firebase.GetAsync<FireStoreUsuario>(Collection, usuarioId, ct);
+                if (usuario == null)
+                {
+                    _logger.LogWarning("Usuario {UsuarioId} no encontrado", usuarioId);
+                    return;
+                }
+
+                if (!usuario.UsuarioEspaciosIds.Contains(usuarioEspacioId))
+                {
+                    usuario.UsuarioEspaciosIds.Add(usuarioEspacioId);
+                    await _firebase.UpdateAsync(Collection, usuarioId, usuario, merge: true, ct);
+                    _logger.LogInformation("UsuarioEspacioId {UsuarioEspacioId} agregado a Usuario {UsuarioId}", usuarioEspacioId, usuarioId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error AddUsuarioEspacioIdAsync {UsuarioId}, {UsuarioEspacioId}", usuarioId, usuarioEspacioId);
+                throw;
+            }
+        }
     }
 }

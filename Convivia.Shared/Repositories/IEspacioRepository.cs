@@ -12,5 +12,6 @@ namespace Convivia.Shared.Repositories
         Task<string> AddAsync(EspacioDto espacio, CancellationToken ct = default);
         Task UpdateAsync(string id, EspacioDto espacio, CancellationToken ct = default);
         Task DeleteAsync(string id, CancellationToken ct = default);
+        Task AddUsuarioEspacioIdAsync(string espacioId, string usuarioEspacioId, CancellationToken ct = default);
     }
 }

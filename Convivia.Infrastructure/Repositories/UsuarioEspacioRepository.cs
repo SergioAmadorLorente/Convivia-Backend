@@ -49,7 +49,9 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(espacioId)) return Array.Empty<UsuarioEspacio>();
             try
             {
-                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, nameof(FireStoreUsuarioEspacio.EspacioId), espacioId, ct);
+                _logger.LogInformation("GetByEspacioIdAsync llamado para espacioId: {EspacioId}", espacioId);
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
+                _logger.LogInformation("GetByEspacioIdAsync devolvió {Count} documentos para espacioId: {EspacioId}", list?.Count ?? 0, espacioId);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)
@@ -64,7 +66,9 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(usuarioId)) return Array.Empty<UsuarioEspacio>();
             try
             {
-                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, nameof(FireStoreUsuarioEspacio.UsuarioId), usuarioId, ct);
+                _logger.LogInformation("GetByUsuarioIdAsync llamado para usuarioId: {UsuarioId}", usuarioId);
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "UsuarioRef", usuarioId, ct);
+                _logger.LogInformation("GetByUsuarioIdAsync devolvió {Count} documentos para usuarioId: {UsuarioId}", list?.Count ?? 0, usuarioId);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)

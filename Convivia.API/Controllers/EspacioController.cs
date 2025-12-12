@@ -84,5 +84,35 @@ namespace Convivia.API.Controllers
             await _service.EliminarAsync(id, ct);
             return NoContent();
         }
+
+        // GET api/espacio/{id}/getCode
+        [HttpGet("{id}/getCode")]
+        public async Task<IActionResult> GetInvitationCode(string id, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            try
+            {
+                var codigo = await _service.GenerarCodigoInvitacionAsync(id, ct);
+                return Ok(new { codigo });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        // POST api/espacio/{code}/usuario
+        [HttpPost("{code}/usuario")]
+        public async Task<IActionResult> JoinSpaceByCode(string code, [FromBody] JoinByCodeDto dto, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return BadRequest("Código requerido");
+            if (dto == null || string.IsNullOrWhiteSpace(dto.UsuarioId)) return BadRequest("UsuarioId requerido");
+
+            var result = await _service.UnirUsuarioPorCodigoAsync(code, dto.UsuarioId, ct);
+            if (result== null) return NotFound("Código no válido o expirado");
+
+            return Ok(new { message = "Usuario unido al espacio correctamente", usuarioEspacio = result });
+        }
     }
 }
