@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Convivia.Application.Services;
+using Convivia.Shared.DTOs;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Shared.DTOs;
-using Convivia.Application.Services;
 
 namespace Convivia.API.Controllers
 {
@@ -15,6 +15,23 @@ namespace Convivia.API.Controllers
         public EspacioController(EspacioService service)
         {
             _service = service;
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            try
+            {
+                await _service.EliminarAsync(id, ct);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // RESTRICT violation -> 409 Conflict
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         // POST api/espacio
