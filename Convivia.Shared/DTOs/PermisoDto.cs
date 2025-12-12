@@ -9,7 +9,7 @@ namespace Convivia.Shared.DTOs
     public class PermisoDto
     {
         public string Id { get; set; }
-        public string Rol { get; set; }
+        public TipoRol Rol { get; set; }
         public bool CrearTarea { get; set; }
         public bool EliminarTarea { get; set; }
         public bool EditarTarea { get; set; }

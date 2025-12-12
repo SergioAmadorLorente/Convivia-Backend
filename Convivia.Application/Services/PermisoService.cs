@@ -14,7 +14,6 @@ namespace Convivia.Application.Services
     {
         private readonly IPermisoRepository _repo;
         private readonly ILogger<PermisoService> _logger;
-        private static readonly string[] RolesValidos = { "Usuario", "Admin" };
 
         public PermisoService(IPermisoRepository repo, ILogger<PermisoService> logger)
         {
@@ -25,16 +24,9 @@ namespace Convivia.Application.Services
         public async Task<string> CrearAsync(CreatePermisoDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Rol)) throw new ArgumentException("Rol requerido");
-
-            // Validar que el rol sea válido
-            if (!EsRolValido(dto.Rol))
-            {
-                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
-            }
 
             // Mapster convierte CreatePermisoDto -> Permiso
-            // RolTypeConverter maneja string -> Rol automáticamente
+            // RolTypeConverter maneja TipoRol -> Rol automáticamente
             var permisoDomain = dto.Adapt<Permiso>();
 
             // DEBUG: Verificar que el Rol esté correctamente configurado
@@ -77,16 +69,8 @@ namespace Convivia.Application.Services
             }
         }
 
-        public async Task<IEnumerable<PermisoDto>> ObtenerPorRolAsync(string rol, CancellationToken ct = default)
+        public async Task<IEnumerable<PermisoDto>> ObtenerPorRolAsync(TipoRol rol, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(rol)) return Array.Empty<PermisoDto>();
-            
-            // Validar que el rol sea válido
-            if (!EsRolValido(rol))
-            {
-                throw new ArgumentException($"Rol '{rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
-            }
-
             try
             {
                 return await _repo.GetByRolAsync(rol, ct);
@@ -119,16 +103,11 @@ namespace Convivia.Application.Services
             var existing = await ObtenerPorIdAsync(id, ct);
             if (existing == null) throw new KeyNotFoundException("Permiso no encontrado");
 
-            if (dto.Rol != null && !EsRolValido(dto.Rol))
-            {
-                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", RolesValidos)}");
-            }
-
             // Si se cambia el rol, actualizar todo según la configuración del rol
-            if (dto.Rol != null && dto.Rol != existing.Rol)
+            if (dto.Rol.HasValue && dto.Rol.Value != existing.Rol)
             {
                 var rolDomain = new Rol();
-                if (dto.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                if (dto.Rol.Value == TipoRol.Admin)
                 {
                     rolDomain.SetConfigurarcionAdmin();
                 }
@@ -137,7 +116,7 @@ namespace Convivia.Application.Services
                     rolDomain.SetConfigurarcionUsuario();
                 }
                 
-                existing.Rol = rolDomain.Nombre;
+                existing.Rol = dto.Rol.Value;
                 existing.CrearTarea = rolDomain.CrearTarea;
                 existing.EliminarTarea = rolDomain.EliminarTarea;
                 existing.EditarTarea = rolDomain.EditarTarea;
@@ -183,12 +162,6 @@ namespace Convivia.Application.Services
                 _logger.LogError(ex, "Error EliminarPermiso {Id}", id);
                 throw;
             }
-        }
-
-        private static bool EsRolValido(string rol)
-        {
-            return !string.IsNullOrWhiteSpace(rol) && 
-                   RolesValidos.Contains(rol, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

@@ -82,13 +82,15 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task<RolDto?> GetByNombreAsync(string nombre, CancellationToken ct = default)
+        public async Task<RolDto?> GetByNombreAsync(TipoRol nombre, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(nombre)) return null;
             try
             {
+                // Convertir enum a string para consultar en Firestore
+                var nombreStr = nombre.ToString();
+                
                 // Consultar FireStoreRol desde Firestore por nombre
-                var list = await _firebase.QueryAsync<FireStoreRol>(Collection, nameof(FireStoreRol.Nombre), nombre, ct);
+                var list = await _firebase.QueryAsync<FireStoreRol>(Collection, nameof(FireStoreRol.Nombre), nombreStr, ct);
                 if (list == null || !list.Any()) return null;
                 
                 var rolPersist = list.FirstOrDefault();

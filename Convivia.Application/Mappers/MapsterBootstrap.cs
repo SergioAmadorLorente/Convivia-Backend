@@ -35,15 +35,15 @@ namespace Convivia.Application.Mappers
             Config.MapsterConfig.RegisterPair<Rol, RolDto, CreateRolDto, UpdateRolDto>(config);
 
             // Configuración personalizada para Permiso: CreatePermisoDto -> Permiso
-            // Mapster convierte string -> Rol automáticamente usando RolTypeConverter
+            // Mapster convierte TipoRol -> Rol automáticamente usando RolTypeConverter
             config.NewConfig<CreatePermisoDto, Permiso>()
-                .Map(dest => dest.Rol, src => src.Rol); // RolTypeConverter maneja string -> Rol automáticamente
+                .Map(dest => dest.Rol, src => src.Rol); // RolTypeConverter maneja TipoRol -> Rol automáticamente
 
             // Configuración personalizada: Permiso -> PermisoDto
             // Expandir las propiedades del Rol en el DTO para facilitar consumo en API
             config.NewConfig<Permiso, PermisoDto>()
                 .Map(dest => dest.Id, src => src.Id)
-                .Map(dest => dest.Rol, src => src.Rol != null ? src.Rol.Nombre : string.Empty)
+                .Map(dest => dest.Rol, src => src.Rol != null && src.Rol.Nombre == "Admin" ? TipoRol.Admin : TipoRol.Usuario)
                 .Map(dest => dest, src => src.Rol); // Mapster copia automáticamente propiedades coincidentes
 
             // Invitacion mappings (DTO <-> Domain)

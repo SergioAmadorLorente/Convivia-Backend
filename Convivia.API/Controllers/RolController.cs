@@ -11,7 +11,6 @@ namespace Convivia.API.Controllers
     public class RolController : ControllerBase
     {
         private readonly RolService _service;
-        private static readonly string[] NombresValidos = { "Usuario", "Admin" };
 
         public RolController(RolService service)
         {
@@ -23,20 +22,6 @@ namespace Convivia.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateRolDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
-            if (string.IsNullOrWhiteSpace(model.Nombre))
-            {
-                return BadRequest("Nombre es requerido.");
-            }
-
-            // Validar que el nombre sea válido
-            if (!EsNombreValido(model.Nombre))
-            {
-                return BadRequest(new
-                {
-                    error = $"Nombre '{model.Nombre}' no válido.",
-                    nombresPermitidos = NombresValidos
-                });
-            }
 
             try
             {
@@ -74,7 +59,7 @@ namespace Convivia.API.Controllers
         {
             return Ok(new
             {
-                nombres = NombresValidos,
+                nombres = Enum.GetNames<TipoRol>(),
                 descripcion = new
                 {
                     Usuario = "Puede crear y editar tareas, y asignarse tareas",
@@ -85,20 +70,8 @@ namespace Convivia.API.Controllers
 
         // GET api/rol/por-nombre/{nombre}
         [HttpGet("nombre/{nombre}")]
-        public async Task<IActionResult> GetByNombre(string nombre, CancellationToken ct)
+        public async Task<IActionResult> GetByNombre(TipoRol nombre, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(nombre)) return BadRequest("Nombre es requerido.");
-
-            // Validar que el nombre sea válido
-            if (!EsNombreValido(nombre))
-            {
-                return BadRequest(new
-                {
-                    error = $"Nombre '{nombre}' no válido.",
-                    nombresPermitidos = NombresValidos
-                });
-            }
-
             try
             {
                 var rol = await _service.ObtenerPorNombreAsync(nombre, ct);
@@ -117,16 +90,6 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
-
-            // Validar nombre si se está actualizando
-            if (model.Nombre != null && !EsNombreValido(model.Nombre))
-            {
-                return BadRequest(new
-                {
-                    error = $"Nombre '{model.Nombre}' no válido.",
-                    nombresPermitidos = NombresValidos
-                });
-            }
 
             try
             {
@@ -153,12 +116,6 @@ namespace Convivia.API.Controllers
             var removed = await _service.EliminarAsync(id, ct);
             if (!removed) return NotFound();
             return NoContent();
-        }
-
-        private static bool EsNombreValido(string nombre)
-        {
-            return !string.IsNullOrWhiteSpace(nombre) && 
-                   NombresValidos.Contains(nombre, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

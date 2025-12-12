@@ -14,7 +14,6 @@ namespace Convivia.Application.Services
     {
         private readonly IRolRepository _repo;
         private readonly ILogger<RolService> _logger;
-        private static readonly string[] NombresValidos = { "Usuario", "Admin" };
 
         public RolService(IRolRepository repo, ILogger<RolService> logger)
         {
@@ -25,17 +24,11 @@ namespace Convivia.Application.Services
         public async Task<string> CrearAsync(CreateRolDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre requerido");
-
-            if (!EsNombreValido(dto.Nombre))
-            {
-                throw new ArgumentException($"Nombre '{dto.Nombre}' no válido. Los nombres permitidos son: {string.Join(", ", NombresValidos)}");
-            }
 
             // Crear rol con la configuración apropiada
             Rol rolDomain = new Rol();
             
-            if (dto.Nombre.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            if (dto.Nombre == TipoRol.Admin)
             {
                 rolDomain.SetConfigurarcionAdmin();
             }
@@ -44,7 +37,6 @@ namespace Convivia.Application.Services
                 rolDomain.SetConfigurarcionUsuario();
             }
 
-            // Mapster maneja automáticamente Rol -> RolDto
             var rolDto = rolDomain.Adapt<RolDto>();
 
             try
@@ -85,15 +77,8 @@ namespace Convivia.Application.Services
             }
         }
 
-        public async Task<RolDto?> ObtenerPorNombreAsync(string nombre, CancellationToken ct = default)
+        public async Task<RolDto?> ObtenerPorNombreAsync(TipoRol nombre, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(nombre)) return null;
-            
-            if (!EsNombreValido(nombre))
-            {
-                throw new ArgumentException($"Nombre '{nombre}' no válido. Los nombres permitidos son: {string.Join(", ", NombresValidos)}");
-            }
-
             try
             {
                 return await _repo.GetByNombreAsync(nombre, ct);
@@ -112,11 +97,6 @@ namespace Convivia.Application.Services
 
             var existing = await ObtenerPorIdAsync(id, ct);
             if (existing == null) throw new KeyNotFoundException("Rol no encontrado");
-
-            if (dto.Nombre != null && !EsNombreValido(dto.Nombre))
-            {
-                throw new ArgumentException($"Nombre '{dto.Nombre}' no válido. Los nombres permitidos son: {string.Join(", ", NombresValidos)}");
-            }
 
             // Mapster maneja automáticamente el merge de UpdateRolDto -> RolDto
             dto.Adapt(existing);
@@ -146,12 +126,6 @@ namespace Convivia.Application.Services
                 _logger.LogError(ex, "Error EliminarRol {Id}", id);
                 throw;
             }
-        }
-
-        private static bool EsNombreValido(string nombre)
-        {
-            return !string.IsNullOrWhiteSpace(nombre) && 
-                   NombresValidos.Contains(nombre, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

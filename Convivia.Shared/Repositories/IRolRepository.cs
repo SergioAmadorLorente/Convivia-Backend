@@ -11,7 +11,7 @@ namespace Convivia.Shared.Repositories
     {
         Task<RolDto?> GetByIdAsync(string id, CancellationToken ct = default);
         Task<IEnumerable<RolDto>> GetAllAsync(CancellationToken ct = default);
-        Task<RolDto?> GetByNombreAsync(string nombre, CancellationToken ct = default);
+        Task<RolDto?> GetByNombreAsync(TipoRol nombre, CancellationToken ct = default);
         Task<string> AddAsync(RolDto rol, CancellationToken ct = default);
         Task UpdateAsync(string id, RolDto rol, CancellationToken ct = default);
         Task DeleteAsync(string id, CancellationToken ct = default);

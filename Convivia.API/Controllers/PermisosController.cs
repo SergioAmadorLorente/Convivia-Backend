@@ -12,7 +12,6 @@ namespace Convivia.API.Controllers
     public class PermisosController : ControllerBase
     {
         private readonly PermisoService _service;
-        private static readonly string[] RolesValidos = { "Usuario", "Admin" };
 
         public PermisosController(PermisoService service)
         {
@@ -24,19 +23,6 @@ namespace Convivia.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreatePermisoDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
-            if (string.IsNullOrWhiteSpace(model.Rol))
-            {
-                return BadRequest("Rol es requerido.");
-            }
-
-            if (!EsRolValido(model.Rol))
-            {
-                return BadRequest(new
-                {
-                    error = $"Rol '{model.Rol}' no válido.",
-                    rolesPermitidos = RolesValidos
-                });
-            }
 
             try
             {
@@ -69,20 +55,9 @@ namespace Convivia.API.Controllers
         }
 
         // GET api/permisos/rol/{rol}
-        [HttpGet("{rol}")]
-        public async Task<IActionResult> GetByRol(string rol, CancellationToken ct)
+        [HttpGet("rol/{rol}")]
+        public async Task<IActionResult> GetByRol(TipoRol rol, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(rol)) return BadRequest("Rol es requerido.");
-
-            if (!EsRolValido(rol))
-            {
-                return BadRequest(new
-                {
-                    error = $"Rol '{rol}' no válido.",
-                    rolesPermitidos = RolesValidos
-                });
-            }
-
             try
             {
                 var list = await _service.ObtenerPorRolAsync(rol, ct);
@@ -100,15 +75,6 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
-
-            if (model.Rol != null && !EsRolValido(model.Rol))
-            {
-                return BadRequest(new
-                {
-                    error = $"Rol '{model.Rol}' no válido.",
-                    rolesPermitidos = RolesValidos
-                });
-            }
 
             try
             {
@@ -135,12 +101,6 @@ namespace Convivia.API.Controllers
             var removed = await _service.EliminarAsync(id, ct);
             if (!removed) return NotFound();
             return NoContent();
-        }
-
-        private static bool EsRolValido(string rol)
-        {
-            return !string.IsNullOrWhiteSpace(rol) && 
-                   RolesValidos.Contains(rol, StringComparer.OrdinalIgnoreCase);
         }
     }
 }
