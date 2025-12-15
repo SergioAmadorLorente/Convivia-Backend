@@ -95,7 +95,7 @@ namespace Convivia.Domain.Entities
                 throw new InvalidOperationException("No existe una petición para este usuario.");
 
             var rolUsuario = new Rol();
-            rolUsuario.SetConfigurarcionUsuario();
+            rolUsuario.SetConfiguracionUsuario();
             var permisoUsuario = new Permiso(rolUsuario);
 
             UsuarioEspacio usuarioEspacio = new UsuarioEspacio
