@@ -25,16 +25,16 @@ namespace Convivia.Application.Services
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // Crear rol con la configuración apropiada
+            // Crear rol con la configuraciÃ³n apropiada
             Rol rolDomain = new Rol();
             
             if (dto.Nombre == TipoRol.Admin)
             {
-                rolDomain.SetConfigurarcionAdmin();
+                rolDomain.SetConfiguracionAdmin();
             }
             else
             {
-                rolDomain.SetConfigurarcionUsuario();
+                rolDomain.SetConfiguracionUsuario();
             }
 
             var rolDto = rolDomain.Adapt<RolDto>();
@@ -98,7 +98,7 @@ namespace Convivia.Application.Services
             var existing = await ObtenerPorIdAsync(id, ct);
             if (existing == null) throw new KeyNotFoundException("Rol no encontrado");
 
-            // Mapster maneja automáticamente el merge de UpdateRolDto -> RolDto
+            // Mapster maneja automÃ¡ticamente el merge de UpdateRolDto -> RolDto
             dto.Adapt(existing);
 
             try
