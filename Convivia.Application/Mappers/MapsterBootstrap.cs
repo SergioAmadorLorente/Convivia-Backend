@@ -44,7 +44,14 @@ namespace Convivia.Application.Mappers
             // Expandir las propiedades del Rol en el DTO para facilitar consumo en API
             config.NewConfig<Permiso, PermisoDto>()
                 .Map(dest => dest.Id, src => src.Id)
-                .Map(dest => dest.Rol, src => src.Rol != null && src.Rol.Nombre == "Admin" ? TipoRol.Admin : TipoRol.Usuario)
+                .Map(dest => dest.Rol, src =>
+                    {
+                        if (src.Rol?.Nombre == null)
+                            return TipoRol.Usuario;
+                        if (Enum.TryParse<TipoRol>(src.Rol.Nombre, true, out var tipoRol))
+                            return tipoRol;
+                        return TipoRol.Usuario;
+                    })
                 .Map(dest => dest, src => src.Rol); // Mapster copia automáticamente propiedades coincidentes
 
             // Invitacion mappings (DTO <-> Domain)
