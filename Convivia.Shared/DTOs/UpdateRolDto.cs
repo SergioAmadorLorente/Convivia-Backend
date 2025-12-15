@@ -4,9 +4,6 @@ namespace Convivia.Shared.DTOs
 {
     public class UpdateRolDto
     {
-        [EnumDataType(typeof(TipoRol), ErrorMessage = "El rol debe ser válido")]
-        public TipoRol? Nombre { get; set; }
-
         public PermisosRolDto? Permisos { get; set; }
     }
     public enum TipoRol
