@@ -15,9 +15,10 @@ namespace Convivia.Application.Mappers
                 var infraAssembly = Assembly.Load("Convivia.Infrastructure");
                 config.Scan(infraAssembly);
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore if assembly not available during design-time operations
+                // ignore if assembly not available during design-time operations, but log for visibility
+                System.Diagnostics.Debug.WriteLine($"[MapsterBootstrap] Could not load Convivia.Infrastructure assembly: {ex}");
             }
 
             // Register application-level mappings (DTO <-> Domain)
@@ -34,17 +35,17 @@ namespace Convivia.Application.Mappers
             // Rol mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Rol, RolDto, CreateRolDto, UpdateRolDto>(config);
 
-            // Configuración personalizada para Permiso: CreatePermisoDto -> Permiso
-            // Mapster convierte TipoRol -> Rol automáticamente usando RolTypeConverter
+            // ConfiguraciÃ³n personalizada para Permiso: CreatePermisoDto -> Permiso
+            // Mapster convierte TipoRol -> Rol automÃ¡ticamente usando RolTypeConverter
             config.NewConfig<CreatePermisoDto, Permiso>()
-                .Map(dest => dest.Rol, src => src.Rol); // RolTypeConverter maneja TipoRol -> Rol automáticamente
+                .Map(dest => dest.Rol, src => src.Rol); // RolTypeConverter maneja TipoRol -> Rol automÃ¡ticamente
 
-            // Configuración personalizada: Permiso -> PermisoDto
+            // ConfiguraciÃ³n personalizada: Permiso -> PermisoDto
             // Expandir las propiedades del Rol en el DTO para facilitar consumo en API
             config.NewConfig<Permiso, PermisoDto>()
                 .Map(dest => dest.Id, src => src.Id)
                 .Map(dest => dest.Rol, src => src.Rol != null && src.Rol.Nombre == "Admin" ? TipoRol.Admin : TipoRol.Usuario)
-                .Map(dest => dest, src => src.Rol); // Mapster copia automáticamente propiedades coincidentes
+                .Map(dest => dest, src => src.Rol); // Mapster copia automÃ¡ticamente propiedades coincidentes
 
             // Invitacion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Invitacion, InvitacionDto, CreateInvitacionDto, UpdateInvitacionDto>(config);
