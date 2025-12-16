@@ -65,13 +65,15 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task<IEnumerable<PermisoDto>> GetByRolAsync(string rol, CancellationToken ct = default)
+        public async Task<IEnumerable<PermisoDto>> GetByRolAsync(TipoRol rol, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(rol)) return Array.Empty<PermisoDto>();
             try
             {
+                // Convertir enum a string para consultar en Firestore
+                var rolStr = rol.ToString();
+                
                 // Consultar FireStorePermiso desde Firestore
-                var list = await _firebase.QueryAsync<FireStorePermiso>(Collection, nameof(FireStorePermiso.Rol), rol, ct);
+                var list = await _firebase.QueryAsync<FireStorePermiso>(Collection, nameof(FireStorePermiso.Rol), rolStr, ct);
                 if (list == null || !list.Any()) return new List<PermisoDto>();
                 
                 // Convertir FireStorePermiso ? Permiso (Domain) ? PermisoDto

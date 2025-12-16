@@ -7,6 +7,7 @@ using Convivia.Infrastructure.Repositories;
 using Convivia.Shared.DTOs;
 using Google.Cloud.Firestore;
 using Mapster;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +32,12 @@ builder.Services.AddScoped<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>()
 builder.Services.AddApplicationServices();               // registra InvitacionService, mappers, etc.
 builder.Services.AddInfrastructure(builder.Configuration); // registra IInvitacionRepository, IFirebaseService, FirebaseService, etc.
 
-// Controllers y Swagger
-builder.Services.AddControllers();
+// Controllers y Swagger - Configurar JSON para serializar enums como strings
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

@@ -3,24 +3,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Convivia.Application.Services;
-using Convivia.Domain.Entities;
 
 namespace Convivia.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PermisosController : ControllerBase
+    public class RolController : ControllerBase
     {
-        private readonly PermisoService _service;
+        private readonly RolService _service;
 
-        public PermisosController(PermisoService service)
+        public RolController(RolService service)
         {
             _service = service;
         }
 
-        // POST api/permisos
+        // POST api/rol
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreatePermisoDto model, CancellationToken ct)
+        public async Task<IActionResult> Create([FromBody] CreateRolDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
 
@@ -35,18 +34,18 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // GET api/permisos/{id}
+        // GET api/rol/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
 
-            var permiso = await _service.ObtenerPorIdAsync(id, ct);
-            if (permiso == null) return NotFound();
-            return Ok(permiso);
+            var rol = await _service.ObtenerPorIdAsync(id, ct);
+            if (rol == null) return NotFound();
+            return Ok(rol);
         }
 
-        // GET api/permisos
+        // GET api/rol
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
@@ -54,14 +53,30 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // GET api/permisos/rol/{rol}
-        [HttpGet("rol/{rol}")]
-        public async Task<IActionResult> GetByRol(TipoRol rol, CancellationToken ct)
+        // GET api/rol/nombres-validos
+        [HttpGet("nombres-validos")]
+        public IActionResult GetNombresValidos()
+        {
+            return Ok(new
+            {
+                nombres = Enum.GetNames<TipoRol>(),
+                descripcion = new
+                {
+                    Usuario = "Puede crear y editar tareas, y asignarse tareas",
+                    Admin = "Tiene todos los permisos disponibles"
+                }
+            });
+        }
+
+        // GET api/rol/por-nombre/{nombre}
+        [HttpGet("nombre/{nombre}")]
+        public async Task<IActionResult> GetByNombre(TipoRol nombre, CancellationToken ct)
         {
             try
             {
-                var list = await _service.ObtenerPorRolAsync(rol, ct);
-                return Ok(list);
+                var rol = await _service.ObtenerPorNombreAsync(nombre, ct);
+                if (rol == null) return NotFound();
+                return Ok(rol);
             }
             catch (ArgumentException ex)
             {
@@ -69,9 +84,9 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // PUT api/permisos/{id}
+        // PUT api/rol/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
+        public async Task<IActionResult> Update(string id, [FromBody] UpdateRolDto model, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
@@ -92,15 +107,22 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // DELETE api/permisos/{id}
+        // DELETE api/rol/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
 
-            var removed = await _service.EliminarAsync(id, ct);
-            if (!removed) return NotFound();
-            return NoContent();
+            try
+            {
+                var removed = await _service.EliminarAsync(id, ct);
+                if (!removed) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { error = ex.Message });
+            }
         }
     }
 }

@@ -10,8 +10,8 @@ namespace Convivia.Shared.DTOs
     public class CreatePermisoDto
     {
         [Required(ErrorMessage = "El rol es requerido")]
-        [RegularExpression("^(Usuario|Admin)$", ErrorMessage = "El rol debe ser: Usuario o Admin")]
-        public string Rol { get; set; }
+        [EnumDataType(typeof(TipoRol), ErrorMessage = "El rol debe ser válido")]
+        public TipoRol Rol { get; set; }
         
         // Los permisos se asignan automáticamente según el rol
         // No es necesario enviarlos en la creación

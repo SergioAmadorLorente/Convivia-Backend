@@ -9,8 +9,8 @@ namespace Convivia.Shared.DTOs
 {
     public class UpdatePermisoDto
     {
-        [RegularExpression("^(Usuario|Admin)$", ErrorMessage = "El rol debe ser: Usuario o Admin")]
-        public string? Rol { get; set; }
+        [EnumDataType(typeof(TipoRol), ErrorMessage = "El rol debe ser válido")]
+        public TipoRol? Rol { get; set; }
         
         public bool? CrearTarea { get; set; }
         public bool? EliminarTarea { get; set; }
