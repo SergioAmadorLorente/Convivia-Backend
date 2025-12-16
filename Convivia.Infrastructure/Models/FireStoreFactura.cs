@@ -19,20 +19,24 @@ namespace Convivia.Infrastructure.Models
         public float Precio { get; set; }
 
         [FirestoreProperty("Reparto")]
-        public Dictionary<string, decimal> Reparto { get; private set; } = new Dictionary<string, decimal>();
+        public Dictionary<string, float> Reparto { get; set; } = new Dictionary<string, float>();
 
         [FirestoreProperty("Pagado")]
-        public bool Pagado { get; private set; }
+        public bool Pagado { get; set; }
 
         [FirestoreProperty("DocumentoUrl")]
-        public byte[]? DocumentoUrl { get; private set; }
+        public byte[]? DocumentoUrl { get; set; }
 
         [FirestoreProperty("TareaId")]
-        public string? TareaId { get; private set; }
+        public string? TareaId { get; set; }
 
         [FirestoreProperty("FechaCreacion")]
-        public DateTime FechaCreacion { get; private set; }
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
-       
+        public FireStoreFactura()
+        {
+            // Asegurar explícitamente Kind = Utc en caso de que algún mapper deje un DateTime sin especificar
+            FechaCreacion = DateTime.SpecifyKind(FechaCreacion, DateTimeKind.Utc);
+        }
     }
 }

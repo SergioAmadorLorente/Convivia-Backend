@@ -1,45 +1,36 @@
-﻿/*
- * using System;
+﻿
+using System;
+using Convivia.Domain.Entities;
 
-namespace Convivia.Domain.Models
+namespace Convivia.Domain.Entities
 {
     public class Reserva
     {
 
-        public string Id_Reserva { get; set; } = Guid.NewGuid().ToString();
+        public string idReserva { get; set; } = Guid.NewGuid().ToString();
 
-        public DateTime FechaInicial { get; set; }
+        public string? description { get; set; }
 
-        public DateTime FechaFinal { get; set; }
+        public DateTime startTime { get; set; } = DateTime.Now;
 
-        public Sala sala { get; set; }
-        public Usuario usuario { get; set; }
+        public DateTime? endTime { get; set; }
+
+        public string idSala { get; set; }
+        public string idUser { get; set; }
 
         public Reserva()
         {
             // Constructor vacío necesario para la deserialización
         }
 
-        public Reserva(DateTime fechaInicial, DateTime fechaFinal, Sala sala)
+        public Reserva(string? description, DateTime startTime, DateTime? endTime, string idSala, string idUser)
         {
-            FechaInicial = fechaInicial;
-            FechaFinal = fechaFinal;
-            sala = sala;
+            description = description;
+            startTime = startTime;
+            endTime = endTime;
+            this.idSala = idSala;
+            this.idUser = idUser;
         }
 
-        public bool reprogramarFecha(DateTime fechaInicial, DateTime fechaFinal)
-        {
-            if (sala.esDisponible(fechaInicial, fechaFinal))
-            {
-                FechaInicial = fechaInicial;
-                FechaFinal = fechaFinal;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
     }
 }
-*/

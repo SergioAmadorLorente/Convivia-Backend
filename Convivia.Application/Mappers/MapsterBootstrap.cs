@@ -57,6 +57,26 @@ namespace Convivia.Application.Mappers
 
             // PlantillaTarea mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<PlantillaTarea, PlantillaTareaDto, CreatePlantillaTareaDto, UpdatePlantillaTareaDto>(config);
+
+            Config.MapsterConfig.RegisterPair<Reserva, ReservaDto, CreateReservaDto, UpdateReservaDto>(config);
+            // UsuarioEspacio mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<UsuarioEspacio, UsuarioEspacioDto, CreateUsuarioEspacioDto, UpdateUsuarioEspacioDto>(config);
+
+
+            // Factura mappings 
+            Config.MapsterConfig.RegisterPair<Factura, FacturaDto, CreateFacturaDto, UpdateFacturaDto>(config);
+
+
+            // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
+            try
+            {
+                var infraAssembly = Assembly.Load("Convivia.Infrastructure");
+                config.Scan(infraAssembly);
+            }
+            catch
+            {
+                // ignore if assembly not available during design-time operations
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Convivia.Domain.Entities;
+﻿
+using Convivia.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
