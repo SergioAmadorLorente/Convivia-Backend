@@ -49,7 +49,8 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(espacioId)) return Array.Empty<UsuarioEspacio>();
             try
             {
-                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, nameof(FireStoreUsuarioEspacio.EspacioId), espacioId, ct);
+                // Usar el nombre real del campo en Firestore: "EspacioRef"
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)
@@ -59,12 +60,30 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
+        // Nueva implementación: consulta eficiente que devuelve si existe al menos una asociación
+        public async Task<bool> ExistsByEspacioIdAsync(string espacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return false;
+            try
+            {
+                // Usar el nombre real del campo en Firestore: "EspacioRef"
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
+                return list != null && list.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ExistsByEspacioIdAsync {EspacioId}", espacioId);
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<UsuarioEspacio>> GetByUsuarioIdAsync(string usuarioId, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(usuarioId)) return Array.Empty<UsuarioEspacio>();
             try
             {
-                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, nameof(FireStoreUsuarioEspacio.UsuarioId), usuarioId, ct);
+                // Usar el nombre real del campo en Firestore: "UsuarioRef"
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "UsuarioRef", usuarioId, ct);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)

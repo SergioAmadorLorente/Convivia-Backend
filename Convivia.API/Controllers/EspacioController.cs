@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Convivia.Application.Services;
-using Convivia.Shared.DTOs;
 using System.Threading;
 using System.Threading.Tasks;
+using Convivia.Shared.DTOs;
+using Convivia.Application.Services;
 
 namespace Convivia.API.Controllers
 {
@@ -33,6 +33,7 @@ namespace Convivia.API.Controllers
                 return Conflict(new { message = ex.Message });
             }
         }
+
 
         // POST api/espacio
         [HttpPost]
@@ -89,16 +90,6 @@ namespace Convivia.API.Controllers
 
             var success = await _service.ParcialActualizarAsync(id, model, ct);
             if (!success) return NotFound();
-            return NoContent();
-        }
-
-        // DELETE api/espacio/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id, CancellationToken ct)
-        {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-
-            await _service.EliminarAsync(id, ct);
             return NoContent();
         }
     }

@@ -1,4 +1,4 @@
-﻿namespace Convivia.Infrastructure.Helpers
+﻿namespace Convivia.Shared.Helpers
 {
     public static class BatchHelper
     {

@@ -1,7 +1,7 @@
 // Application/Services/EspacioService.cs
 using Convivia.Domain.Entities;
 using Convivia.Domain.Repositories;
-using Convivia.Infrastructure.Helpers;
+using Convivia.Shared.Helpers;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Mapster;
@@ -65,12 +65,13 @@ namespace Convivia.Application.Services
         /// </summary>
         public async Task EliminarAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido", nameof(id));
 
-            var usuariosEnEspacio = await _usuarioEspacioRepo.GetByEspacioIdAsync(id, ct);
-            if (usuariosEnEspacio != null && usuariosEnEspacio.Any())
+            // Uso de ExistsByEspacioIdAsync para evitar materializar colecciones grandes
+            var tieneUsuarios = await _usuarioEspacioRepo.ExistsByEspacioIdAsync(id, ct);
+            if (tieneUsuarios)
             {
-                throw new InvalidOperationException($"No se puede eliminar el espacio {id}: existen {usuariosEnEspacio.Count()} usuarios asociados.");
+                throw new InvalidOperationException($"No se puede eliminar el espacio {id}: existen usuarios asociados.");
             }
 
             await _repo.DeleteAsync(id, ct);
@@ -115,6 +116,56 @@ namespace Convivia.Application.Services
 
             // 4) Borrar documento antiguo
             await _repo.DeleteAsync(oldId, ct);
+        }
+
+        public async Task<IEnumerable<EspacioDto>> ObtenerPorDireccionAsync(string direccion, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(direccion)) return Enumerable.Empty<EspacioDto>();
+            try
+            {
+                return await _repo.GetByDireccionAsync(direccion, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ObtenerPorDireccion {Direccion}", direccion);
+                throw;
+            }
+        }
+
+        public async Task<bool> ParcialActualizarAsync(string id, UpdateEspacioDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            try
+            {
+                var espacio = await _repo.GetByIdAsync(id, ct);
+                if (espacio == null) return false;
+
+                var changed = false;
+
+                if (!string.IsNullOrWhiteSpace(dto.Nombre) && dto.Nombre != espacio.Nombre)
+                {
+                    espacio.Nombre = dto.Nombre;
+                    changed = true;
+                }
+
+                if (dto.Direccion != null && dto.Direccion != espacio.Direccion)
+                {
+                    espacio.Direccion = dto.Direccion;
+                    changed = true;
+                }
+
+                if (!changed) return true;
+
+                await _repo.UpdateAsync(id, espacio, ct);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error parcial actualizando espacio {Id}", id);
+                throw;
+            }
         }
     }
 }
