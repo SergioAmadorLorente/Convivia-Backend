@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
@@ -13,11 +14,13 @@ namespace Convivia.Application.Services
     public class RolService
     {
         private readonly IRolRepository _repo;
+        private readonly IPermisoRepository _permisoRepo;
         private readonly ILogger<RolService> _logger;
 
-        public RolService(IRolRepository repo, ILogger<RolService> logger)
+        public RolService(IRolRepository repo, IPermisoRepository permisoRepo, ILogger<RolService> logger)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _permisoRepo = permisoRepo ?? throw new ArgumentNullException(nameof(permisoRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -30,11 +33,11 @@ namespace Convivia.Application.Services
             
             if (dto.Nombre == TipoRol.Admin)
             {
-                rolDomain.SetConfiguracionAdmin();
+                rolDomain.SetConfigurarcionAdmin();
             }
             else
             {
-                rolDomain.SetConfiguracionUsuario();
+                rolDomain.SetConfigurarcionUsuario();
             }
 
             var rolDto = rolDomain.Adapt<RolDto>();
@@ -116,10 +119,35 @@ namespace Convivia.Application.Services
         public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return false;
+            
             try
             {
+                // Verificar que el rol existe
+                var rol = await ObtenerPorIdAsync(id, ct);
+                if (rol == null)
+                {
+                    _logger.LogWarning("Intento de eliminar rol inexistente {Id}", id);
+                    return false;
+                }
+
+                // Verificar si hay permisos asociados a este rol
+                var permisosAsociados = await _permisoRepo.GetByRolAsync(rol.Nombre, ct);
+                if (permisosAsociados != null && permisosAsociados.Any())
+                {
+                    var cantidadPermisos = permisosAsociados.Count();
+                    _logger.LogWarning("No se puede eliminar el rol {Id} porque tiene {Cantidad} permisos/usuarios asociados", id, cantidadPermisos);
+                    throw new InvalidOperationException($"No se puede eliminar el rol porque tiene {cantidadPermisos} usuarios asignados. Primero debes reasignar o eliminar los usuarios asociados.");
+                }
+
+                // Si no hay permisos asociados, proceder con la eliminación
                 await _repo.DeleteAsync(id, ct);
+                _logger.LogInformation("Rol {Id} ({Nombre}) eliminado exitosamente", id, rol.Nombre);
                 return true;
+            }
+            catch (InvalidOperationException)
+            {
+                // Re-lanzar la excepción de validación de negocio
+                throw;
             }
             catch (Exception ex)
             {

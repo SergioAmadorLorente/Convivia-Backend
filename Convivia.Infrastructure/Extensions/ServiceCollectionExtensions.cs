@@ -5,8 +5,7 @@ using Convivia.Domain.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Repositories;
 using Convivia.Infrastructure.Services;
-using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+
 
 namespace Convivia.Infrastructure.Extensions
 {

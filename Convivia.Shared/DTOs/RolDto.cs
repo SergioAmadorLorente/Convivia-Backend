@@ -12,7 +12,7 @@ namespace Convivia.Shared.DTOs
         [Required]
         public string Id { get; set; }
         [Required]
-        public string Nombre { get; set; }
+        public TipoRol Nombre { get; set; }
         public bool CrearTarea { get; set; }
         public bool EliminarTarea { get; set; }
         public bool EditarTarea { get; set; }

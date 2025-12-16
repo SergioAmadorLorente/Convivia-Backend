@@ -20,7 +20,10 @@ namespace Convivia.Infrastructure.Mappers
             config.ForType<string, Rol>().MapWith(src => MapStringToRol(src));
 
             // Rol -> TipoRol
-            config.ForType<Rol, TipoRol>().MapWith(src => src != null && src.Nombre == "Admin" ? TipoRol.Admin : TipoRol.Usuario);
+            config.ForType<Rol, TipoRol>().MapWith(src => 
+                src != null && src.Nombre != null && src.Nombre.Equals("Admin", StringComparison.OrdinalIgnoreCase) 
+                    ? TipoRol.Admin 
+                    : TipoRol.Usuario);
 
             // Rol -> string (nombre)
             config.ForType<Rol, string>().MapWith(src => src != null ? src.Nombre ?? string.Empty : string.Empty);
@@ -32,12 +35,10 @@ namespace Convivia.Infrastructure.Mappers
             if (tipoRol == TipoRol.Admin)
             {
                 rol.SetConfigurarcionAdmin();
-                Console.WriteLine($"[RolTypeConverter] Configurado Admin - CrearTarea: {rol.CrearTarea}, EliminarTarea: {rol.EliminarTarea}");
             }
             else
             {
                 rol.SetConfigurarcionUsuario();
-                Console.WriteLine($"[RolTypeConverter] Configurado Usuario - CrearTarea: {rol.CrearTarea}, EliminarTarea: {rol.EliminarTarea}");
             }
 
             rol.Nombre = tipoRol.ToString();
@@ -48,7 +49,6 @@ namespace Convivia.Infrastructure.Mappers
         {
             if (string.IsNullOrWhiteSpace(src))
             {
-                Console.WriteLine("[RolTypeConverter] Entrada vacía, retornando Rol vacío");
                 return new Rol();
             }
 
@@ -56,12 +56,10 @@ namespace Convivia.Infrastructure.Mappers
             if (src.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 rol.SetConfigurarcionAdmin();
-                Console.WriteLine($"[RolTypeConverter] Configurado Admin - CrearTarea: {rol.CrearTarea}, EliminarTarea: {rol.EliminarTarea}");
             }
             else
             {
                 rol.SetConfigurarcionUsuario();
-                Console.WriteLine($"[RolTypeConverter] Configurado Usuario - CrearTarea: {rol.CrearTarea}, EliminarTarea: {rol.EliminarTarea}");
             }
 
             rol.Nombre = src;

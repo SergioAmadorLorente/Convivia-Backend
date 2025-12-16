@@ -15,10 +15,9 @@ namespace Convivia.Application.Mappers
                 var infraAssembly = Assembly.Load("Convivia.Infrastructure");
                 config.Scan(infraAssembly);
             }
-            catch (Exception ex)
+            catch
             {
-                // ignore if assembly not available during design-time operations, but log for visibility
-                System.Diagnostics.Debug.WriteLine($"[MapsterBootstrap] Could not load Convivia.Infrastructure assembly: {ex}");
+                // ignore if assembly not available during design-time operations
             }
 
             // Register application-level mappings (DTO <-> Domain)
@@ -44,14 +43,7 @@ namespace Convivia.Application.Mappers
             // Expandir las propiedades del Rol en el DTO para facilitar consumo en API
             config.NewConfig<Permiso, PermisoDto>()
                 .Map(dest => dest.Id, src => src.Id)
-                .Map(dest => dest.Rol, src =>
-                    {
-                        if (src.Rol?.Nombre == null)
-                            return TipoRol.Usuario;
-                        if (Enum.TryParse<TipoRol>(src.Rol.Nombre, true, out var tipoRol))
-                            return tipoRol;
-                        return TipoRol.Usuario;
-                    })
+                .Map(dest => dest.Rol, src => src.Rol != null && src.Rol.Nombre == "Admin" ? TipoRol.Admin : TipoRol.Usuario)
                 .Map(dest => dest, src => src.Rol); // Mapster copia automáticamente propiedades coincidentes
 
             // Invitacion mappings (DTO <-> Domain)

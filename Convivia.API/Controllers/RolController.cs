@@ -113,9 +113,16 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
 
-            var removed = await _service.EliminarAsync(id, ct);
-            if (!removed) return NotFound();
-            return NoContent();
+            try
+            {
+                var removed = await _service.EliminarAsync(id, ct);
+                if (!removed) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { error = ex.Message });
+            }
         }
     }
 }

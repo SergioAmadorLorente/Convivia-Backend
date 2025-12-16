@@ -29,20 +29,8 @@ namespace Convivia.Application.Services
             // RolTypeConverter maneja TipoRol -> Rol automáticamente
             var permisoDomain = dto.Adapt<Permiso>();
 
-            // DEBUG: Verificar que el Rol esté correctamente configurado
-            _logger.LogInformation("Permiso creado - Rol.Nombre: {Nombre}, CrearTarea: {CrearTarea}, EliminarTarea: {EliminarTarea}", 
-                permisoDomain.Rol?.Nombre, 
-                permisoDomain.Rol?.CrearTarea, 
-                permisoDomain.Rol?.EliminarTarea);
-
             // Mapster convierte Permiso -> PermisoDto
             var permisoDto = permisoDomain.Adapt<PermisoDto>();
-
-            // DEBUG: Verificar que el DTO tenga los valores correctos
-            _logger.LogInformation("PermisoDto - Rol: {Rol}, CrearTarea: {CrearTarea}, EliminarTarea: {EliminarTarea}", 
-                permisoDto.Rol, 
-                permisoDto.CrearTarea, 
-                permisoDto.EliminarTarea);
 
             try
             {
@@ -152,9 +140,20 @@ namespace Convivia.Application.Services
         public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return false;
+            
             try
             {
+                // Verificar que el permiso existe
+                var permiso = await ObtenerPorIdAsync(id, ct);
+                if (permiso == null)
+                {
+                    _logger.LogWarning("Intento de eliminar permiso inexistente {Id}", id);
+                    return false;
+                }
+
+                // Proceder con la eliminación
                 await _repo.DeleteAsync(id, ct);
+                _logger.LogInformation("Permiso {Id} eliminado exitosamente", id);
                 return true;
             }
             catch (Exception ex)
