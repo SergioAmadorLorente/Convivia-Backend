@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using Convivia.Shared.Repositories;
+using Convivia.Domain.Repositories;
 using Mapster;
 using Convivia.Domain.Entities;
 
@@ -13,11 +15,13 @@ namespace Convivia.Application.Services
     public class PermisoService
     {
         private readonly IPermisoRepository _repo;
+        private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
         private readonly ILogger<PermisoService> _logger;
 
-        public PermisoService(IPermisoRepository repo, ILogger<PermisoService> logger)
+        public PermisoService(IPermisoRepository repo, IUsuarioEspacioRepository usuarioEspacioRepo, ILogger<PermisoService> logger)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _usuarioEspacioRepo = usuarioEspacioRepo ?? throw new ArgumentNullException(nameof(usuarioEspacioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -97,11 +101,11 @@ namespace Convivia.Application.Services
                 var rolDomain = new Rol();
                 if (dto.Rol.Value == TipoRol.Admin)
                 {
-                    rolDomain.SetConfigurarcionAdmin();
+                    rolDomain.SetConfiguracionAdmin();
                 }
                 else
                 {
-                    rolDomain.SetConfigurarcionUsuario();
+                    rolDomain.SetConfiguracionUsuario();
                 }
                 
                 existing.Rol = dto.Rol.Value;
@@ -137,13 +141,16 @@ namespace Convivia.Application.Services
             }
         }
 
+        /// <summary>
+        /// Elimina un permiso verificando integridad referencial.
+        /// Si hay UsuarioEspacios asociados, lanza InvalidOperationException.
+        /// </summary>
         public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return false;
             
             try
             {
-                // Verificar que el permiso existe
                 var permiso = await ObtenerPorIdAsync(id, ct);
                 if (permiso == null)
                 {
@@ -151,10 +158,24 @@ namespace Convivia.Application.Services
                     return false;
                 }
 
-                // Proceder con la eliminación
+                // Verificar si hay usuarios asociados a este permiso
+                var usuariosAsociados = await _usuarioEspacioRepo.GetByPermisoIdAsync(id, ct);
+                var usuariosList = usuariosAsociados?.ToList() ?? new List<UsuarioEspacio>();
+                
+                if (usuariosList.Any())
+                {
+                    var cantidad = usuariosList.Count;
+                    _logger.LogWarning("No se puede eliminar el permiso {Id} porque tiene {Cantidad} usuarios asociados", id, cantidad);
+                    throw new InvalidOperationException($"No se puede eliminar el permiso porque esta asignado a {cantidad} usuarios.");
+                }
+
                 await _repo.DeleteAsync(id, ct);
                 _logger.LogInformation("Permiso {Id} eliminado exitosamente", id);
                 return true;
+            }
+            catch (InvalidOperationException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

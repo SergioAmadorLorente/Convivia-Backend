@@ -1,5 +1,4 @@
-﻿
-using Convivia.Domain.Entities;
+﻿using Convivia.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +38,34 @@ namespace Convivia.Domain.Entities
             Nombre = name;
             Direccion = direccion;
         }
-        
+
+        public bool AdmitirUsuario(Usuario usuario)
+        {
+            if (usuario == null)
+                throw new ArgumentNullException(nameof(usuario));
+
+            if (UsuarioEspacios.Any(u => u.Usuario.Id == usuario.Id))
+                throw new InvalidOperationException("El usuario ya está admitido en el espacio.");
+
+            if (!Peticiones.Any(p => p.IdSolicitante == usuario.Id))
+                throw new InvalidOperationException("No existe una petición para este usuario.");
+
+            var rolUsuario = new Rol();
+            rolUsuario.SetConfiguracionUsuario();
+            var permisoUsuario = new Permiso(rolUsuario);
+
+            UsuarioEspacio usuarioEspacio = new UsuarioEspacio
+            {
+                Usuario = usuario,
+                Espacio = this,
+                Permiso = permisoUsuario,
+                Ausente = false,
+                Karma = 0
+            };
+
+            UsuarioEspacios.Add(usuarioEspacio);
+            Peticiones.RemoveAll(p => p.IdSolicitante == usuario.Id);
+            return true;
+        }
     }
 }

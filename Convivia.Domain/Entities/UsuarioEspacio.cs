@@ -57,14 +57,14 @@ namespace Convivia.Domain.Entities
             if (rol == "admin")
             {
                 var rolAdmin = new Rol();
-                rolAdmin.SetConfigurarcionAdmin();
+                rolAdmin.SetConfiguracionAdmin();
                 this.Permiso = new Permiso(rolAdmin);
             }
             else
             {
                 // Por defecto asignar rol Usuario
                 var rolUsuario = new Rol();
-                rolUsuario.SetConfigurarcionUsuario();
+                rolUsuario.SetConfiguracionUsuario();
                 this.Permiso = new Permiso(rolUsuario);
             }
             this.PermisoId = this.Permiso?.Id ?? string.Empty;

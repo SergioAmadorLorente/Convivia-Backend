@@ -33,11 +33,11 @@ namespace Convivia.Application.Services
             
             if (dto.Nombre == TipoRol.Admin)
             {
-                rolDomain.SetConfigurarcionAdmin();
+                rolDomain.SetConfiguracionAdmin();
             }
             else
             {
-                rolDomain.SetConfigurarcionUsuario();
+                rolDomain.SetConfiguracionUsuario();
             }
 
             var rolDto = rolDomain.Adapt<RolDto>();

@@ -34,11 +34,11 @@ namespace Convivia.Infrastructure.Mappers
             var rol = new Rol();
             if (tipoRol == TipoRol.Admin)
             {
-                rol.SetConfigurarcionAdmin();
+                rol.SetConfiguracionAdmin();
             }
             else
             {
-                rol.SetConfigurarcionUsuario();
+                rol.SetConfiguracionUsuario();
             }
 
             rol.Nombre = tipoRol.ToString();
@@ -55,11 +55,11 @@ namespace Convivia.Infrastructure.Mappers
             var rol = new Rol();
             if (src.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
-                rol.SetConfigurarcionAdmin();
+                rol.SetConfiguracionAdmin();
             }
             else
             {
-                rol.SetConfigurarcionUsuario();
+                rol.SetConfiguracionUsuario();
             }
 
             rol.Nombre = src;

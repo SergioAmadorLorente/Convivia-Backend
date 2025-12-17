@@ -49,7 +49,8 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(espacioId)) return Array.Empty<UsuarioEspacio>();
             try
             {
-                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, nameof(FireStoreUsuarioEspacio.EspacioId), espacioId, ct);
+                // El campo en Firestore es "EspacioRef" segun [FirestoreProperty("EspacioRef")]
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)
@@ -64,12 +65,29 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(usuarioId)) return Array.Empty<UsuarioEspacio>();
             try
             {
-                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, nameof(FireStoreUsuarioEspacio.UsuarioId), usuarioId, ct);
+                // El campo en Firestore es "UsuarioRef" segun [FirestoreProperty("UsuarioRef")]
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "UsuarioRef", usuarioId, ct);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error GetByUsuarioIdAsync {UsuarioId}", usuarioId);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<UsuarioEspacio>> GetByPermisoIdAsync(string permisoId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(permisoId)) return Array.Empty<UsuarioEspacio>();
+            try
+            {
+                // El campo en Firestore es "PermisoRef" segun [FirestoreProperty("PermisoRef")]
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "PermisoRef", permisoId, ct);
+                return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetByPermisoIdAsync {PermisoId}", permisoId);
                 throw;
             }
         }
@@ -99,10 +117,16 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task<IEnumerable<UsuarioEspacio>> GetAllAsync(CancellationToken ct = default)
         {
-            _logger.LogInformation("GetAllAsync llamado para colección: {Collection}", Collection);
-            var list = await _firebase.GetAllAsync<FireStoreUsuarioEspacio>(Collection, ct);
-            _logger.LogInformation("Firebase devolvió {Count} documentos de {Collection}", list?.Count ?? 0, Collection);
-            return list.Select(fs => fs.Adapt<UsuarioEspacio>());
+            try
+            {
+                var list = await _firebase.GetAllAsync<FireStoreUsuarioEspacio>(Collection, ct);
+                return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetAllAsync");
+                throw;
+            }
         }
     }
 }

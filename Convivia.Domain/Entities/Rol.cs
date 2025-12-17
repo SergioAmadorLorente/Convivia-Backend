@@ -26,7 +26,7 @@ namespace Convivia.Domain.Entities
             get
             {
                 var rol = new Rol("Usuario");
-                rol.SetConfigurarcionUsuario();
+                rol.SetConfiguracionUsuario();
                 return rol;
             }
         }
@@ -35,12 +35,12 @@ namespace Convivia.Domain.Entities
             get
             {
                 var rol = new Rol("Admin");
-                rol.SetConfigurarcionAdmin();
+                rol.SetConfiguracionAdmin();
                 return rol;
             }
         }
 
-        public void SetConfigurarcionUsuario()
+        public void SetConfiguracionUsuario()
         {
             this.Nombre = "Usuario";
             this.CrearTarea = true;
@@ -52,7 +52,7 @@ namespace Convivia.Domain.Entities
             this.AsignarseTarea = true;
         }
         
-        public void SetConfigurarcionAdmin()
+        public void SetConfiguracionAdmin()
         {
             this.Nombre = "Admin";
             this.CrearTarea = true;
