@@ -35,7 +35,7 @@ namespace Convivia.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id }, new { id });
         }
 
-        // GET api/invitaciones/{id}
+        // GET api/usuarios/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
@@ -46,7 +46,18 @@ namespace Convivia.API.Controllers
             return Ok(usuario);
         }
 
-        // GET api/invitaciones/por-usuario/{usuarioInvitadoId}
+        // GET api/usuarios/correo/{correo}
+        [HttpGet("correo/{correo}")]
+        public async Task<IActionResult> GetByEmail(string correo, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(correo)) return BadRequest("El correo es requerido");
+
+            var usuario = await _service.ObtenerPorEmailAsync(correo, ct);
+            if (usuario == null) return NotFound($"No se encontró usuario con el correo: {correo}");
+            return Ok(usuario);
+        }
+
+        // GET api/usuarios/por-usuario/{usuarioInvitadoId}
         [HttpGet("por-usuario/{usuarioInvitadoId}")]
         public async Task<IActionResult> GetByUsuarioInvitado(string usuarioInvitadoId, CancellationToken ct)
         {
@@ -68,5 +79,7 @@ namespace Convivia.API.Controllers
             if (!removed) return NotFound();
             return NoContent();
         }
+
+
     }
 }

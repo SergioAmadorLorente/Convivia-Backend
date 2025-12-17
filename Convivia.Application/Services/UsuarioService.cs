@@ -58,6 +58,20 @@ namespace Convivia.Application.Services
             }
         }
 
+        public async Task<UsuarioDto?> ObtenerPorEmailAsync(string email, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            try
+            {
+                return await _repo.GetByEmailAsync(email, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ObtenerPorEmail {Email}", email);
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<UsuarioDto>> GetByFullNameInvitadoAsync(string Nombre, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(Nombre)) return Array.Empty<UsuarioDto>();

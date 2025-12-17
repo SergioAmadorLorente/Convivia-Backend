@@ -10,6 +10,7 @@ namespace Convivia.Shared.Repositories
     public interface IUsuarioRepository
     {
         Task<UsuarioDto?> GetByIdAsync(string id, CancellationToken ct = default);
+        Task<UsuarioDto?> GetByEmailAsync(string email, CancellationToken ct = default);
         Task<IEnumerable<UsuarioDto>> GetByFullNameInvitadoAsync(string Nombre, CancellationToken ct = default);
         Task<string> AddAsync(UsuarioDto usuario, CancellationToken ct = default);
         Task UpdateAsync(string id, UsuarioDto usuario, CancellationToken ct = default);

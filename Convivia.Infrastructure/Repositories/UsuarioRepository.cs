@@ -64,6 +64,37 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
+        public async Task<UsuarioDto?> GetByEmailAsync(string email, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            try
+            {
+                _logger.LogInformation("GetByEmailAsync llamado para email: {Email}", email);
+                var list = await _firebase.QueryAsync<FireStoreUsuario>(Collection, "Email", email, ct);
+                
+                if (list == null || !list.Any())
+                {
+                    _logger.LogInformation("No se encontró usuario con email: {Email}", email);
+                    return null;
+                }
+
+                var usuarioPersist = list.FirstOrDefault();
+                if (usuarioPersist == null) return null;
+
+                // Convertir FireStoreUsuario → Usuario (Domain) → UsuarioDto
+                var usuarioDomain = usuarioPersist.Adapt<Usuario>();
+                var usuarioDto = usuarioDomain.Adapt<UsuarioDto>();
+                
+                _logger.LogInformation("Usuario encontrado con email: {Email}, Id: {Id}", email, usuarioDto.Id);
+                return usuarioDto;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetByEmailAsync {Email}", email);
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<UsuarioDto>> GetByFullNameInvitadoAsync(string Nombre, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(Nombre)) return Array.Empty<UsuarioDto>();
