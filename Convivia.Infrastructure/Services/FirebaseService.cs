@@ -44,7 +44,7 @@ namespace Convivia.Infrastructure.Services
             await _db.Collection(collection).Document(id).SetAsync(entity, cancellationToken: cancellationToken);
         }
 
-        public async Task AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
+        public async Task<string> AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
             if (entity == null) throw new ArgumentNullException(nameof(entity));
@@ -78,24 +78,24 @@ namespace Convivia.Infrastructure.Services
                     {
                         // Use provided id to create document with same name
                         await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(existingId).SetAsync(entity, cancellationToken: cancellationToken);
-                        return;
+                        return existingId;
                     }
 
                     var docRef = await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).AddAsync(entity, cancellationToken: cancellationToken);
-                    // Assign generated id back to entity if possible
                     SetIdIfPossible(entity, docRef.Id);
-                    return;
+                    return docRef.Id;
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(existingId))
             {
                 await _db.Collection(collection).Document(existingId).SetAsync(entity, cancellationToken: cancellationToken);
-                return;
+                return existingId;
             }
 
             var newDoc = await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
             SetIdIfPossible(entity, newDoc.Id);
+            return newDoc.Id;
         }
 
         // Método que exige la interfaz original
@@ -156,6 +156,38 @@ namespace Convivia.Infrastructure.Services
             }
 
             await _db.Collection(collection).Document(id).SetAsync(entity, options, cancellationToken: cancellationToken);
+        }
+
+        // New overload: update partial via dictionary
+        public async Task UpdateAsync(string collection, string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id required", nameof(id));
+            if (updates == null) throw new ArgumentNullException(nameof(updates));
+            if (updates.Count == 0) return;
+
+            if (collection.Contains("/"))
+            {
+                var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
+                {
+                    var parentCollection = parts[0];
+                    var parentId = parts[1];
+                    var subcollection = parts[2];
+                    var docRef = _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(id);
+                    if (useSetMerge)
+                        await docRef.SetAsync(updates, SetOptions.MergeAll, cancellationToken);
+                    else
+                        await docRef.UpdateAsync(updates, default, cancellationToken);
+                    return;
+                }
+            }
+
+            var doc = _db.Collection(collection).Document(id);
+            if (useSetMerge)
+                await doc.SetAsync(updates, SetOptions.MergeAll, cancellationToken);
+            else
+                await doc.UpdateAsync(updates, default ,cancellationToken);
         }
 
         public async Task DeleteAsync(string collection, string id, CancellationToken cancellationToken = default)

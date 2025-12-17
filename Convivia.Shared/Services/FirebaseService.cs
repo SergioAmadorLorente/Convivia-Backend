@@ -1,7 +1,11 @@
-﻿using Convivia.Shared.Services;
-using Google.Cloud.Firestore;
+﻿using Google.Cloud.Firestore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Convivia.Shared.Services;
 using Microsoft.Extensions.Logging;
-
 
 namespace Convivia.Infrastructure.Services
 {
@@ -26,13 +30,15 @@ namespace Convivia.Infrastructure.Services
         }
 
         // Dejar que Firestore genere id y devolverlo (y asignarlo si la entidad tiene propiedad Id)
-        public async Task AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
+        public async Task<string> AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
             if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-            await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
-
+            var docRef = await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
+            var id = docRef.Id;
+            SetIdIfPossible(entity, id);
+            return id;
         }
 
         // Método que exige la interfaz original
@@ -51,6 +57,7 @@ namespace Convivia.Infrastructure.Services
             if (!snap.Exists) return null;
 
             var entity = snap.ConvertTo<T>();
+            SetIdIfPossible(entity, snap.Id);
             return entity;
         }
 
@@ -64,6 +71,28 @@ namespace Convivia.Infrastructure.Services
             var options = merge ? SetOptions.MergeAll : SetOptions.Overwrite;
             await _db.Collection(collection).Document(id).SetAsync(entity, options, cancellationToken: cancellationToken);
         }
+
+        public async Task UpdateAsync(string collection, string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id required", nameof(id));
+            if (updates == null) throw new ArgumentNullException(nameof(updates));
+            if (updates.Count == 0) return;
+
+            var docRef = _db.Collection(collection).Document(id);
+
+            if (useSetMerge)
+            {
+                // Tolerante: crea/mezcla si no existe
+                await docRef.SetAsync(updates, SetOptions.MergeAll, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                // Estricto: falla si no existe
+                await docRef.UpdateAsync(updates, null, cancellationToken);
+            }
+        }
+
 
         public async Task DeleteAsync(string collection, string id, CancellationToken cancellationToken = default)
         {
@@ -161,64 +190,40 @@ namespace Convivia.Infrastructure.Services
             return snap.Documents.Count;
         }
 
-        public async Task<List<T>> QueryCollectionGroupAsync<T>(string subcollectionName, string field, object value, CancellationToken cancellationToken = default) where T : class
-        {
-            if (string.IsNullOrWhiteSpace(subcollectionName)) throw new ArgumentException("subcollection required", nameof(subcollectionName));
-            if (string.IsNullOrWhiteSpace(field)) throw new ArgumentException("field required", nameof(field));
-
-            var q = _db.CollectionGroup(subcollectionName).WhereEqualTo(field, value);
-            var snap = await q.GetSnapshotAsync(cancellationToken);
-            var result = new List<T>();
-            foreach (var doc in snap.Documents)
-            {
-                try
-                {
-                    var entity = doc.ConvertTo<T>();
-                    SetIdIfPossible(entity, doc.Id);
-                    if (entity != null) result.Add(entity);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error converting document {DocumentId} in QueryCollectionGroupAsync", doc.Id);
-                }
-            }
-
-            return result;
-        }
-
-        public async Task<List<T>> QueryCollectionGroupAllAsync<T>(string subcollectionName, CancellationToken cancellationToken = default) where T : class
-        {
-            if (string.IsNullOrWhiteSpace(subcollectionName)) throw new ArgumentException("subcollection required", nameof(subcollectionName));
-
-            var q = _db.CollectionGroup(subcollectionName);
-            var snap = await q.GetSnapshotAsync(cancellationToken);
-            var result = new List<T>();
-            foreach (var doc in snap.Documents)
-            {
-                try
-                {
-                    var entity = doc.ConvertTo<T>();
-                    SetIdIfPossible(entity, doc.Id);
-                    if (entity != null) result.Add(entity);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error converting document {DocumentId} in QueryCollectionGroupAllAsync", doc.Id);
-                }
-            }
-
-            return result;
-        }
-
         // Helper: intenta asignar la propiedad Id si existe
         private void SetIdIfPossible<T>(T entity, string id)
         {
             if (entity == null || string.IsNullOrWhiteSpace(id)) return;
             try
             {
-                var prop = typeof(T).GetProperty("Id");
-                if (prop != null && prop.CanWrite)
-                    prop.SetValue(entity, id);
+                var type = typeof(T);
+                // Buscar propiedades por nombre común
+                var candidates = new[] { "Id", "IdFactura", "Id_Factura", "IdFactura" };
+                var prop = candidates
+                    .Select(name => type.GetProperty(name))
+                    .FirstOrDefault(p => p != null && p.CanWrite);
+
+                // Si no encontramos por nombre exacto, buscar cualquier propiedad que contenga "id" (case-insensitive)
+                if (prop == null)
+                {
+                    prop = type.GetProperties()
+                               .FirstOrDefault(p => p.CanWrite && p.Name.IndexOf("id", StringComparison.OrdinalIgnoreCase) >= 0);
+                }
+
+                if (prop != null)
+                {
+                    // Convertir si la propiedad no es string
+                    if (prop.PropertyType == typeof(string))
+                    {
+                        prop.SetValue(entity, id);
+                    }
+                    else
+                    {
+                        // intentar convertir a tipo destino si es posible
+                        var converted = Convert.ChangeType(id, prop.PropertyType);
+                        prop.SetValue(entity, converted);
+                    }
+                }
             }
             catch (Exception ex)
             {

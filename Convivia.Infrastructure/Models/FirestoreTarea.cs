@@ -30,12 +30,6 @@ namespace Convivia.Infrastructure.Models
         public bool Completada { get; set; }
 
         [FirestoreProperty]
-        public string? FacturaId { get; set; }
-
-        [FirestoreProperty]
-        public int karma { get; set; }
-
-        [FirestoreProperty]
         public int DiaSemana { get; set; }
 
         [FirestoreProperty]

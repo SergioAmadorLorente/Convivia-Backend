@@ -21,7 +21,7 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public DateTime FechaCreacion { get; set; }
         [FirestoreProperty]
-        public int karma { get; set; } = 10;
+        public int karma { get; set; }
         [FirestoreProperty]
         public List<int> DiasRepeticion { get; set; } = new();
         [FirestoreProperty]
@@ -37,10 +37,12 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public int? GracePeriodMinutes { get; set; }
         [FirestoreProperty]
-        public DateOnly? StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+        public string? StartDate { get; set; }
         [FirestoreProperty]
-        public DateOnly? EndDate { get; set; } = null;
+        public string? EndDate { get; set; }
 
+        [FirestoreProperty]
+        public string? FacturaId { get; set; }
 
     }
 }

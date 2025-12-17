@@ -31,6 +31,33 @@ namespace Convivia.Application.Services
             return plantillanovaid;
         }
 
+        public async Task<PlantillaTareaDto> UpdateAsync(string espacioid, string id, UpdatePlantillaTareaDto dto)
+        {
+            var plantilla = await GetByEspacioAndIdAsync(espacioid, id);
+            if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
+
+            var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+
+            await _repository.UpdateAsync(id, domPlantilla);
+
+            return dto.Adapt<PlantillaTareaDto>();
+        }
+
+        public async Task<bool> DeleteAsync(string espacioid, string id)
+        {
+            var plantilla = await _repository.GetByEspacioAndIdAsync(espacioid, id);
+            if (plantilla == null) return false;
+            await _repository.DeleteAsync(id);
+            return true;
+        }
+
+        public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
+        {
+            var plantillas = await _repository.GetAllAsync();
+            var filtered = plantillas.Where(p => p.EspacioId == espacioid);
+            return _mapper.Map<IEnumerable<PlantillaTareaDto>>(filtered);
+        }
+
         public async Task<IEnumerable<PlantillaTareaDto>> GetAsync()
         {
             var plantillas = await _repository.GetAllAsync();
@@ -44,40 +71,34 @@ namespace Convivia.Application.Services
             return _mapper.Map<PlantillaTareaDto>(plantilla);
         }
 
-        public async Task<PlantillaTareaDto> UpdateAsync(string id, UpdatePlantillaTareaDto dto)
-        {
-            var plantilla = await _repository.GetAsync(id);
-            if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
-
-            plantilla.Nombre = dto.Nombre ?? plantilla.Nombre;
-            plantilla.karma = dto.karma ?? plantilla.karma;
-            plantilla.DiasRepeticion = dto.DiasRepeticion ?? plantilla.DiasRepeticion;
-            plantilla.TareasId = dto.TareasId ?? plantilla.TareasId;
-            await _repository.UpdateAsync(id, plantilla);
-
-            var plantillaDto = _mapper.Map<PlantillaTareaDto>(plantilla);
-            return plantillaDto;
-        }
-
-        public async Task<bool> DeleteAsync(string id)
-        {
-            var plantilla = await _repository.GetAsync(id);
-            if (plantilla == null) return false;
-            await _repository.DeleteAsync(id);
-            return true;
-        }
-
-        public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
-        {
-            var plantillas = await _repository.GetAllAsync();
-            var filtered = plantillas.Where(p => p.EspacioId == espacioid);
-            return _mapper.Map<IEnumerable<PlantillaTareaDto>>(filtered);
-        }
-
         public async Task<PlantillaTareaDto?> GetByEspacioAndIdAsync(string espacioid, string id)
         {
             var plantilla = await _repository.GetByEspacioAndIdAsync(espacioid, id);
-            return plantilla == null ? null : _mapper.Map<PlantillaTareaDto>(plantilla);
+            if (plantilla == null) return null;
+            return _mapper.Map<PlantillaTareaDto>(plantilla);
+        }
+
+        private static bool IsOverdue(Tarea tarea, PlantillaTarea plantilla)
+        {
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(plantilla.TimeZoneId);
+            var nowUtc = DateTime.UtcNow;
+            var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
+
+            // Si hoy no es el día de la tarea, no está overdue
+            if (tarea.DiaSemana != (int)nowLocal.DayOfWeek)
+                return false;
+
+            var occurrenceDate = nowLocal.Date;
+            var horaLimite = plantilla.HoraLimite;
+
+            var dueLocal = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
+                                        horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
+            var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
+
+            if (plantilla.GracePeriodMinutes.HasValue)
+                dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
+
+            return nowUtc >= dueUtc;
         }
 
     }

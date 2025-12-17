@@ -9,15 +9,15 @@ namespace Convivia.Shared.DTOs
     {
         public string? Nombre { get; set; }
 
-        public DateTime? FechaCreacion { get; set; }
+        public TimeOnly? HoraLimite { get; set; }
+
+        public string? Descripcion { get; set; }
 
         public int? karma { get; set; }
 
-        public List<int>? DiasRepeticion { get; set; }
+        public string? FacturaId { get; set; } // Referencia a la factura asociada
 
-        public List<string>? TareasId { get; set; } = new List<string>();
-
-        public TimeOnly? HoraLimite { get; set; }
+        public List<string>? TareasId { get; set; }
 
     }
 }

@@ -20,12 +20,16 @@ namespace Convivia.Domain.Entities
 
         public string EspacioId { get; set; }
 
-        public List<string> TareasId { get; set; } = new List<string>();
+        public string? FacturaId { get; set; }
+
+        public List<string> TareasId { get; set; }
 
         public TimeOnly HoraLimite { get; set; }
-        // public string TimeZoneId { get; set; } = "Europe/Madrid";
 
         public int? GracePeriodMinutes { get; set; } = 30;
+
+        public DateOnly? StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+        public DateOnly? EndDate { get; set; } = null;
 
         public PlantillaTarea()
         {

@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 namespace Convivia.Domain.Entities
 {
 
-
     public class UsuarioEspacio
     {
         public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString();
@@ -24,7 +23,6 @@ namespace Convivia.Domain.Entities
         public Permiso Permiso { get; set; }
 
         public List<Factura> Facturas { get; set; } = new();
-
 
         // ?
 

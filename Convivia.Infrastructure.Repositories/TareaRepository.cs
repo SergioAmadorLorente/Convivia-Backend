@@ -1,4 +1,4 @@
-﻿using Convivia.Domain.Entities;
+using Convivia.Domain.Entities;
 using Convivia.Domain.Repositories;
 using Convivia.Infrastructure.Models;
 using Convivia.Shared.Services;
@@ -76,7 +76,9 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task<IEnumerable<Tarea>> GetAllAsync(CancellationToken ct = default)
         {
-            throw new NotImplementedException("Usar QueryAsync con condición PlantillaId.");
+
+            throw new NotImplementedException("Usar QueryAsync con condici�n PlantillaId.");
+
         }
 
         public async Task UpdateAsync(string id, Tarea tareaActualizada, CancellationToken ct = default)
@@ -122,7 +124,7 @@ namespace Convivia.Infrastructure.Repositories
             if (updates == null) throw new ArgumentNullException(nameof(updates));
             if (updates.Count == 0) return;
 
-            // Locate plantillaId by scanning plantillatareas subcollections to avoid collection-group query index requirement.
+            // Avoid collection-group query that requires an index by searching subcollections sequentially.
             var plantillaId = await FindPlantillaIdForTareaAsync(id, ct);
             if (string.IsNullOrWhiteSpace(plantillaId)) throw new KeyNotFoundException($"Tarea {id} no encontrada");
 
@@ -130,8 +132,7 @@ namespace Convivia.Infrastructure.Repositories
             await _firebase.UpdateAsync(subcollectionPath, id, updates, useSetMerge, ct);
         }
 
-        // Override DeleteAsync to match base contract (avoid CS0114 hiding warning)
-        public override async Task DeleteAsync(string id, CancellationToken ct = default)
+        public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
 
@@ -146,6 +147,7 @@ namespace Convivia.Infrastructure.Repositories
         // This avoids performing a collection-group query that requires a composite index.
         private async Task<string?> FindPlantillaIdForTareaAsync(string tareaId, CancellationToken ct = default)
         {
+            // Get all plantillas and probe their tareas subcollection for the document id.
             var plantillas = await _firebase.GetAllAsync<FirestorePlantillaTarea>("plantillatareas", ct);
             if (plantillas == null) return null;
 

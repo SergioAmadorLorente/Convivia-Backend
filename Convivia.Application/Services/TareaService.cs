@@ -20,13 +20,11 @@ namespace Convivia.Application.Services
         }
 
 
-        public async Task<List<string>> AddAsync(string espacioid, CreateTareaDto dto)
+        public async Task<string> AddAsync(string espacioid, CreateTareaDto dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
-
-            var plantillaId = await _ptservice.AddAsync(createPlantilla, espacioid);
 
             var tareas = new List<Tarea>();
 
@@ -35,34 +33,27 @@ namespace Convivia.Application.Services
                 if (dia < 0 || dia > 6) throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Domingo, 6=Sábado).");
 
                 var tarea = _mapper.Map<Tarea>(dto);
-                tarea.PlantillaId = plantillaId;
                 tarea.DiaSemana = dia;
                 tarea.Completada = false;      // recién creada: no completada
                 tarea.Disponible = true;   // recién creada: se puede hacer
+                createPlantilla.TareasId.Add(tarea.Id);
 
                 tareas.Add(tarea);
             }
 
-            var ids = await _repository.AddAsyncList(tareas);
+            var plantillaId = await _ptservice.AddAsync(createPlantilla, espacioid);
 
-            var plantilla = await _ptservice.GetByIdAsync(plantillaId);
-            if (plantilla != null)
+            foreach (var tarea in tareas)
             {
-                foreach (var id in ids)
-                    plantilla.TareasId.Add(id);
 
-                await _ptservice.UpdateAsync(plantilla.PlantillaId, new UpdatePlantillaTareaDto
-                {
-                    Nombre = plantilla.Nombre,
-                    karma = plantilla.karma,
-                    DiasRepeticion = plantilla.DiasRepeticion,
-                    TareasId = plantilla.TareasId
-                });
+                tarea.PlantillaId = plantillaId;
+
             }
 
-            return ids;
-        }
+            var ids = await _repository.AddAsyncList(tareas);
 
+            return plantillaId;
+        }
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
         {
@@ -81,7 +72,6 @@ namespace Convivia.Application.Services
             return _mapper.Map<PlantillaTareaDto>(pttarea);
         }
 
-
         public async Task<TareaDto?> GetByEspacioAndPlantillaAndTareaAsync(string espacioid, string plantillaId, string tareaId)
         {
             if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
@@ -99,6 +89,9 @@ namespace Convivia.Application.Services
             // Complementa con datos de la plantilla
             dto.Nombre = plantilla.Nombre;
             dto.Descripcion = plantilla.Descripcion;
+            dto.karma = plantilla.karma;
+            dto.HoraLimite = plantilla.HoraLimite;
+            dto.FacturaId = plantilla.FacturaId;
 
             // Derivado: overdue
             dto.Overdue = IsOverdue(tarea, plantilla.Adapt<PlantillaTarea>());
@@ -110,84 +103,197 @@ namespace Convivia.Application.Services
             return dto;
         }
 
-
-        public async Task<bool> DeleteAsync(string espacioid, string id)
+        // Overwrite (PUT): replace entire tarea document
+        public async Task<TareaDto?> UpdateCompleteAsync(string espacioid, string plantillaid, string tareaid, UpdateTareaDto dto, CancellationToken ct = default)
         {
-            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, id);
-            if (plantilla == null) return false;
-            var resultat = await _ptservice.DeleteAsync(id);
-            return resultat;
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(plantillaid)) throw new ArgumentNullException(nameof(plantillaid));
+            if (string.IsNullOrWhiteSpace(tareaid)) throw new ArgumentNullException(nameof(tareaid));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-        }
+            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
+            if (plantilla == null) return null;
 
-        // TODO - delete pantalla edicio al canviar els dies en que es repeteix la tasca.
+            var existing = await _repository.GetAsync(plantillaid, tareaid, ct);
+            if (existing == null) return null;
 
-        public async Task<TareaDto> UpdateAsync(string espacioid, string id, UpdateTareaDto dto)
-        {
-            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, id);
-            if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
-
-            var tareas = await _repository.GetAllAsync(id);
-            if (tareas is null || tareas.Count == 0)
-                throw new InvalidOperationException("No hay tareas asociadas a la plantilla.");
-
-            // 1) BLOQUEO: no permitir Disponible=true si alguna está overdue
+            // 1) BLOQUEO: no permitir Disponible=true si está overdue
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
             if (dto.Disponible == true)
             {
-                var algunaOverdue = tareas.Any(t => IsOverdue(t, domPlantilla));
-                if (algunaOverdue)
-                    throw new InvalidOperationException("La tarea está vencida (overdue); no se puede marcar como disponible.");
+                var isOverdue = IsOverdue(existing, domPlantilla);
+                if (isOverdue)
+                    throw new InvalidOperationException("No se puede marcar como disponible una tarea que está overdue.");
             }
 
-            // 2) Actualización de PLANTILLA
-            var plantillaupdatedto = new UpdatePlantillaTareaDto
-            {
-                Nombre = dto.Nombre ?? plantilla.Nombre,
-                karma = dto.karma ?? plantilla.karma,
-                DiasRepeticion = plantilla.DiasRepeticion,
-                TareasId = plantilla.TareasId,
-                HoraLimite = dto.HoraLimite ?? plantilla.HoraLimite
-            };
+            // Map DTO -> Domain (new object)
+            var domain = _mapper.Map<Tarea>(dto);
+            domain.Id = tareaid;
+            domain.PlantillaId = plantillaid;
 
-            // 3) Actualización parcial de TAREA
-            var tareaactualizada = new Tarea
-            {
-                Nombre = dto.Nombre ?? tareas[0].Nombre,
-                karma = dto.karma ?? tareas[0].karma,
-                Disponible = dto.Disponible ?? tareas[0].Disponible,
-                Completada = dto.Completada ?? tareas[0].Completada,
-                UsuarioEspaciosIds = dto.UsuarioEspaciosIds ?? tareas[0].UsuarioEspaciosIds,
-                FechaRealizacion = dto.FechaRealizacion ?? tareas[0].FechaRealizacion,
-                Foto = dto.Foto ?? tareas[0].Foto,
-                Prorroga = dto.Prorroga ?? tareas[0].Prorroga,
-                FacturaId = dto.FacturaId ?? tareas[0].FacturaId,
-                DiaSemana = tareas[0].DiaSemana,
-                SalaId = dto.SalaId ?? tareas[0].SalaId,
-                PlantillaId = tareas[0].PlantillaId
-            };
+            // Persist overwrite
+            await _repository.UpdateAsync(tareaid, domain, merge: false, ct);
 
-            await _ptservice.UpdateAsync(id, plantillaupdatedto);
-            await _repository.UpdateAsyncList(tareas, tareaactualizada);
+            var updated = await _repository.GetAsync(plantillaid, tareaid, ct);
+            if (updated == null) return null;
 
-            // 4) Recarga y calcula Overdue
-            var tareaRecargada = await _repository.GetAsync(id, tareas[0].Id!);
-            var dtoResp = _mapper.Map<TareaDto>(tareaRecargada);
-            dtoResp.Nombre = plantillaupdatedto.Nombre!;
+            var dtoResp = _mapper.Map<TareaDto>(updated);
+            dtoResp.Nombre = plantilla.Nombre!;
             dtoResp.Descripcion = plantilla.Descripcion;
+            dtoResp.karma = plantilla.karma;
+            dtoResp.HoraLimite = plantilla.HoraLimite;
+            dtoResp.FacturaId = plantilla.FacturaId;
 
-            // Recalcular overdue con la plantilla actualizada
-            var domPlantillaResp = plantilla.Adapt<PlantillaTarea>();
-            domPlantillaResp.HoraLimite = plantillaupdatedto.HoraLimite ?? domPlantilla.HoraLimite;
-            dtoResp.Overdue = IsOverdue(tareaRecargada, domPlantillaResp);
-
-            if (dtoResp.Overdue)
-                dtoResp.Disponible = false;
+            dtoResp.Overdue = IsOverdue(updated, domPlantilla);
+            if (dtoResp.Overdue) dtoResp.Disponible = false;
 
             return dtoResp;
         }
 
+        // delete
 
+        public async Task<bool> DeleteAsync(string espacioid, string plantillaid, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(plantillaid)) throw new ArgumentNullException(nameof(plantillaid));
+
+            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
+            if (plantilla == null) return false;
+
+            foreach (string tareaid in plantilla.TareasId)
+            {
+
+                 await _repository.DeleteAsync(tareaid);
+
+            }
+
+            var resultat = await _ptservice.DeleteAsync(espacioid, plantillaid);
+            if (resultat == false) return false;
+
+            return true;
+
+        }
+
+        // Merge (PUT merge): map DTO onto existing and persist with merge option
+        public async Task<TareaDto?> UpdateMergeAsync(string espacioid, string plantillaid, string tareaid, UpdateTareaDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(plantillaid)) throw new ArgumentNullException(nameof(plantillaid));
+            if (string.IsNullOrWhiteSpace(tareaid)) throw new ArgumentNullException(nameof(tareaid));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
+            if (plantilla == null) return null;
+
+            var existing = await _repository.GetAsync(plantillaid, tareaid, ct);
+            if (existing == null) return null;
+
+            // 1) BLOQUEO: no permitir Disponible=true si está overdue
+            var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+            if (dto.Disponible == true)
+            {
+                var isOverdue = IsOverdue(existing, domPlantilla);
+                if (isOverdue)
+                    throw new InvalidOperationException("No se puede marcar como disponible una tarea que está overdue.");
+            }
+
+            // Map DTO onto existing (ignore nulls configured in Mapster)
+            _mapper.Map(dto, existing);
+
+            await _repository.UpdateAsync(tareaid, existing, merge: true, ct);
+
+            var updated = await _repository.GetAsync(plantillaid, tareaid, ct);
+            if (updated == null) return null;
+
+            var dtoResp = _mapper.Map<TareaDto>(updated);
+            dtoResp.Nombre = plantilla.Nombre!;
+            dtoResp.Descripcion = plantilla.Descripcion;
+            dtoResp.karma = plantilla.karma;
+            dtoResp.HoraLimite = plantilla.HoraLimite;
+            dtoResp.FacturaId = plantilla.FacturaId;
+
+            dtoResp.Overdue = IsOverdue(updated, domPlantilla);
+            if (dtoResp.Overdue) dtoResp.Disponible = false;
+
+            return dtoResp;
+        }
+
+        // Partial (PATCH): build updates dictionary and call repository partial update
+        public async Task<TareaDto?> UpdatePartialAsync(string espacioid, string plantillaid, string tareaid, UpdateTareaDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(plantillaid)) throw new ArgumentNullException(nameof(plantillaid));
+            if (string.IsNullOrWhiteSpace(tareaid)) throw new ArgumentNullException(nameof(tareaid));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
+            if (plantilla == null) return null;
+
+            var existing = await _repository.GetAsync(plantillaid, tareaid, ct);
+            if (existing == null) return null;
+
+            // 1) BLOQUEO: no permitir Disponible=true si está overdue
+            var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+            if (dto.Disponible == true)
+            {
+                var isOverdue = IsOverdue(existing, domPlantilla);
+                if (isOverdue)
+                    throw new InvalidOperationException("No se puede marcar como disponible una tarea que está overdue.");
+            }
+
+            var updates = ObtenerActualizacionesDesdeDto(dto);
+            if (updates.Count == 0)
+            {
+                var current = existing;
+                var dtoResp = _mapper.Map<TareaDto>(current);
+                dtoResp.Nombre = plantilla.Nombre!;
+                dtoResp.Descripcion = plantilla.Descripcion;
+                dtoResp.karma = plantilla.karma;
+                dtoResp.HoraLimite = plantilla.HoraLimite;
+                dtoResp.FacturaId = plantilla.FacturaId;
+                dtoResp.Overdue = IsOverdue(current, domPlantilla);
+                if (dtoResp.Overdue) dtoResp.Disponible = false;
+                return dtoResp;
+            }
+
+            // useSetMerge: false -> strict update (will throw if not exists)
+            await _repository.UpdateAsync(tareaid, updates, useSetMerge: false, ct);
+
+            var updated = await _repository.GetAsync(plantillaid, tareaid, ct);
+            if (updated == null) return null;
+
+            var dtoResult = _mapper.Map<TareaDto>(updated);
+            dtoResult.Nombre = plantilla.Nombre!;
+            dtoResult.Descripcion = plantilla.Descripcion;
+            dtoResult.karma = plantilla.karma;
+            dtoResult.HoraLimite = plantilla.HoraLimite;
+            dtoResult.FacturaId = plantilla.FacturaId;
+            dtoResult.Overdue = IsOverdue(updated, domPlantilla);
+            if (dtoResult.Overdue) dtoResult.Disponible = false;
+
+            return dtoResult;
+        }
+
+        // Keep existing UpdateAsync for backward compatibility (acts like PATCH)
+        public async Task<TareaDto> UpdateAsync(string espacioid, string plantillaid, string tareaid, UpdateTareaDto dto)
+        {
+            // Delegate to partial update
+            var res = await UpdatePartialAsync(espacioid, plantillaid, tareaid, dto);
+            return res!;
+        }
+
+        private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateTareaDto dto)
+        {
+            var updates = new Dictionary<string, object>();
+            if (dto.UsuarioEspaciosIds != null && dto.UsuarioEspaciosIds.Count > 0) updates["UsuarioEspaciosIds"] = dto.UsuarioEspaciosIds;
+            if (dto.FechaRealizacion.HasValue) updates["FechaRealizacion"] = dto.FechaRealizacion.Value;
+            if (dto.Foto != null) updates["Foto"] = dto.Foto;
+            if (dto.Prorroga.HasValue) updates["Prorroga"] = dto.Prorroga.Value;
+            if (dto.Disponible.HasValue) updates["Disponible"] = dto.Disponible.Value;
+            if (dto.Completada.HasValue) updates["Completada"] = dto.Completada.Value;
+            if (!string.IsNullOrWhiteSpace(dto.SalaId)) updates["SalaId"] = dto.SalaId;
+            return updates;
+        }
 
         private static bool IsOverdue(Tarea tarea, PlantillaTarea plantilla)
         {
@@ -211,7 +317,6 @@ namespace Convivia.Application.Services
 
             return nowUtc >= dueUtc;
         }
-
 
     }
 }

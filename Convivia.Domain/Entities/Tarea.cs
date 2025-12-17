@@ -9,7 +9,7 @@ namespace Convivia.Domain.Entities
     {
         public string? Id { get; set; } = Guid.NewGuid().ToString("N");
 
-        public string Nombre { get; set; }
+        
 
         public List<UsuarioEspacio> Usuarios { get; set; } = new();
         
@@ -22,14 +22,10 @@ namespace Convivia.Domain.Entities
         public bool Disponible { get; set; }
         public bool Completada { get; set; }
 
-        public string? FacturaId { get; set; }
         public string PlantillaId { get; set; } = string.Empty; // obligatorio
         public List<string> UsuarioEspaciosIds { get; set; } = new();
-        public Factura? Factura { get; set; }
 
         public int DiaSemana { get; set; }
-
-        public int karma { get; set; }
 
         // Optional sala id where task applies
         public string? SalaId { get; set; }
@@ -39,18 +35,13 @@ namespace Convivia.Domain.Entities
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(string nombre, List<string> usuarioEspaciosIds, int karma, string plantillaId, string? facturaId = null)
+        public Tarea(List<string> usuarioEspaciosIds, string plantillaId)
         {
-            if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
-            if (karma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
             if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("PlantillaId es obligatoria.");
 
-            Nombre = nombre;
             UsuarioEspaciosIds = usuarioEspaciosIds;
-            this.karma = karma;
             Disponible = false; // Por defecto, la tarea está incompleta
             PlantillaId = plantillaId;
-            FacturaId = facturaId;
         }
 
     }
