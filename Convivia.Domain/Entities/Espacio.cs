@@ -1,5 +1,5 @@
-﻿using Convivia.Domain.Entities;
-using Google.Cloud.Firestore;
+﻿
+using Convivia.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,30 +8,25 @@ using System.Text.Json.Serialization;
 namespace Convivia.Domain.Entities
 {
     /// <summary>
-    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones         e invitaciones.
+    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticionese invitaciones.
     /// </summary>
-    [FirestoreData]
     public class Espacio
     {
-        [FirestoreProperty]
         public string Id { get; set; } = Guid.NewGuid().ToString(); // <- ahora con setter
 
-        [FirestoreProperty]
+
         public string Nombre { get; set; }
 
-        [FirestoreProperty]
+
         public string? Direccion { get; set; }
 
-        [JsonIgnore]
+
         public List<Sala> Salas { get; set; } = new List<Sala>();
 
-        [JsonIgnore]
         public List<UsuarioEspacio> UsuarioEspacios { get; set; } = new List<UsuarioEspacio>();
 
-        [JsonIgnore]
         public List<Peticion> Peticiones { get; set; } = new List<Peticion>();
 
-        [JsonIgnore]
         public List<Invitacion> InvitacionesEnviadas { get; set; } = new List<Invitacion>();
 
         public Espacio() { }

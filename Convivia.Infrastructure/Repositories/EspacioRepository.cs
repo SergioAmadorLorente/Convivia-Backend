@@ -1,13 +1,10 @@
-﻿using Convivia.Shared.DTOs;
+﻿using Convivia.Domain.Entities;
+using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
+using Convivia.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Convivia.Shared.Repositories;
+using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
@@ -26,16 +23,19 @@ namespace Convivia.Infrastructure.Repositories
         public async Task<string> AddAsync(EspacioDto espacio, CancellationToken ct = default)
         {
             if (espacio == null) throw new ArgumentNullException(nameof(espacio));
-            if (string.IsNullOrWhiteSpace(espacio.Id))
+
+            // Convertir EspacioDto → Espacio (Domain) → FireStoreEspacio (Firestore)
+            var espacioDomain = espacio.Adapt<Espacio>();
+            var espacioPersist = espacioDomain.Adapt<FireStoreEspacio>();
+
+            if (string.IsNullOrWhiteSpace(espacioPersist.Id))
             {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, espacio, ct);
+                var generatedId = await _firebase.AddAsync(Collection, espacioPersist, ct);
                 return generatedId;
             }
 
-            // Si ya tiene id, lo usamos para crear el documento con ese id
-            await _firebase.AddAsync(Collection, espacio.Id, espacio, ct);
-            return espacio.Id;
+            await _firebase.AddAsync(Collection, espacioPersist.Id, espacioPersist, ct);
+            return espacioPersist.Id;
         }
 
         public async Task<EspacioDto?> GetByIdAsync(string id, CancellationToken ct = default)
@@ -43,7 +43,12 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                return await _firebase.GetAsync<EspacioDto>(Collection, id, ct);
+                var espacioPersist = await _firebase.GetAsync<FireStoreEspacio>(Collection, id, ct);
+                if (espacioPersist == null) return null;
+
+                // Convertir FireStoreEspacio → Espacio (Domain) → EspacioDto
+                var espacioDomain = espacioPersist.Adapt<Espacio>();
+                return espacioDomain.Adapt<EspacioDto>();
             }
             catch (Exception ex)
             {
@@ -57,16 +62,18 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(direccion)) return Array.Empty<EspacioDto>();
             try
             {
-                var list = await _firebase.QueryAsync<EspacioDto>(Collection, nameof(EspacioDto.Direccion), direccion, ct);
-                return list ?? new List<EspacioDto>();
+                var list = await _firebase.QueryAsync<FireStoreEspacio>(Collection, nameof(FireStoreEspacio.Direccion), direccion, ct);
+                if (list == null || !list.Any()) return new List<EspacioDto>();
+
+                return list.Select(e => e.Adapt<Espacio>().Adapt<EspacioDto>()).ToList();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error GetByUsuarioInvitadoAsync {Usuario}", direccion);
+                _logger.LogError(ex, "Error GetByDireccionAsync {Direccion}", direccion);
                 throw;
             }
         }
-
+      
         public async Task UpdateAsync(string id, EspacioDto espacio, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
@@ -74,7 +81,11 @@ namespace Convivia.Infrastructure.Repositories
 
             try
             {
-                await _firebase.UpdateAsync(Collection, id, espacio, ct);
+                // Convertir EspacioDto → Espacio (Domain) → FireStoreEspacio
+                var espacioDomain = espacio.Adapt<Espacio>();
+                var espacioPersist = espacioDomain.Adapt<FireStoreEspacio>();
+
+                await _firebase.UpdateAsync(Collection, id, espacioPersist, ct);
             }
             catch (Exception ex)
             {

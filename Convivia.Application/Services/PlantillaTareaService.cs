@@ -1,38 +1,39 @@
-using Convivia.Application.DTOs;
 using Convivia.Application.Mappers;
 using Convivia.Shared.Services;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Repositories;
 using Convivia.Domain.Entities;
 using MapsterMapper;
+using Convivia.Domain.Repositories;
+using Mapster;
 
 namespace Convivia.Application.Services
 {
     public class PlantillaTareaService
     {
-        private readonly IPlantillaTareaRepository<PlantillaTarea> _repository;
+        private readonly IPlantillaTareaRepository _repository;
         private readonly IMapper _mapper;
 
-        public PlantillaTareaService(IPlantillaTareaRepository<PlantillaTarea> plantilla, IMapper _mapper)
+        public PlantillaTareaService(IPlantillaTareaRepository plantilla, IMapper _mapper)
         {
             _repository = plantilla ?? throw new ArgumentNullException(nameof(plantilla));
             this._mapper = _mapper ?? throw new ArgumentNullException(nameof(_mapper));
         }
 
-        public async Task<PlantillaTareaDto> AddAsync(CreatePlantillaTareaDto dto)
+        public async Task<string> AddAsync(CreatePlantillaTareaDto dto)
         {
 
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             var plantillaTarea = _mapper.Map<PlantillaTarea>(dto);
-            plantillaTarea.PlantillaId = Guid.NewGuid().ToString();
+            plantillaTarea.PlantillaId = Guid.NewGuid().ToString("N");
             await _repository.AddAsync(plantillaTarea);
-            return _mapper.Map<PlantillaTareaDto>(plantillaTarea);
+            return _mapper.Map<PlantillaTareaDto>(plantillaTarea).PlantillaId;
 
         }
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAsync()
         {
-            var plantillas = await _repository.GetAllAsync();
+            var plantillas = await _repository.GetAllAsync();   
             return _mapper.Map<IEnumerable<PlantillaTareaDto>>(plantillas);
         }
 
@@ -52,10 +53,11 @@ namespace Convivia.Application.Services
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             plantilla.Nombre = dto.Nombre ?? plantilla.Nombre;
-            plantilla.PuntosKarma = dto.PuntosKarma ?? plantilla.PuntosKarma;
-            plantilla.Disponible = dto.Disponible ?? plantilla.Disponible;
+            plantilla.karma = dto.karma ?? plantilla.karma;
+            plantilla.Estado = dto.Estado ?? plantilla.Estado;
             plantilla.DiasRepeticion = dto.DiasRepeticion ?? plantilla.DiasRepeticion;
-            await _repository.UpdateAsync(plantilla);
+            await _repository.UpdateAsync(id, plantilla);
+
             var plantillaDto = _mapper.Map<PlantillaTareaDto>(plantilla);
             return plantillaDto;
 

@@ -1,8 +1,9 @@
-﻿using System;
-using Mapster;
+﻿using Mapster;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+using Convivia.Domain.Entities;
+using Convivia.Domain.Repositories;
 using Microsoft.Extensions.Logging;
+
 namespace Convivia.Application.Services
 {
     public class SalaService
@@ -16,129 +17,91 @@ namespace Convivia.Application.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> CrearAsync(CreateSalaDto dto, CancellationToken ct = default)
+        // Crear sala
+        public async Task<SalaDto?> AddAsync(CreateSalaDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre requerido");
 
-            // Usar Mapster para mapear CreateSalaDto -> SalaDto
-            var sala = dto.Adapt<SalaDto>();
-            sala.Id = Guid.NewGuid().ToString("N");
-            sala.Descripcion = sala.Descripcion ?? string.Empty;
+            var salaDomain = dto.Adapt<Sala>(); // Aquí la entidad ya genera su Id
+            var createdSala = await _repo.AddAsync(salaDomain, ct);
 
-            try
-            {
-                return await _repo.AddAsync(sala, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creando sala");
-                throw;
-            }
+            return createdSala?.Adapt<SalaDto>();
         }
 
+        // Obtener sala por Id
         public async Task<SalaDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                return await _repo.GetByIdAsync(id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
-                throw;
-            }
+            var sala = await _repo.GetByIdAsync(id, ct);
+            return sala?.Adapt<SalaDto>();
         }
 
+        // Obtener salas por espacio
         public async Task<IEnumerable<SalaDto>> ObtenerPorEspacioAsync(string idEspacio, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(idEspacio)) return Enumerable.Empty<SalaDto>();
-            try
-            {
-                return await _repo.GetByEspacioIdAsync(idEspacio, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorEspacio {IdEspacio}", idEspacio);
-                throw;
-            }
+            var salas = await _repo.GetByEspacioIdAsync(idEspacio, ct);
+            return salas.Select(s => s.Adapt<SalaDto>());
         }
 
-        public async Task ActualizarAsync(string id, CreateSalaDto dto, CancellationToken ct = default)
+        // Actualizar sala
+        public async Task<SalaDto> UpdateAsync(string id, UpdateSalaDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            try
-            {
-                var salaExistente = await _repo.GetByIdAsync(id, ct);
-                if (salaExistente == null) throw new KeyNotFoundException($"Sala con Id {id} no encontrada");
-                salaExistente.Nombre = dto.Nombre ?? salaExistente.Nombre;
-                salaExistente.Descripcion = dto.Descripcion ?? salaExistente.Descripcion;
-                await _repo.UpdateAsync(id, salaExistente, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error actualizando sala {Id}", id);
-                throw;
-            }
+
+            var salaExistente = await _repo.GetByIdAsync(id, ct);
+            if (salaExistente == null) throw new KeyNotFoundException($"Sala con Id {id} no encontrada");
+
+            salaExistente.Nombre = dto.Nombre ?? salaExistente.Nombre;
+            salaExistente.Descripcion = dto.Descripcion ?? salaExistente.Descripcion;
+            salaExistente.IdEspacio = dto.IdEspacio ?? salaExistente.IdEspacio;
+
+            var updated = await _repo.UpdateAsync(id, salaExistente, ct);
+            return updated!.Adapt<SalaDto>();
         }
 
+        // Eliminar sala
         public async Task EliminarAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
-            try
-            {
-                await _repo.DeleteAsync(id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error eliminando sala {Id}", id);
-                throw;
-            }
+            await _repo.DeleteAsync(id, ct);
         }
 
+        // Actualización parcial
         public async Task<bool> ParcialActualizarAsync(string id, UpdateSalaDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // Try que obtiene la sala, verifica cambios y actualiza solo si hay cambios.
-            try
+            var sala = await _repo.GetByIdAsync(id, ct);
+            if (sala == null) return false;
+
+            var changed = false;
+
+            if (!string.IsNullOrWhiteSpace(dto.Nombre) && dto.Nombre != sala.Nombre)
             {
-                var sala = await _repo.GetByIdAsync(id, ct);
-                if (sala == null) return false;
-
-                var changed = false;
-
-                if (!string.IsNullOrWhiteSpace(dto.Nombre) && dto.Nombre != sala.Nombre)
-                {
-                    sala.Nombre = dto.Nombre;
-                    changed = true;
-                }
-
-                if (!string.IsNullOrWhiteSpace(dto.Descripcion) && dto.Descripcion != sala.Descripcion)
-                {
-                    sala.Descripcion = dto.Descripcion;
-                    changed = true;
-                }
-
-                if (!string.IsNullOrWhiteSpace(dto.IdEspacio) && dto.IdEspacio != sala.IdEspacio)
-                {
-                    sala.IdEspacio = dto.IdEspacio;
-                    changed = true;
-                }
-
-                if (!changed) return true; // nada que actualizar
-
-                await _repo.UpdateAsync(id, sala, ct);
-                return true;
+                sala.Nombre = dto.Nombre;
+                changed = true;
             }
-            catch (Exception ex)
+
+            if (!string.IsNullOrWhiteSpace(dto.Descripcion) && dto.Descripcion != sala.Descripcion)
             {
-                _logger.LogError(ex, "Error parcial actualizando sala {Id}", id);
-                throw;
+                sala.Descripcion = dto.Descripcion;
+                changed = true;
             }
+
+            if (!string.IsNullOrWhiteSpace(dto.IdEspacio) && dto.IdEspacio != sala.IdEspacio)
+            {
+                sala.IdEspacio = dto.IdEspacio;
+                changed = true;
+            }
+
+            if (!changed) return true; // nada que actualizar
+
+            await _repo.UpdateAsync(id, sala, ct);
+            return true;
         }
     }
 }

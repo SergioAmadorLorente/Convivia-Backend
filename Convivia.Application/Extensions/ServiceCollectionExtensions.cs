@@ -1,9 +1,9 @@
 ﻿using Convivia.Application.Services;
 using Mapster;
 using Convivia.Infrastructure.Services;
-using Convivia.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Convivia.Application.Mappers.Config;
+using Convivia.Application.Mappers;
 
 namespace Convivia.Application.Extensions
 {
@@ -19,14 +19,16 @@ namespace Convivia.Application.Extensions
             services.AddScoped<SalaService>();
             services.AddScoped<PlantillaTareaService>();
             services.AddScoped<PeticionService>();
+            services.AddScoped<TareaService>();
+            services.AddScoped<PermisoService>();
+            services.AddScoped<ReservaService>();
+            services.AddScoped<UsuarioEspacioService>();
 
+            services.AddScoped<FacturaService>();
 
-            // Registrar mappers, validators, MediatR, etc. si procede
-            MapsterConfig.RegisterPair<Convivia.Domain.Entities.Sala, Convivia.Shared.DTOs.SalaDto, Convivia.Shared.DTOs.CreateSalaDto, Convivia.Shared.DTOs.UpdateSalaDto>(TypeAdapterConfig.GlobalSettings);
+            // Centralizar Mapster configuration
+            MapsterBootstrap.Configure(TypeAdapterConfig.GlobalSettings);
 
-
-            // Registrar mapper con el modelo FireStore
-            // services.AddAutoMapper(typeof(YourProfile).Assembly);
 
             return services;
         }
