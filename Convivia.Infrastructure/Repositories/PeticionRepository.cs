@@ -1,6 +1,6 @@
 using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Models;
 using Microsoft.Extensions.Logging;

@@ -4,7 +4,7 @@ namespace Convivia.Domain.Entities
 {
     public class Invitacion
     {
-        public string Id { get; internal set; } = Guid.NewGuid().ToString(); // El setter només sera accesible de manera interna, per a poder utilitzarlo en el repo de firestore
+        public string IdInvitacion { get; set; } = Guid.NewGuid().ToString("N"); 
 
         public UsuarioEspacio? UsuarioSolicitante { get; set; }
 

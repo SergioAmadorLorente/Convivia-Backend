@@ -1,66 +1,83 @@
+using Convivia.Application.Repositories;
+using Convivia.Domain.Entities;
+using Convivia.Shared.DTOs;
+using Convivia.Shared.Services;
+using Mapster;
+using MapsterMapper;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Shared.DTOs;
-using Microsoft.Extensions.Logging;
-using Convivia.Shared.Repositories;
-using Convivia.Shared.Services;
-using Mapster;
 
 namespace Convivia.Application.Services
 {
     public class EspacioService
     {
-        private readonly IEspacioRepository _repo;
+        private readonly IEspacioRepository _espacioRepository;
+        private readonly IMapper _mapper;
         private readonly ILogger<EspacioService> _logger;
 
-        public EspacioService(IEspacioRepository repo, ILogger<EspacioService> logger)
+        public EspacioService(IEspacioRepository espacioRepository, IMapper mapper, ILogger<EspacioService> logger)
         {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _espacioRepository = espacioRepository ?? throw new ArgumentNullException(nameof(espacioRepository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> CrearAsync(CreateEspacioDto dto, CancellationToken ct = default)
+        public async Task<EspacioDto> CrearEspacioAsync(CreateEspacioDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre requerido");
 
-            // Usar Mapster para mapear CreateEspacioDto -> EspacioDto
-            var espacio = dto.Adapt<EspacioDto>();
-            espacio.Id = Guid.NewGuid().ToString("N");
+            // DTO -> domain
+            var espacioDomain = _mapper.Map<Espacio>(dto);
 
-            try
+            // Persistir y obtener id
+            var id = await _espacioRepository.AddAsync(espacioDomain, ct);
+
+            // Recuperar entidad guardada y devolver DTO consistente
+            var createdDomain = await _espacioRepository.GetByIdAsync(id, ct);
+            if (createdDomain == null)
             {
-                return await _repo.AddAsync(espacio, ct);
+                // devolver DTO mínimo con id para evitar fallos en rutas
+                return new EspacioDto { IdEspacio = id };
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creando espacio");
-                throw;
-            }
+
+            var createdDto = _mapper.Map<EspacioDto>(createdDomain);
+            if (string.IsNullOrWhiteSpace(createdDto.IdEspacio))
+                createdDto.IdEspacio = id;
+
+            return createdDto;
+            
         }
 
-        public async Task<EspacioDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
+        /// <summary>
+        /// Obtiene una espacio por id.
+        /// </summary>
+        public async Task<EspacioDto?> ObtenerEspacioAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                return await _repo.GetByIdAsync(id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            var domain = await _espacioRepository.GetByIdAsync(id, ct);
+            return domain == null ? null : _mapper.Map<EspacioDto>(domain);
         }
 
-        public async Task<IEnumerable<EspacioDto>> ObtenerPorDireccionAsync(string direccion, CancellationToken ct = default)
+
+        /// <summary>
+        /// Lista todas las espacios.
+        /// </summary>
+        public async Task<List<EspacioDto>> ListarTodasAsync(CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(direccion)) return Enumerable.Empty<EspacioDto>();
+            var list = await _espacioRepository.GetAllAsync(ct);
+            return list?.Select(f => _mapper.Map<EspacioDto>(f)).ToList() ?? new List<EspacioDto>();
+        }
+
+        public async Task<IEnumerable<Espacio>> ObtenerPorDireccionAsync(string direccion, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(direccion)) return Enumerable.Empty<Espacio>();
             try
             {
-                return await _repo.GetByDireccionAsync(direccion, ct);
+                return await _espacioRepository.GetByDireccionAsync(direccion, ct);
             }
             catch (Exception ex)
             {
@@ -69,75 +86,119 @@ namespace Convivia.Application.Services
             }
         }
 
-        public async Task ActualizarAsync(string id, CreateEspacioDto dto, CancellationToken ct = default)
+        // Overwrite completo: reemplaza todo el documento en Firestore (PUT)
+        public async Task<EspacioDto?> ActualizarEspacioCompletoAsync(string id, UpdateEspacioDto dto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-            try
-            {
-                var espacioExistente = await _repo.GetByIdAsync(id, ct);
-                if (espacioExistente == null) throw new KeyNotFoundException($"Espacio con Id {id} no encontrado");
-
-                espacioExistente.Nombre = dto.Nombre ?? espacioExistente.Nombre;
-                espacioExistente.Direccion = dto.Direccion ?? espacioExistente.Direccion;
-
-                await _repo.UpdateAsync(id, espacioExistente, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error actualizando espacio {Id}", id);
-                throw;
-            }
-        }
-
-        public async Task EliminarAsync(string id, CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
-            try
-            {
-                await _repo.DeleteAsync(id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error eliminando espacio {Id}", id);
-                throw;
-            }
-        }
-
-        public async Task<bool> ParcialActualizarAsync(string id, UpdateEspacioDto dto, CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            try
+            // Mapear DTO -> Domain (suponiendo que tienes la entidad Espacio)
+            var domain = _mapper.Map<Espacio>(dto);
+            domain.Id = id; // asegurar id
+
+            // Persistir como overwrite 
+            await _espacioRepository.UpdateAsync(id, domain, merge: false, ct);
+
+            var updated = await _espacioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<EspacioDto>(updated);
+        }
+
+        // Merge: mapear sobre la entidad existente y persistir con merge (Set + MergeAll)
+        public async Task<EspacioDto?> ActualizarEspacioMergeAsync(string id, UpdateEspacioDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            // Obtener existente para mapear sobre él y evitar perder campos no enviados
+            var existing = await _espacioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
+
+            // Mapear solo valores no nulos (asegúrate de configurar Mapster: IgnoreNullValues = true)
+            _mapper.Map(dto, existing);
+
+            await _espacioRepository.UpdateAsync(id, existing, merge: true, ct);
+
+            var updated = await _espacioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<EspacioDto>(updated);
+        }
+
+        // Parcial / PATCH: actualiza solo los campos permitidos (construye IDictionary<string, object>)
+        public async Task<EspacioDto?> ActualizarEspacioParcialAsync(string id, UpdateEspacioDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            // Construir diccionario de actualizaciones (usa el helper que definiste)
+            var updates = ObtenerActualizacionesDesdeDto(dto); // método estático/privado que devuelve IDictionary<string, object>
+            if (updates.Count == 0)
             {
-                var espacio = await _repo.GetByIdAsync(id, ct);
-                if (espacio == null) return false;
-
-                var changed = false;
-
-                if (!string.IsNullOrWhiteSpace(dto.Nombre) && dto.Nombre != espacio.Nombre)
-                {
-                    espacio.Nombre = dto.Nombre;
-                    changed = true;
-                }
-
-                if (dto.Direccion != null && dto.Direccion != espacio.Direccion)
-                {
-                    espacio.Direccion = dto.Direccion;
-                    changed = true;
-                }
-
-                if (!changed) return true;
-
-                await _repo.UpdateAsync(id, espacio, ct);
-                return true;
+                // Nada que actualizar: devolver la entidad actual
+                var current = await _espacioRepository.GetByIdAsync(id, ct);
+                return current == null ? null : _mapper.Map<EspacioDto>(current);
             }
-            catch (Exception ex)
+
+          
+            await _espacioRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
+
+            var updated = await _espacioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<EspacioDto>(updated);             
+        }
+
+
+        /// <summary>
+        /// Elimina una espacio.
+        /// </summary>
+        public async Task<bool> EliminarEsapcioAsync(string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
+
+            var existing = await _espacioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return false;
+
+
+
+            await _espacioRepository.DeleteAsync(id, ct);
+            return true;
+        }
+
+
+
+
+        /// <summary>
+        /// Construye el diccionario de actualizaciones para PATCH de Espacio.
+        /// - Añade solo propiedades no nulas/no vacías del DTO.
+        /// - Usa los nombres exactos de Firestore según FireStoreEspacio.
+        /// - Filtra campos que no deben actualizarse por PATCH: "Id".
+        /// - Normaliza cadenas (Trim) y aplica validaciones mínimas (longitud).
+        /// </summary>
+        public static IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateEspacioDto dto)
+        {
+            var updates = new Dictionary<string, object>();
+            if (dto == null) return updates;
+
+            // Nombre: actualizar solo si se envía un valor no vacío
+            if (!string.IsNullOrWhiteSpace(dto.Nombre))
             {
-                _logger.LogError(ex, "Error parcial actualizando espacio {Id}", id);
-                throw;
+                var nombre = dto.Nombre.Trim();
+                const int maxNombre = 200;
+                if (nombre.Length == 0)
+                    throw new ArgumentException("Nombre no puede quedar vacío.");
+                if (nombre.Length > maxNombre)
+                    throw new ArgumentException($"Nombre demasiado largo. Máximo {maxNombre} caracteres.");
+                updates["Nombre"] = nombre;
             }
+
+            // Direccion: permitir cadena vacía intencionada; excluir null
+            if (dto.Direccion != null)
+            {
+                var direccion = dto.Direccion.Trim();
+                const int maxDireccion = 1000;
+                if (direccion.Length > maxDireccion)
+                    throw new ArgumentException($"Dirección demasiado larga. Máximo {maxDireccion} caracteres.");
+                updates["Direccion"] = direccion;
+            }
+
+            return updates;
         }
     }
 }

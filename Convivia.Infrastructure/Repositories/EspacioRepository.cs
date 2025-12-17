@@ -1,6 +1,6 @@
 ﻿using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
@@ -8,64 +8,46 @@ using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class EspacioRepository : IEspacioRepository
+    public class EspacioRepository : Repository<FireStoreEspacio>, IEspacioRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<EspacioRepository> _logger;
         private const string Collection = "espacios";
 
-        public EspacioRepository(IFirebaseService firebase, ILogger<EspacioRepository> logger)
+        public EspacioRepository(IFirebaseService firebase, ILogger<EspacioRepository> logger, ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreEspacio>>(), Collection)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(EspacioDto espacio, CancellationToken ct = default)
+        public async Task<string> AddAsync(Espacio espacio, CancellationToken ct = default)
         {
             if (espacio == null) throw new ArgumentNullException(nameof(espacio));
-
-            // Convertir EspacioDto → Espacio (Domain) → FireStoreEspacio (Firestore)
-            var espacioDomain = espacio.Adapt<Espacio>();
-            var espacioPersist = espacioDomain.Adapt<FireStoreEspacio>();
-
-            if (string.IsNullOrWhiteSpace(espacioPersist.Id))
-            {
-                var generatedId = await _firebase.AddAsync(Collection, espacioPersist, ct);
-                return generatedId;
-            }
-
-            await _firebase.AddAsync(Collection, espacioPersist.Id, espacioPersist, ct);
-            return espacioPersist.Id;
+            var persist = espacio.Adapt<FireStoreEspacio>();
+            return await base.AddAsync(persist, ct);
         }
 
-        public async Task<EspacioDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<Espacio?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                var espacioPersist = await _firebase.GetAsync<FireStoreEspacio>(Collection, id, ct);
-                if (espacioPersist == null) return null;
-
-                // Convertir FireStoreEspacio → Espacio (Domain) → EspacioDto
-                var espacioDomain = espacioPersist.Adapt<Espacio>();
-                return espacioDomain.Adapt<EspacioDto>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-                throw;
-            }
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<Espacio>();
         }
 
-        public async Task<IEnumerable<EspacioDto>> GetByDireccionAsync(string direccion, CancellationToken ct = default)
+        public async Task<IEnumerable<Espacio>> GetAllAsync(CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(direccion)) return Array.Empty<EspacioDto>();
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Espacio>() : list.Adapt<List<Espacio>>();
+        }
+
+        public async Task<IEnumerable<Espacio>> GetByDireccionAsync(string direccion, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(direccion)) return Array.Empty<Espacio>();
             try
             {
                 var list = await _firebase.QueryAsync<FireStoreEspacio>(Collection, nameof(FireStoreEspacio.Direccion), direccion, ct);
-                if (list == null || !list.Any()) return new List<EspacioDto>();
+                if (list == null || !list.Any()) return new List<Espacio>();
 
-                return list.Select(e => e.Adapt<Espacio>().Adapt<EspacioDto>()).ToList();
+                return list.Select(e => e.Adapt<Espacio>().Adapt<Espacio>()).ToList();
             }
             catch (Exception ex)
             {
@@ -74,38 +56,32 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
       
-        public async Task UpdateAsync(string id, EspacioDto espacio, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Espacio espacio, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+            if (string.IsNullOrEmpty(id)) throw new ArgumentNullException(nameof(id));
+            if (espacio == null) throw new ArgumentNullException(nameof(espacio));
+            
+            var persist = espacio.Adapt<FireStoreEspacio>();
+            await base.UpdateAsync(id, persist, ct);
+        }
+
+        public async Task UpdateAsync(string id, Espacio espacio, bool merge, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (espacio == null) throw new ArgumentNullException(nameof(espacio));
 
-            try
-            {
-                // Convertir EspacioDto → Espacio (Domain) → FireStoreEspacio
-                var espacioDomain = espacio.Adapt<Espacio>();
-                var espacioPersist = espacioDomain.Adapt<FireStoreEspacio>();
+            var persist = espacio.Adapt<FireStoreEspacio>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
 
-                await _firebase.UpdateAsync(Collection, id, espacioPersist, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error UpdateAsync {Id}", id);
-                throw;
-            }
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            try
-            {
-                await _firebase.DeleteAsync(Collection, id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-                throw;
-            }
+            await base.DeleteAsync(id, ct);
         }
     }
 }

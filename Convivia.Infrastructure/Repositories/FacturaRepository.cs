@@ -1,92 +1,80 @@
-﻿using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Models;
 using Convivia.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using Mapster;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class FacturaRepository : IFacturaRepository
+    public class FacturaRepository : Repository<FireStoreFactura>, IFacturaRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<FacturaRepository> _logger;
         private const string Collection = "facturas";
 
-        public FacturaRepository(IFirebaseService firebase, ILogger<FacturaRepository> logger)
+        public FacturaRepository(IFirebaseService firebase, ILogger<FacturaRepository> logger, ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreFactura>>(), Collection)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(CreateFacturaDto factura, CancellationToken ct = default)
+        public async Task<string> AddAsync(Factura factura, CancellationToken ct = default)
         {
             if (factura == null) throw new ArgumentNullException(nameof(factura));
-
-            // Map CreateFacturaDto → Domain.Factura → FireStoreFactura
-            var facturaDomain = factura.Adapt<Factura>();
-            var facturaPersist = facturaDomain.Adapt<FireStoreFactura>();
-
-            // Si no tiene id, Firestore lo genera
-            var generatedId = await _firebase.AddAsync(Collection, facturaPersist, ct);
-            return generatedId;
+            var persist = factura.Adapt<FireStoreFactura>();
+            return await base.AddAsync(persist, ct);
         }
 
-        public async Task<FacturaDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<Factura?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                var facturaPersist = await _firebase.GetAsync<FireStoreFactura>(Collection, id, ct);
-                if (facturaPersist == null) return null;
-
-                var facturaDomain = facturaPersist.Adapt<Factura>();
-                return facturaDomain.Adapt<FacturaDto>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-                throw;
-            }
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<Factura>();
         }
 
-        public async Task<IEnumerable<FacturaDto>> GetAllAsync(CancellationToken ct = default)
+        public async Task<IEnumerable<Factura>> GetAllAsync(CancellationToken ct = default)
         {
-            var list = await _firebase.GetAllAsync<FireStoreFactura>(Collection, ct);
-            var domainList = list.Adapt<List<Factura>>();
-            return domainList.Adapt<List<FacturaDto>>();
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Factura>() : list.Adapt<List<Factura>>();
         }
 
-        public async Task UpdateAsync(string id, UpdateFacturaDto factura, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Factura factura, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (factura == null) throw new ArgumentNullException(nameof(factura));
 
-            var facturaDomain = factura.Adapt<Factura>();
-            var facturaPersist = facturaDomain.Adapt<FireStoreFactura>();
+            var persist = factura.Adapt<FireStoreFactura>();
+            await base.UpdateAsync(id, persist, ct);
+        }
 
-            await _firebase.UpdateAsync(Collection, id, facturaPersist, ct);
+        public async Task UpdateAsync(string id, Factura factura, bool merge, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (factura == null) throw new ArgumentNullException(nameof(factura));
+
+            var persist = factura.Adapt<FireStoreFactura>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
+
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            await _firebase.DeleteAsync(Collection, id, ct);
+            await base.DeleteAsync(id, ct);
         }
 
-        public async Task<IEnumerable<FacturaDto>> QueryByFieldAsync(string field, object value, CancellationToken ct = default)
+        public async Task<IEnumerable<Factura>> QueryByFieldAsync(string field, object value, CancellationToken ct = default)
         {
             var list = await _firebase.QueryAsync<FireStoreFactura>(Collection, field, value, ct);
-            var domainList = list.Adapt<List<Factura>>();
-            return domainList.Adapt<List<FacturaDto>>();
+            return list == null ? Array.Empty<Factura>() : list.Adapt<List<Factura>>();
         }
-
-    
     }
 }

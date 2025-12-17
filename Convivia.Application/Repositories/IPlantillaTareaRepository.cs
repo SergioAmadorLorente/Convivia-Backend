@@ -3,7 +3,7 @@ using Convivia.Shared.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Convivia.Domain.Repositories
+namespace Convivia.Application.Repositories
 {
     public interface IPlantillaTareaRepository
     {

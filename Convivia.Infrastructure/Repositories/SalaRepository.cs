@@ -1,5 +1,5 @@
 ﻿using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Infrastructure.Models;
 using Convivia.Shared.Services;
 using Mapster;

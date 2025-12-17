@@ -22,13 +22,11 @@ namespace Convivia.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateEspacioDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest();
-            if (string.IsNullOrWhiteSpace(model.Nombre))
-            {
-                return BadRequest("Nombre es requerido.");
-            }
+            if (string.IsNullOrWhiteSpace(model.Nombre)) return BadRequest("Nombre es requerido.");
+            
 
-            var id = await _service.CrearAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+            var created = await _service.CrearEspacioAsync(model, ct);
+            return CreatedAtAction(nameof(GetById), new { id = created.IdEspacio }, created);
         }
 
         // GET api/espacio/{id}
@@ -37,7 +35,7 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var espacio = await _service.ObtenerPorIdAsync(id, ct);
+            var espacio = await _service.ObtenerEspacioAsync(id, ct);
             if (espacio == null) return NotFound();
             return Ok(espacio);
         }
@@ -53,26 +51,39 @@ namespace Convivia.API.Controllers
         }
 
         // PUT api/espacio/{id}
+        // Overwrite completo: reemplaza todo el documento en Firestore.
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] CreateEspacioDto model, CancellationToken ct)
+        public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdateEspacioDto model, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-            if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            await _service.ActualizarAsync(id, model, ct);
-            return NoContent();
+            var updated = await _service.ActualizarEspacioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        // PUT api/espacio/{id}/merge
+        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        [HttpPut("{id}/merge")]
+        public async Task<IActionResult> PutMerge(string id, [FromBody] UpdateEspacioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarEspacioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
         // PATCH api/espacio/{id}
+        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
         [HttpPatch("{id}")]
-        public async Task<IActionResult> PartialUpdate(string id, [FromBody] UpdateEspacioDto model, CancellationToken ct)
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdateEspacioDto model, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-            if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            var success = await _service.ParcialActualizarAsync(id, model, ct);
-            if (!success) return NotFound();
-            return NoContent();
+            var updated = await _service.ActualizarEspacioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
         // DELETE api/espacio/{id}
@@ -81,8 +92,8 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            await _service.EliminarAsync(id, ct);
-            return NoContent();
+            var resultat = await _service.EliminarEsapcioAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
     }
 }

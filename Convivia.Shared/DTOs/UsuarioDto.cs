@@ -11,7 +11,7 @@ namespace Convivia.Shared.DTOs
     public class UsuarioDto
     {
 
-        public string Id { get;  set; }
+        public string IdUsuario { get;  set; }
 
         public string Nombre { get; set; }
 

@@ -2,72 +2,89 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Convivia.Application.Repositories;
+using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
+using MapsterMapper;
 using Microsoft.Extensions.Logging;
-using Convivia.Shared.Repositories;
 
 namespace Convivia.Application.Services
 {
     public class InvitacionService
     {
-        private readonly IInvitacionRepository _repo;
+        private readonly IInvitacionRepository _invitacionRepository;
+        private readonly IMapper _mapper;
         private readonly ILogger<InvitacionService> _logger;
 
-        public InvitacionService(IInvitacionRepository repo, ILogger<InvitacionService> logger)
+        public InvitacionService(IInvitacionRepository invitacionRepository, IMapper mapper, ILogger<InvitacionService> logger)
         {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _invitacionRepository = invitacionRepository ?? throw new ArgumentNullException(nameof(invitacionRepository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> CrearAsync(CreateInvitacionDto dto, CancellationToken ct = default)
+
+        /// <summary>
+        /// Crea una invitacion y devuelve la invitacion persistida (con Id y metadatos).
+        /// </summary>
+        public async Task<InvitacionDto> CrearInvitacionAsync(CreateInvitacionDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.UsuarioSolicitanteId)) throw new ArgumentException("UsuarioSolicitanteId requerido");
-            if (string.IsNullOrWhiteSpace(dto.UsuarioInvitadoId)) throw new ArgumentException("UsuarioInvitadoId requerido");
-            if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId requerido");
+            if (string.IsNullOrWhiteSpace(dto.UsuarioSolicitanteId)) throw new ArgumentException("UsuarioSolicitanteId requerido", nameof(dto.UsuarioSolicitanteId));
+            if (string.IsNullOrWhiteSpace(dto.UsuarioInvitadoId)) throw new ArgumentException("UsuarioInvitadoId requerido", nameof(dto.UsuarioInvitadoId));
+            if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId requerido", nameof(dto.EspacioId));
 
-            var invitacion = new InvitacionDto
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                UsuarioSolicitanteId = dto.UsuarioSolicitanteId,
-                UsuarioInvitadoId = dto.UsuarioInvitadoId,
-                EspacioId = dto.EspacioId,
-                Mensaje = dto.Mensaje ?? string.Empty,
-                Fecha = DateTime.UtcNow,
-                Estado = "pendiente"
-            };
+            // DTO -> Domain
+            var invitacionDomain = _mapper.Map<Invitacion>(dto);
 
-            try
+            // Persistir y obtener id
+            var id = await _invitacionRepository.AddAsync(invitacionDomain, ct);
+
+            // Recuperar entidad guardad y devolver DTO consistente 
+            var createdDomain = await _invitacionRepository.GetByIdAsync(id, ct);
+            if (createdDomain == null)
             {
-                return await _repo.AddAsync(invitacion, ct);
+                // Devolver DTO mínimo con id para evitar fallos en rutas 
+                return new InvitacionDto { IdInvitacion = id };
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creando invitación");
-                throw;
-            }
+
+            var createdDto = _mapper.Map<InvitacionDto>(createdDomain);
+            if (string.IsNullOrWhiteSpace(createdDto.IdInvitacion))
+                createdDto.IdInvitacion = id;
+
+            return createdDto;
         }
 
-        public async Task<InvitacionDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
+        /// <summary>
+        /// Obtiene una invitacion por id.
+        /// </summary>
+        public async Task<InvitacionDto?> ObtenerInvitacionAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                return await _repo.GetByIdAsync(id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
-                throw;
-            }
+            var domain = await _invitacionRepository.GetByIdAsync(id, ct);
+            return domain == null ? null : _mapper.Map<InvitacionDto>(domain);
         }
 
+        /// <summary>
+        /// Lista todas las invitaciones.
+        /// </summary>
+        public async Task<List<InvitacionDto>> ListarTodasAsync(CancellationToken ct = default)
+        {
+            var list = await _invitacionRepository.GetAllAsync(ct);
+            return list?.Select(f => _mapper.Map<InvitacionDto>(f)).ToList() ?? new List<InvitacionDto>();
+        }
+
+
+        /// <summary>
+        /// Obtiene una invitacion por id de usuario invitado.
+        /// </summary>
         public async Task<IEnumerable<InvitacionDto>> ObtenerPorUsuarioInvitadoAsync(string usuarioInvitadoId, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(usuarioInvitadoId)) return Array.Empty<InvitacionDto>();
             try
             {
-                return await _repo.GetByUsuarioInvitadoAsync(usuarioInvitadoId, ct);
+                var domains = await _invitacionRepository.GetByUsuarioInvitadoAsync(usuarioInvitadoId, ct);
+                return domains == null ? Array.Empty<InvitacionDto>() : _mapper.Map<IEnumerable<InvitacionDto>>(domains);
             }
             catch (Exception ex)
             {
@@ -76,19 +93,18 @@ namespace Convivia.Application.Services
             }
         }
 
-        public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
+        /// <summary>
+        /// Elimina una invitaicon.
+        /// </summary>
+        public async Task<bool> EliminarInvitacionAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return false;
-            try
-            {
-                await _repo.DeleteAsync(id, ct);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error EliminarInvitacion {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            var existing = await _invitacionRepository.GetByIdAsync(id, ct);
+            if (existing == null) return false;
+
+            await _invitacionRepository.DeleteAsync(id, ct);
+            return true;
         }
 
         public async Task ActualizarMensajeAsync(string id, CreateInvitacionDto dto, CancellationToken ct = default)
@@ -96,14 +112,15 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var existing = await ObtenerPorIdAsync(id, ct);
+            var existing = await _invitacionRepository.GetByIdAsync(id, ct);
             if (existing == null) throw new KeyNotFoundException("Invitación no encontrada");
 
+            // Aplicar cambio de mensaje (solo este flujo)
             existing.Mensaje = dto.Mensaje ?? existing.Mensaje;
 
             try
             {
-                await _repo.UpdateAsync(id, existing, ct);
+                await _invitacionRepository.UpdateAsync(id, existing, ct);
             }
             catch (Exception ex)
             {

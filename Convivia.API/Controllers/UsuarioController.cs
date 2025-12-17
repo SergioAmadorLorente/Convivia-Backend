@@ -46,18 +46,6 @@ namespace Convivia.API.Controllers
             return Ok(usuario);
         }
 
-        // GET api/invitaciones/por-usuario/{usuarioInvitadoId}
-        [HttpGet("por-usuario/{usuarioInvitadoId}")]
-        public async Task<IActionResult> GetByUsuarioInvitado(string usuarioInvitadoId, CancellationToken ct)
-        {
-            if (string.IsNullOrWhiteSpace(usuarioInvitadoId)) return BadRequest();
-
-            var list = await _service.GetByFullNameInvitadoAsync(usuarioInvitadoId, ct);
-            return Ok(list);
-        }
-
-       
-
         // DELETE api/invitaciones/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)

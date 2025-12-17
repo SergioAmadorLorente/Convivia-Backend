@@ -1,81 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Models;
 using Convivia.Domain.Entities;
+using Convivia.Application.Repositories;
 using Microsoft.Extensions.Logging;
 using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class InvitacionRepository : IInvitacionRepository
+    public class InvitacionRepository : Repository<FireStoreInvitacion>, IInvitacionRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<InvitacionRepository> _logger;
         private const string Collection = "invitaciones";
 
-        public InvitacionRepository(IFirebaseService firebase, ILogger<InvitacionRepository> logger)
+        public InvitacionRepository(IFirebaseService firebase, ILogger<InvitacionRepository> logger, ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreInvitacion>>(), Collection)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(InvitacionDto invitacion, CancellationToken ct = default)
+        // Add: si la entidad trae Id la usamos, sino dejamos que Firestore lo genere
+        public async Task<string> AddAsync(Invitacion invitacion, CancellationToken ct = default)
         {
             if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
-            
-            // Convertir InvitacionDto → Invitacion (Domain) → FireStoreInvitacion (Firestore)
-            var invitacionDomain = invitacion.Adapt<Invitacion>();
-            var invitacionPersist = invitacionDomain.Adapt<FireStoreInvitacion>();
-            
-            if (string.IsNullOrWhiteSpace(invitacionPersist.Id))
-            {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, invitacionPersist, ct);
-                return generatedId;
-            }
-
-            // Si ya tiene id, lo usamos para crear el documento con ese id
-            await _firebase.AddAsync(Collection, invitacionPersist.Id, invitacionPersist, ct);
-            return invitacionPersist.Id;
+            var persist = invitacion.Adapt<FireStoreInvitacion>();
+            return await base.AddAsync(persist, ct);
         }
 
-        public async Task<InvitacionDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<Invitacion?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                // Obtener FireStoreInvitacion de Firestore
-                var invitacionPersist = await _firebase.GetAsync<FireStoreInvitacion>(Collection, id, ct);
-                if (invitacionPersist == null) return null;
-                
-                // Convertir FireStoreInvitacion → Invitacion (Domain) → InvitacionDto
-                var invitacionDomain = invitacionPersist.Adapt<Invitacion>();
-                return invitacionDomain.Adapt<InvitacionDto>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-                throw;
-            }
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<Invitacion>();
         }
 
-        public async Task<IEnumerable<InvitacionDto>> GetByUsuarioInvitadoAsync(string usuarioInvitadoId, CancellationToken ct = default)
+        public async Task<IEnumerable<Invitacion>> GetAllAsync(CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(usuarioInvitadoId)) return Array.Empty<InvitacionDto>();
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Invitacion>() : list.Adapt<List<Invitacion>>();
+        }
+
+        public async Task<IEnumerable<Invitacion>> GetByUsuarioInvitadoAsync(string usuarioInvitadoId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioInvitadoId)) return Array.Empty<Invitacion>();
+
             try
             {
-                // Consultar FireStoreInvitacion desde Firestore
                 var list = await _firebase.QueryAsync<FireStoreInvitacion>(Collection, nameof(FireStoreInvitacion.UsuarioInvitadoId), usuarioInvitadoId, ct);
-                if (list == null || !list.Any()) return new List<InvitacionDto>();
-                
-                // Convertir FireStoreInvitacion → Invitacion (Domain) → InvitacionDto
-                return list.Select(ip => ip.Adapt<Invitacion>().Adapt<InvitacionDto>()).ToList();
+                return list == null ? Array.Empty<Invitacion>() : list.Adapt<List<Invitacion>>();
             }
             catch (Exception ex)
             {
@@ -83,39 +58,32 @@ namespace Convivia.Infrastructure.Repositories
                 throw;
             }
         }
-
-        public async Task UpdateAsync(string id, InvitacionDto invitacion, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Invitacion invitacion, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
 
-            try
-            {
-                // Convertir InvitacionDto → Invitacion (Domain) → FireStoreInvitacion
-                var invitacionDomain = invitacion.Adapt<Invitacion>();
-                var invitacionPersist = invitacionDomain.Adapt<FireStoreInvitacion>();
-                
-                await _firebase.UpdateAsync(Collection, id, invitacionPersist, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error UpdateAsync {Id}", id);
-                throw;
-            }
+            var persist = invitacion.Adapt<FireStoreInvitacion>();
+            await base.UpdateAsync(id, persist, ct);
+        }
+
+        public async Task UpdateAsync(string id, Invitacion invitacion, bool merge, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (invitacion == null) throw new ArgumentNullException(nameof(invitacion));
+
+            var persist = invitacion.Adapt<FireStoreInvitacion>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
+
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            try
-            {
-                await _firebase.DeleteAsync(Collection, id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-                throw;
-            }
+            await base.DeleteAsync(id, ct);
         }
     }
 }

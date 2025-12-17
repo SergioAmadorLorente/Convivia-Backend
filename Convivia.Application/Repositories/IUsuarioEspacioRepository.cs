@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Convivia.Domain.Repositories
+namespace Convivia.Application.Repositories
 {
     public interface IUsuarioEspacioRepository : IRepository<UsuarioEspacio>
     {
