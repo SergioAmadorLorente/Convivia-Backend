@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Convivia.Shared.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Domain.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Repositories;
@@ -26,7 +26,7 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<IUsuarioEspacioRepository, UsuarioEspacioRepository>();            services.AddScoped<IFacturaRepository, FacturaRepository>();
 
             // Servicios de infraestructura
-            services.AddScoped<IFirebaseService, FirebaseService>();
+           // services.AddScoped<IFirebaseService, FirebaseService>();
 
 
             return services;
