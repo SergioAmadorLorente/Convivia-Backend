@@ -1,7 +1,8 @@
 using System;
 using Mapster;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+using Convivia.Domain.Entities;
+using Convivia.Application.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Convivia.Application.Services
@@ -35,17 +36,16 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(dto.IdEspacio))
                 throw new ArgumentException("El ID del espacio no puede estar vacío", nameof(dto.IdEspacio));
 
-            // Usar Mapster para mapear CreatePeticionDto -> PeticionDto
-            var peticion = dto.Adapt<PeticionDto>();
-            peticion.Id = Guid.NewGuid().ToString("N");
-            peticion.Fecha = DateTime.UtcNow;
-            peticion.Estado = "pendiente";
+            var peticionDomain = dto.Adapt<Peticion>();
+            peticionDomain.Id = Guid.NewGuid().ToString("N");
+            peticionDomain.Fecha = DateTime.UtcNow;
+            peticionDomain.Estado = "pendiente";
 
             try
             {
-                var id = await _repo.AddAsync(peticion);
-                peticion.Id = id;
-                return peticion;
+                var id = await _repo.AddAsync(peticionDomain);
+                peticionDomain.Id = id;
+                return peticionDomain.Adapt<PeticionDto>();
             }
             catch (Exception ex)
             {
@@ -62,7 +62,8 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                return await _repo.GetByIdAsync(id);
+                var peticion = await _repo.GetByIdAsync(id);
+                return peticion?.Adapt<PeticionDto>();
             }
             catch (Exception ex)
             {
@@ -79,7 +80,7 @@ namespace Convivia.Application.Services
             try
             {
                 var entities = await _repo.GetAllAsync();
-                return entities.ToList();
+                return entities.Select(p => p.Adapt<PeticionDto>()).ToList();
             }
             catch (Exception ex)
             {
@@ -97,7 +98,7 @@ namespace Convivia.Application.Services
             try
             {
                 var entities = await _repo.GetByEstadoAsync(estado);
-                return entities.ToList();
+                return entities.Select(p => p.Adapt<PeticionDto>()).ToList();
             }
             catch (Exception ex)
             {
@@ -141,7 +142,7 @@ namespace Convivia.Application.Services
             try
             {
                 await _repo.UpdateAsync(id, peticion);
-                return peticion;
+                return peticion.Adapt<PeticionDto>();
             }
             catch (Exception ex)
             {
@@ -173,7 +174,7 @@ namespace Convivia.Application.Services
             try
             {
                 await _repo.UpdateAsync(id, peticion);
-                return peticion;
+                return peticion.Adapt<PeticionDto>();
             }
             catch (Exception ex)
             {

@@ -148,14 +148,12 @@ namespace Convivia.Application.Services
         /// <summary>
         /// Elimina una espacio.
         /// </summary>
-        public async Task<bool> EliminarEsapcioAsync(string id, CancellationToken ct = default)
+        public async Task<bool> EliminarEspacioAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
 
             var existing = await _espacioRepository.GetByIdAsync(id, ct);
             if (existing == null) return false;
-
-
 
             await _espacioRepository.DeleteAsync(id, ct);
             return true;

@@ -31,17 +31,17 @@ namespace Convivia.API.Controllers
                 return BadRequest("email y nombre son requeridos");
             }
 
-            var id = await _service.CrearAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+            var created = await _service.CrearUsuarioAsync(model, ct);
+            return CreatedAtAction(nameof(GetById), new { id = created.IdUsuario }, created);
         }
 
-        // GET api/invitaciones/{id}
+        // GET api/usuarios/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var usuario = await _service.ObtenerPorIdAsync(id, ct);
+            var usuario = await _service.ObtenerUsuarioAsync(id, ct);
             if (usuario == null) return NotFound();
             return Ok(usuario);
         }

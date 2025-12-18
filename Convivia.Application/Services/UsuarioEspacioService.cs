@@ -1,7 +1,7 @@
 using Mapster;
 using Convivia.Shared.DTOs;
 using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Convivia.Application.Services
@@ -76,8 +76,8 @@ namespace Convivia.Application.Services
             if (dto.Karma.HasValue) usuarioEspacioExistente.Karma = dto.Karma.Value;
             if (!string.IsNullOrWhiteSpace(dto.Rol)) usuarioEspacioExistente.Rol = dto.Rol;
 
-            var updated = await _repo.UpdateAsync(id, usuarioEspacioExistente, ct);
-            return updated!.Adapt<UsuarioEspacioDto>();
+            await _repo.UpdateAsync(id, usuarioEspacioExistente, ct);
+            return usuarioEspacioExistente.Adapt<UsuarioEspacioDto>();
         }
 
         // Actualización parcial

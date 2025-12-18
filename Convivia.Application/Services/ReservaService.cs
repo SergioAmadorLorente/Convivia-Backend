@@ -1,7 +1,7 @@
 ﻿using Mapster;
 using Convivia.Shared.DTOs;
 using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Convivia.Application.Services
@@ -67,8 +67,8 @@ namespace Convivia.Application.Services
             reservaExistente.idSala = dto.idSala ?? reservaExistente.idSala;
             reservaExistente.idUser = dto.idUser ?? reservaExistente.idUser;
 
-            var updated = await _repo.UpdateAsync(id, reservaExistente, ct);
-            return updated!.Adapt<ReservaDto>();
+            await _repo.UpdateAsync(id, reservaExistente, ct);
+            return reservaExistente.Adapt<ReservaDto>();
         }
 
         // Eliminar reserva

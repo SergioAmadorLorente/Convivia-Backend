@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Microsoft.Extensions.Logging;
-using Convivia.Shared.Repositories;
+using Convivia.Application.Repositories;
 using Mapster;
 using Convivia.Domain.Entities;
 
@@ -45,11 +45,9 @@ namespace Convivia.Application.Services
                 permisoDomain.SetConfigurarcionUsuario();
             }
 
-            var permisoDto = permisoDomain.Adapt<PermisoDto>();
-
             try
             {
-                return await _repo.AddAsync(permisoDto, ct);
+                return await _repo.AddAsync(permisoDomain, ct);
             }
             catch (Exception ex)
             {
@@ -63,7 +61,8 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(id)) return null;
             try
             {
-                return await _repo.GetByIdAsync(id, ct);
+                var permiso = await _repo.GetByIdAsync(id, ct);
+                return permiso?.Adapt<PermisoDto>();
             }
             catch (Exception ex)
             {
@@ -84,7 +83,8 @@ namespace Convivia.Application.Services
 
             try
             {
-                return await _repo.GetByRolAsync(rol, ct);
+                var permisos = await _repo.GetByRolAsync(rol, ct);
+                return permisos.Select(p => p.Adapt<PermisoDto>());
             }
             catch (Exception ex)
             {
@@ -97,7 +97,8 @@ namespace Convivia.Application.Services
         {
             try
             {
-                return await _repo.GetAllAsync(ct);
+                var permisos = await _repo.GetAllAsync(ct);
+                return permisos.Select(p => p.Adapt<PermisoDto>());
             }
             catch (Exception ex)
             {
@@ -111,7 +112,7 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var existing = await ObtenerPorIdAsync(id, ct);
+            var existing = await _repo.GetByIdAsync(id, ct);
             if (existing == null) throw new KeyNotFoundException("Permiso no encontrado");
 
             // Validar rol si se está actualizando

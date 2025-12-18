@@ -68,7 +68,7 @@ namespace Convivia.Application.Services
         /// <summary>
         /// Overwrite completo: reemplaza todo el documento en Firestore.
         /// </summary>
-        public async Task<FacturaDto?> ActualizarFacturaCompletaAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
+        /*public async Task<FacturaDto?> ActualizarFacturaCompletaAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
@@ -129,9 +129,7 @@ namespace Convivia.Application.Services
 
             var updated = await _facturaRepository.GetByIdAsync(id, ct);
             return updated == null ? null : _mapper.Map<FacturaDto>(updated);
-        }
-
-
+        }*/
         public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return false;
@@ -142,7 +140,7 @@ namespace Convivia.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error EliminarInvitacion {Id}", id);
+                _logger.LogError(ex, "Error EliminarUsuario {Id}", id);
                 throw;
             }
         }
