@@ -9,10 +9,6 @@ namespace Convivia.Domain.Entities
     {
         public string? Id { get; set; } = Guid.NewGuid().ToString("N");
 
-        
-
-        public List<UsuarioEspacio> Usuarios { get; set; } = new();
-        
         public DateTime? FechaRealizacion { get; set; }
 
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
@@ -23,23 +19,25 @@ namespace Convivia.Domain.Entities
         public bool Completada { get; set; }
 
         public string PlantillaId { get; set; } = string.Empty; // obligatorio
-        public List<string> UsuarioEspaciosIds { get; set; } = new();
+
+        // Single assigned user per task
+        public string? UsuarioEspacioId { get; set; }
 
         public int DiaSemana { get; set; }
 
-        // Optional sala id where task applies
-        public string? SalaId { get; set; }
+        // Fecha limite para tarea puntual o referencia
+        public DateTime? FechaLimite { get; set; }
 
         public Tarea()
         {
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(List<string> usuarioEspaciosIds, string plantillaId)
+        public Tarea(string usuarioEspacioId, string plantillaId)
         {
             if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("PlantillaId es obligatoria.");
 
-            UsuarioEspaciosIds = usuarioEspaciosIds;
+            UsuarioEspacioId = usuarioEspacioId;
             Disponible = false; // Por defecto, la tarea está incompleta
             PlantillaId = plantillaId;
         }

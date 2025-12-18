@@ -47,6 +47,20 @@ namespace Convivia.API.Controllers
             return !list.Any() ? NotFound() : Ok(list);
         }
 
+        [HttpGet("filter")]
+        public async Task<ActionResult<IEnumerable<TareaDto>>> Filter(string espacioid, [FromQuery] int? diaSemana, [FromQuery] string? estado)
+        {
+            try
+            {
+                var res = await _service.FilterAsync(espacioid, diaSemana, estado);
+                return (res == null || !res.Any()) ? NotFound() : Ok(res);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTarea(string espacioid, string id)
         {

@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace Convivia.Shared.DTOs
 {
     public class UpdateTareaDto
     {
-
-        public List<string>? UsuarioEspaciosIds { get; set; }
-
         public DateTime? FechaRealizacion { get; set; }
 
         public byte[]? Foto { get; set; }
@@ -19,7 +15,9 @@ namespace Convivia.Shared.DTOs
 
         public bool? Completada { get; set; }
 
-        public string? SalaId { get; set; }
-
+        /// <summary>
+        /// ID del usuario asignado a la tarea (1 solo).
+        /// </summary>
+        public string? UsuarioEspacioId { get; set; }
     }
 }

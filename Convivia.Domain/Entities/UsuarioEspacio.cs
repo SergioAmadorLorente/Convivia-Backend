@@ -10,7 +10,7 @@ namespace Convivia.Domain.Entities
 
         public bool Ausente { get; set; }
 
-        public int Karma { get; set; }
+        public int karma { get; set; }
 
         public string Rol { get; set; }
 
@@ -38,7 +38,7 @@ namespace Convivia.Domain.Entities
             this.Usuario = usuario;
             this.Espacio = espacio;
             this.Ausente = ausente;
-            this.Karma = karma;
+            this.karma = karma;
 
             if (rol == "admin")
             {
@@ -58,7 +58,7 @@ namespace Convivia.Domain.Entities
             this.Usuario = usuario;
             this.Espacio = espacio;
             this.Ausente = ausente;
-            this.Karma = karma;
+            this.karma = karma;
             this.Permiso = permiso;
         }
     }

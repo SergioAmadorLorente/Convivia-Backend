@@ -38,8 +38,6 @@ namespace Convivia.Infrastructure.Models
         public int? GracePeriodMinutes { get; set; }
         [FirestoreProperty]
         public string? StartDate { get; set; }
-        [FirestoreProperty]
-        public string? EndDate { get; set; }
 
         [FirestoreProperty]
         public string? FacturaId { get; set; }
