@@ -4,6 +4,12 @@ using System.Text.Json.Serialization;
 
 namespace Convivia.Domain.Entities
 {
+    public enum TareaEstado
+    {
+        Pendiente = 0,
+        FueraDePlazo = 1,
+        Completada = 2
+    }
 
     public class Tarea
     {
@@ -15,8 +21,8 @@ namespace Convivia.Domain.Entities
 
         public DateTime? Prorroga { get; set; } // Puede ser null
 
-        public bool Disponible { get; set; }
-        public bool Completada { get; set; }
+        // Reemplazamos los booleanos Completada/Disponible por el enum Estado
+        public TareaEstado Estado { get; set; } = TareaEstado.Pendiente;
 
         public string PlantillaId { get; set; } = string.Empty; // obligatorio
 
@@ -38,7 +44,7 @@ namespace Convivia.Domain.Entities
             if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("PlantillaId es obligatoria.");
 
             UsuarioEspacioId = usuarioEspacioId;
-            Disponible = false; // Por defecto, la tarea está incompleta
+            Estado = TareaEstado.Pendiente;
             PlantillaId = plantillaId;
         }
 

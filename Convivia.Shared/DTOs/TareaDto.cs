@@ -19,9 +19,8 @@ namespace Convivia.Shared.DTOs
 
         public DateTime? Prorroga { get; set; }
 
-        public bool Disponible { get; set; }
-
-        public bool Completada { get; set; }
+        // Reemplazamos Completada por Estado (como string en DTO)
+        public string Estado { get; set; }
 
         public DateTime? FechaRealizacion { get; set; }
 

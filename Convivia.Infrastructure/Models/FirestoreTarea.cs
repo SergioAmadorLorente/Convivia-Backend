@@ -24,10 +24,9 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public DateTime? Prorroga { get; set; } // Puede ser null
 
+        // Guardamos el enum como int en Firestore
         [FirestoreProperty]
-        public bool Disponible { get; set; }
-        [FirestoreProperty]
-        public bool Completada { get; set; }
+        public string Estado { get; set; } // TareaEstado.Pendiente
 
         [FirestoreProperty]
         public int DiaSemana { get; set; }

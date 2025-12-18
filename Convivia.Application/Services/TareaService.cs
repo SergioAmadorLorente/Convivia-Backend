@@ -11,16 +11,6 @@ using System.Threading.Tasks;
 
 namespace Convivia.Application.Services
 {
-    /// <summary>
-    /// Estados posibles de una tarea
-    /// </summary>
-    public enum TareaEstado
-    {
-        Pendiente,     // No completada, dentro de plazo
-        FueraDePlazo,  // No completada, pasó hora límite (overdue)
-        Completada     // Completada
-    }
-
     public class TareaService
     {
         private readonly ITareaRepository _repository;
@@ -61,21 +51,15 @@ namespace Convivia.Application.Services
                     if (dia < 0 || dia > 6)
                         throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Domingo, 6=Sábado).");
                 }
-
-                // Para tarea repetida: FechaFin opcional, FechaLimite opcional
             }
             else
             {
-                // Tarea puntual: FechaLimite obligatoria, sin días de repetición
+                // Tarea puntual: FechaLimite obligatoria
                 if (!dto.FechaLimite.HasValue)
                     throw new ArgumentException("FechaLimite es obligatoria para tareas puntuales.", nameof(dto.FechaLimite));
             }
 
-            // Validación 4: Si es puntual, requiere usuario
-            if (esPuntual && string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
-                throw new ArgumentException("Una tarea puntual requiere UsuarioEspacioId.", nameof(dto.UsuarioEspacioId));
-
-            // Validación 5: Verificar usuario si está presente
+            // Validación 4: Verificar usuario si está presente (OPCIONAL)
             if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
             {
                 var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
@@ -91,9 +75,8 @@ namespace Convivia.Application.Services
                 // Tarea puntual: 1 sola tarea
                 var tarea = _mapper.Map<Tarea>(dto);
                 tarea.DiaSemana = -1; // Indicador de tarea puntual
-                tarea.Completada = false;
-                tarea.Disponible = true;
-                tarea.UsuarioEspacioId = dto.UsuarioEspacioId;
+                tarea.Estado = TareaEstado.Pendiente;
+                tarea.UsuarioEspacioId = dto.UsuarioEspacioId; // opcional
                 tarea.FechaLimite = dto.FechaLimite;
                 createPlantilla.TareasId.Add(tarea.Id!);
                 tareas.Add(tarea);
@@ -105,9 +88,9 @@ namespace Convivia.Application.Services
                 {
                     var tarea = _mapper.Map<Tarea>(dto);
                     tarea.DiaSemana = dia;
-                    tarea.Completada = false;
-                    tarea.Disponible = true;
+                    tarea.Estado = TareaEstado.Pendiente;
                     tarea.FechaLimite = dto.FechaLimite;
+                    tarea.UsuarioEspacioId = dto.UsuarioEspacioId; // opcional
                     createPlantilla.TareasId.Add(tarea.Id!);
                     tareas.Add(tarea);
                 }
@@ -128,13 +111,13 @@ namespace Convivia.Application.Services
         /// Obtener tareas por día de la semana y estado.
         /// </summary>
         public async Task<IEnumerable<TareaDto>> GetByDiaAndEstadoAsync(
-            string espacioid, 
-            int diaSemana, 
+            string espacioid,
+            int diaSemana,
             TareaEstado estado)
         {
             if (string.IsNullOrWhiteSpace(espacioid))
                 throw new ArgumentNullException(nameof(espacioid));
-            
+
             if (diaSemana < 0 || diaSemana > 6)
                 throw new ArgumentException("Día debe estar entre 0 y 6.", nameof(diaSemana));
 
@@ -144,7 +127,7 @@ namespace Convivia.Application.Services
             foreach (var plantilla in pttareas)
             {
                 var pt = plantilla.Adapt<PlantillaTarea>();
-                
+
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
                     var tarea = await _repository.GetAsync(plantilla.PlantillaId, tareaId);
@@ -162,10 +145,8 @@ namespace Convivia.Application.Services
                     dto.karma = plantilla.karma;
                     dto.HoraLimite = plantilla.HoraLimite;
                     dto.FacturaId = plantilla.FacturaId;
+                    dto.Estado = tarea.Estado.ToString();
                     dto.Overdue = IsOverdue(tarea, pt);
-                    
-                    if (dto.Overdue)
-                        dto.Disponible = false;
 
                     tareasFiltered.Add(dto);
                 }
@@ -178,7 +159,7 @@ namespace Convivia.Application.Services
         /// Obtener tareas solo por estado.
         /// </summary>
         public async Task<IEnumerable<TareaDto>> GetByEstadoAsync(
-            string espacioid, 
+            string espacioid,
             TareaEstado estado)
         {
             if (string.IsNullOrWhiteSpace(espacioid))
@@ -190,7 +171,7 @@ namespace Convivia.Application.Services
             foreach (var plantilla in pttareas)
             {
                 var pt = plantilla.Adapt<PlantillaTarea>();
-                
+
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
                     var tarea = await _repository.GetAsync(plantilla.PlantillaId, tareaId);
@@ -204,10 +185,8 @@ namespace Convivia.Application.Services
                     dto.karma = plantilla.karma;
                     dto.HoraLimite = plantilla.HoraLimite;
                     dto.FacturaId = plantilla.FacturaId;
+                    dto.Estado = tarea.Estado.ToString();
                     dto.Overdue = IsOverdue(tarea, pt);
-                    
-                    if (dto.Overdue)
-                        dto.Disponible = false;
 
                     tareasFiltered.Add(dto);
                 }
@@ -217,7 +196,7 @@ namespace Convivia.Application.Services
         }
 
         /// <summary>
-        /// Filtrar tareas por día y/o estado. Validaciones centralizadas aquí.
+        /// Filtrar tareas por día y/o estado.
         /// </summary>
         public async Task<IEnumerable<TareaDto>> FilterAsync(string espacioid, int? diaSemana, string? estado)
         {
@@ -238,19 +217,12 @@ namespace Convivia.Application.Services
                 parsedEstado = p;
             }
 
-            // Ambos parámetros
             if (diaSemana.HasValue && parsedEstado.HasValue)
-            {
                 return await GetByDiaAndEstadoAsync(espacioid, diaSemana.Value, parsedEstado.Value);
-            }
 
-            // Solo día -> mantener comportamiento anterior (por defecto Pendiente)
             if (diaSemana.HasValue)
-            {
                 return await GetByDiaAndEstadoAsync(espacioid, diaSemana.Value, TareaEstado.Pendiente);
-            }
 
-            // Solo estado
             return await GetByEstadoAsync(espacioid, parsedEstado!.Value);
         }
 
@@ -261,9 +233,7 @@ namespace Convivia.Application.Services
 
             var pttareas = await _ptservice.GetAllByEspacioAsync(espacioid);
             if (pttareas.Any() == false)
-            {
                 return Enumerable.Empty<PlantillaTareaDto>();
-            }
             return _mapper.Map<IEnumerable<PlantillaTareaDto>>(pttareas);
         }
 
@@ -298,17 +268,13 @@ namespace Convivia.Application.Services
                 return null;
 
             var dto = _mapper.Map<TareaDto>(tarea);
-
             dto.Nombre = plantilla.Nombre;
             dto.Descripcion = plantilla.Descripcion;
             dto.karma = plantilla.karma;
             dto.HoraLimite = plantilla.HoraLimite;
             dto.FacturaId = plantilla.FacturaId;
-
+            dto.Estado = tarea.Estado.ToString();
             dto.Overdue = IsOverdue(tarea, plantilla.Adapt<PlantillaTarea>());
-
-            if (dto.Overdue)
-                dto.Disponible = false;
 
             return dto;
         }
@@ -332,7 +298,7 @@ namespace Convivia.Application.Services
             if (existing == null)
                 return null;
 
-            // Validación: usuario si se actualiza
+            // Validación: usuario si se actualiza (OPCIONAL)
             if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
             {
                 var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
@@ -341,16 +307,31 @@ namespace Convivia.Application.Services
             }
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
-            if (dto.Disponible == true)
+
+            // Parse estado si viene (string -> enum)
+            if (!string.IsNullOrWhiteSpace(dto.Estado))
             {
-                var isOverdue = IsOverdue(existing, domPlantilla);
-                if (isOverdue)
-                    throw new InvalidOperationException("No se puede marcar como disponible una tarea que está overdue.");
+                if (Enum.TryParse<TareaEstado>(dto.Estado, ignoreCase: true, out var parsedEstado))
+                {
+                    if (parsedEstado == TareaEstado.Pendiente)
+                    {
+                        var isOverdue = IsOverdue(existing, domPlantilla);
+                        if (isOverdue)
+                            throw new InvalidOperationException("No se puede marcar como pendiente una tarea que está overdue.");
+                    }
+                    existing.Estado = parsedEstado;
+                }
+                else
+                {
+                    throw new ArgumentException($"Estado '{dto.Estado}' no válido. Valores: Pendiente, FueraDePlazo, Completada");
+                }
             }
 
             var domain = _mapper.Map<Tarea>(dto);
             domain.Id = tareaid;
             domain.PlantillaId = plantillaid;
+            if (!string.IsNullOrWhiteSpace(dto.Estado) && Enum.TryParse<TareaEstado>(dto.Estado, ignoreCase: true, out var estado))
+                domain.Estado = estado;
 
             await _repository.UpdateAsync(tareaid, domain, merge: false, ct);
 
@@ -364,10 +345,8 @@ namespace Convivia.Application.Services
             dtoResp.karma = plantilla.karma;
             dtoResp.HoraLimite = plantilla.HoraLimite;
             dtoResp.FacturaId = plantilla.FacturaId;
-
+            dtoResp.Estado = updated.Estado.ToString();
             dtoResp.Overdue = IsOverdue(updated, domPlantilla);
-            if (dtoResp.Overdue)
-                dtoResp.Disponible = false;
 
             return dtoResp;
         }
@@ -430,7 +409,7 @@ namespace Convivia.Application.Services
             if (existing == null)
                 return null;
 
-            // Validación: usuario
+            // Validación: usuario (OPCIONAL)
             if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
             {
                 var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
@@ -439,14 +418,29 @@ namespace Convivia.Application.Services
             }
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
-            if (dto.Disponible == true)
+
+            // Parse estado si viene (string -> enum)
+            if (!string.IsNullOrWhiteSpace(dto.Estado))
             {
-                var isOverdue = IsOverdue(existing, domPlantilla);
-                if (isOverdue)
-                    throw new InvalidOperationException("No se puede marcar como disponible una tarea que está overdue.");
+                if (Enum.TryParse<TareaEstado>(dto.Estado, ignoreCase: true, out var parsedEstado))
+                {
+                    if (parsedEstado == TareaEstado.Pendiente)
+                    {
+                        var isOverdue = IsOverdue(existing, domPlantilla);
+                        if (isOverdue)
+                            throw new InvalidOperationException("No se puede marcar como pendiente una tarea que está overdue.");
+                    }
+                    existing.Estado = parsedEstado;
+                }
+                else
+                {
+                    throw new ArgumentException($"Estado '{dto.Estado}' no válido. Valores: Pendiente, FueraDePlazo, Completada");
+                }
             }
 
             _mapper.Map(dto, existing);
+            if (!string.IsNullOrWhiteSpace(dto.Estado) && Enum.TryParse<TareaEstado>(dto.Estado, ignoreCase: true, out var estado2))
+                existing.Estado = estado2;
 
             await _repository.UpdateAsync(tareaid, existing, merge: true, ct);
 
@@ -460,10 +454,8 @@ namespace Convivia.Application.Services
             dtoResp.karma = plantilla.karma;
             dtoResp.HoraLimite = plantilla.HoraLimite;
             dtoResp.FacturaId = plantilla.FacturaId;
-
+            dtoResp.Estado = updated.Estado.ToString();
             dtoResp.Overdue = IsOverdue(updated, domPlantilla);
-            if (dtoResp.Overdue)
-                dtoResp.Disponible = false;
 
             return dtoResp;
         }
@@ -487,7 +479,7 @@ namespace Convivia.Application.Services
             if (existing == null)
                 return null;
 
-            // Validación: usuario
+            // Validación: usuario (OPCIONAL)
             if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
             {
                 var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
@@ -496,11 +488,23 @@ namespace Convivia.Application.Services
             }
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
-            if (dto.Disponible == true)
+
+            // Parse estado si viene (string -> enum)
+            if (!string.IsNullOrWhiteSpace(dto.Estado))
             {
-                var isOverdue = IsOverdue(existing, domPlantilla);
-                if (isOverdue)
-                    throw new InvalidOperationException("No se puede marcar como disponible una tarea que está overdue.");
+                if (Enum.TryParse<TareaEstado>(dto.Estado, ignoreCase: true, out var parsedEstado))
+                {
+                    if (parsedEstado == TareaEstado.Pendiente)
+                    {
+                        var isOverdue = IsOverdue(existing, domPlantilla);
+                        if (isOverdue)
+                            throw new InvalidOperationException("No se puede marcar como pendiente una tarea que está overdue.");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"Estado '{dto.Estado}' no válido. Valores: Pendiente, FueraDePlazo, Completada");
+                }
             }
 
             var updates = ObtenerActualizacionesDesdeDto(dto);
@@ -513,9 +517,8 @@ namespace Convivia.Application.Services
                 dtoResp.karma = plantilla.karma;
                 dtoResp.HoraLimite = plantilla.HoraLimite;
                 dtoResp.FacturaId = plantilla.FacturaId;
+                dtoResp.Estado = current.Estado.ToString();
                 dtoResp.Overdue = IsOverdue(current, domPlantilla);
-                if (dtoResp.Overdue)
-                    dtoResp.Disponible = false;
                 return dtoResp;
             }
 
@@ -531,9 +534,8 @@ namespace Convivia.Application.Services
             dtoResult.karma = plantilla.karma;
             dtoResult.HoraLimite = plantilla.HoraLimite;
             dtoResult.FacturaId = plantilla.FacturaId;
+            dtoResult.Estado = updated.Estado.ToString();
             dtoResult.Overdue = IsOverdue(updated, domPlantilla);
-            if (dtoResult.Overdue)
-                dtoResult.Disponible = false;
 
             return dtoResult;
         }
@@ -553,10 +555,14 @@ namespace Convivia.Application.Services
                 updates["Foto"] = dto.Foto;
             if (dto.Prorroga.HasValue)
                 updates["Prorroga"] = dto.Prorroga.Value;
-            if (dto.Disponible.HasValue)
-                updates["Disponible"] = dto.Disponible.Value;
-            if (dto.Completada.HasValue)
-                updates["Completada"] = dto.Completada.Value;
+
+            // Parse Estado: string -> enum -> store as string name
+            if (!string.IsNullOrWhiteSpace(dto.Estado))
+            {
+                if (Enum.TryParse<TareaEstado>(dto.Estado, ignoreCase: true, out var parsed))
+                    updates["Estado"] = parsed.ToString();
+            }
+
             if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
                 updates["UsuarioEspacioId"] = dto.UsuarioEspacioId;
             return updates;
@@ -591,9 +597,9 @@ namespace Convivia.Application.Services
         {
             return estado switch
             {
-                TareaEstado.Completada => tarea.Completada,
-                TareaEstado.Pendiente => !tarea.Completada && !IsOverdue(tarea, plantilla),
-                TareaEstado.FueraDePlazo => !tarea.Completada && IsOverdue(tarea, plantilla),
+                TareaEstado.Completada => tarea.Estado == TareaEstado.Completada,
+                TareaEstado.Pendiente => tarea.Estado == TareaEstado.Pendiente && !IsOverdue(tarea, plantilla),
+                TareaEstado.FueraDePlazo => tarea.Estado == TareaEstado.FueraDePlazo || (tarea.Estado != TareaEstado.Completada && IsOverdue(tarea, plantilla)),
                 _ => false
             };
         }

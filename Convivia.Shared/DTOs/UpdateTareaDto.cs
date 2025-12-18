@@ -11,12 +11,11 @@ namespace Convivia.Shared.DTOs
 
         public DateTime? Prorroga { get; set; }
 
-        public bool? Disponible { get; set; }
-
-        public bool? Completada { get; set; }
+        // Estado como string - será parseado en el service
+        public string? Estado { get; set; }
 
         /// <summary>
-        /// ID del usuario asignado a la tarea (1 solo).
+        /// ID del usuario asignado a la tarea (1 solo) - OPCIONAL.
         /// </summary>
         public string? UsuarioEspacioId { get; set; }
     }
