@@ -35,5 +35,8 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty("AsignarseTarea")]
         public bool AsignarseTarea { get; set; }
+
+        [FirestoreProperty("EliminarResidencia")]
+        public bool EliminarResidencia { get; set; }
     }
 }
