@@ -5,13 +5,8 @@ using System.Threading.Tasks;
 
 namespace Convivia.Application.Repositories
 {
-    public interface ITareaRepository
+    public interface ITareaRepository : IRepository<Tarea>
     {
-        Task<string> AddAsync(Tarea tarea, CancellationToken ct = default);
-        Task<Tarea?> GetAsync(string id, CancellationToken ct = default);
-        Task<List<Tarea>> GetAllAsync(CancellationToken ct = default);
-        Task UpdateAsync(string id, Tarea tarea, CancellationToken ct = default);
-        Task DeleteAsync(string id, CancellationToken ct = default);
-        Task<List<Tarea?>> GetAllByEspacioIdAsync(string espacioid, CancellationToken ct = default);
+        Task<List<Tarea>> GetAllByEspacioIdAsync(string espacioid, CancellationToken ct = default);
     }
 }

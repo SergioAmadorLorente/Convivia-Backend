@@ -5,12 +5,7 @@ using System.Threading.Tasks;
 
 namespace Convivia.Application.Repositories
 {
-    public interface IPlantillaTareaRepository
+    public interface IPlantillaTareaRepository : IRepository<PlantillaTarea>
     {
-        Task<string> AddAsync(PlantillaTarea plantilla, CancellationToken ct = default);
-        Task<PlantillaTarea?> GetAsync(string id, CancellationToken ct = default);
-        Task<List<PlantillaTarea>> GetAllAsync(CancellationToken ct = default);
-        Task UpdateAsync(string id, PlantillaTarea plantilla, CancellationToken ct = default);
-        Task DeleteAsync(string id, CancellationToken ct = default);
     }
 }

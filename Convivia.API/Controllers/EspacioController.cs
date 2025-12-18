@@ -92,8 +92,8 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var resultat = await _service.EliminarEsapcioAsync(id, ct);
-            return resultat ? NoContent() : NotFound();
+            var result = await _service.EliminarEspacioAsync(id, ct);
+            return result ? NoContent() : NotFound();
         }
     }
 }
