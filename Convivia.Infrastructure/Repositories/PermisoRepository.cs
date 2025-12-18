@@ -17,19 +17,16 @@ namespace Convivia.Infrastructure.Repositories
         private readonly ILogger<PermisoRepository> _logger;
         private const string Collection = "permisos";
 
-        public PermisoRepository(
-            IFirebaseService firebase,
-            ILogger<PermisoRepository> logger,
-            ILoggerFactory loggerFactory)
+        public PermisoRepository(IFirebaseService firebase, ILogger<PermisoRepository> logger, ILoggerFactory loggerFactory)
             : base(firebase, loggerFactory.CreateLogger<Repository<FireStorePermiso>>(), Collection)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(Permiso entity, CancellationToken ct = default)
+        public async Task<string> AddAsync(Permiso permiso, CancellationToken ct = default)
         {
-            if (entity == null) throw new ArgumentNullException(nameof(entity));
-            var persist = entity.Adapt<FireStorePermiso>();
+            if (permiso == null) throw new ArgumentNullException(nameof(permiso));
+            var persist = permiso.Adapt<FireStorePermiso>();
             return await base.AddAsync(persist, ct);
         }
 

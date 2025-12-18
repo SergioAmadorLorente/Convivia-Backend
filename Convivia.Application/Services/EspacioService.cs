@@ -41,12 +41,12 @@ namespace Convivia.Application.Services
             if (createdDomain == null)
             {
                 // devolver DTO mínimo con id para evitar fallos en rutas
-                return new EspacioDto { IdEspacio = id };
+                return new EspacioDto { Id = id };
             }
 
             var createdDto = _mapper.Map<EspacioDto>(createdDomain);
-            if (string.IsNullOrWhiteSpace(createdDto.IdEspacio))
-                createdDto.IdEspacio = id;
+            if (string.IsNullOrWhiteSpace(createdDto.Id))
+                createdDto.Id = id;
 
             return createdDto;
             

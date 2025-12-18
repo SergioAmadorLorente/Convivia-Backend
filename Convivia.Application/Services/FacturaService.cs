@@ -47,12 +47,12 @@ namespace Convivia.Application.Services
             if (createdDomain == null)
             {
                 // devolver DTO mínimo con id para evitar fallos en rutas
-                return new FacturaDto { IdFactura = id };
+                return new FacturaDto { Id = id };
             }
 
             var createdDto = _mapper.Map<FacturaDto>(createdDomain);
-            if (string.IsNullOrWhiteSpace(createdDto.IdFactura))
-                createdDto.IdFactura = id;
+            if (string.IsNullOrWhiteSpace(createdDto.Id))
+                createdDto.Id = id;
 
             return createdDto;
         }
@@ -88,7 +88,7 @@ namespace Convivia.Application.Services
             var domain = _mapper.Map<Factura>(dto);
 
             // Asegurar que el Id de dominio coincide con el id pasado
-            domain.Id_Factura = id;
+            domain.Id = id;
 
             // Persistir como overwrite (merge = false)
             await _facturaRepository.UpdateAsync(id, domain, merge: false, ct);
@@ -148,22 +148,6 @@ namespace Convivia.Application.Services
         /// <summary>
         /// Elimina una factura.
         /// </summary>
-        /*
-        public async Task<bool> EliminarFacturaAsync(string id, CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            var idExiste = _facturaRepository.GetByIdAsync(id);
-
-            if (idExiste.Id == null)
-            {
-                return false;
-            } else
-            {
-                await _facturaRepository.DeleteAsync(id, ct);
-                return true;
-            }
-        }
-        */
         public async Task<bool> EliminarFacturaAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));

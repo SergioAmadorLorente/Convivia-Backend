@@ -5,8 +5,8 @@ namespace Convivia.Infrastructure.Models
     [FirestoreData]
     public class FireStoreReserva
     {
-        [FirestoreProperty("idReserva")]
-        public string idReserva { get; set; } = string.Empty;
+        [FirestoreProperty("Id")]
+        public string Id { get; set; } = string.Empty;
 
         [FirestoreProperty("description")]
         public string? description { get; set; } = string.Empty;

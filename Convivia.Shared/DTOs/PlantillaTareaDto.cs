@@ -5,7 +5,7 @@ namespace Convivia.Shared.DTOs
 {
     public class PlantillaTareaDto
     {
-        public string PlantillaId { get; set; }
+        public string IdPlantilla { get; set; }
 
         public string Nombre { get; set; }
 

@@ -24,7 +24,7 @@ namespace Convivia.Application.Services
 
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             var plantillaTarea = _mapper.Map<PlantillaTarea>(dto);
-            plantillaTarea.PlantillaId = Guid.NewGuid().ToString("N");
+            plantillaTarea.Id = Guid.NewGuid().ToString("N");
             await _repository.AddAsync(plantillaTarea);
             return _mapper.Map<PlantillaTareaDto>(plantillaTarea).PlantillaId;
 

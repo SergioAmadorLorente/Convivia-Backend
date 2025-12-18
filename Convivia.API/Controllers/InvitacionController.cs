@@ -30,7 +30,7 @@ namespace Convivia.API.Controllers
             }
 
             var created = await _service.CrearInvitacionAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id = created.IdInvitacion }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // GET api/invitaciones/{id}

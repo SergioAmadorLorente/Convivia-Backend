@@ -11,7 +11,7 @@ namespace Convivia.Shared.DTOs
     public class EspacioDto
     {
         public EspacioDto() { }
-        public string IdEspacio { get; set; }
+        public string Id { get; set; }
         public string Nombre { get; set; }
         public string? Direccion { get; set; }
     }

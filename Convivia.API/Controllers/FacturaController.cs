@@ -26,7 +26,7 @@ namespace Convivia.API.Controllers
             if (model.Precio < 0) return BadRequest("Precio no puede ser negativo.");
 
             var created = await _service.CrearFacturaAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id = created.IdFactura }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // GET api/factura/{id}

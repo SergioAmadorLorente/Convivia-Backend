@@ -46,9 +46,9 @@ namespace Convivia.Infrastructure.Mappers
 
             // Factura
             config.NewConfig<FireStoreFactura, Factura>()
-                .Map(dest => dest.Id_Factura, src => src.IdFactura);
+                .Map(dest => dest.Id, src => src.Id);
             config.NewConfig<Factura, FireStoreFactura>()
-                .Map(dest => dest.IdFactura, src => src.Id_Factura); 
+                .Map(dest => dest.Id, src => src.Id); 
         }
 
     }

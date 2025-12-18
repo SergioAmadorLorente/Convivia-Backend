@@ -4,7 +4,7 @@ namespace Convivia.Shared.DTOs
 {
     public class InvitacionDto
     {
-        public string IdInvitacion { get; set; }
+        public string Id { get; set; }
 
         public string UsuarioSolicitanteId { get; set; } 
 

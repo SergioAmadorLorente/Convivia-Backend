@@ -10,7 +10,7 @@ namespace Convivia.Infrastructure.Models
     public class FireStorePermiso
     {
         [FirestoreProperty("Id")]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         [FirestoreProperty("Rol")]
         public string Rol { get; set; } = string.Empty;

@@ -12,7 +12,7 @@ namespace Convivia.Infrastructure.Repositories
     {
         private readonly ILogger<EspacioRepository> _logger;
         private const string Collection = "espacios";
-
+             
         public EspacioRepository(IFirebaseService firebase, ILogger<EspacioRepository> logger, ILoggerFactory loggerFactory)
             : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreEspacio>>(), Collection)
         {
@@ -81,6 +81,7 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await base.DeleteAsync(id, ct);
         }
     }

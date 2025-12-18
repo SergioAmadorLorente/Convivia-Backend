@@ -26,7 +26,7 @@ namespace Convivia.API.Controllers
             
 
             var created = await _service.CrearEspacioAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id = created.IdEspacio }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // GET api/espacio/{id}
@@ -38,6 +38,14 @@ namespace Convivia.API.Controllers
             var espacio = await _service.ObtenerEspacioAsync(id, ct);
             if (espacio == null) return NotFound();
             return Ok(espacio);
+        }
+
+        // GET api/espacio
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken ct)
+        {
+            var list = await _service.ListarTodasAsync(ct);
+            return Ok(list);
         }
 
         // GET api/espacio/por-direccion/{direccion}

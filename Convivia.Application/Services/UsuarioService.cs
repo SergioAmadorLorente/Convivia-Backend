@@ -68,13 +68,13 @@ namespace Convivia.Application.Services
         /// <summary>
         /// Overwrite completo: reemplaza todo el documento en Firestore.
         /// </summary>
-        /*public async Task<FacturaDto?> ActualizarFacturaCompletaAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
+        public async Task<UsuarioDto?> ActualizarUsuarioCompletaAsync(string id, UpdateUsuarioDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             // Mapear DTO -> Domain (nuevo objeto completo)
-            var domain = _mapper.Map<Factura>(dto);
+            var domain = _mapper.Map<Usuario>(dto);
 
             // Asegurar que el Id de dominio coincide con el id pasado
             domain.Id_Factura = id;
@@ -129,7 +129,7 @@ namespace Convivia.Application.Services
 
             var updated = await _facturaRepository.GetByIdAsync(id, ct);
             return updated == null ? null : _mapper.Map<FacturaDto>(updated);
-        }*/
+        }
         public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return false;
