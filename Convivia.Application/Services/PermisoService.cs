@@ -99,13 +99,19 @@ namespace Convivia.Application.Services
             if (dto.Rol.HasValue && dto.Rol.Value != existing.Rol)
             {
                 var rolDomain = new Rol();
-                if (dto.Rol.Value == TipoRol.Admin)
+                
+                switch (dto.Rol.Value)
                 {
-                    rolDomain.SetConfiguracionAdmin();
-                }
-                else
-                {
-                    rolDomain.SetConfiguracionUsuario();
+                    case TipoRol.Admin:
+                        rolDomain.SetConfiguracionAdmin();
+                        break;
+                    case TipoRol.Moderador:
+                        rolDomain.SetConfiguracionModerador();
+                        break;
+                    case TipoRol.Usuario:
+                    default:
+                        rolDomain.SetConfiguracionUsuario();
+                        break;
                 }
                 
                 existing.Rol = dto.Rol.Value;
@@ -116,6 +122,7 @@ namespace Convivia.Application.Services
                 existing.EliminarUsuario = rolDomain.EliminarUsuario;
                 existing.AsignarTarea = rolDomain.AsignarTarea;
                 existing.AsignarseTarea = rolDomain.AsignarseTarea;
+                existing.EliminarResidencia = rolDomain.EliminarResidencia;
             }
             else
             {
@@ -127,6 +134,7 @@ namespace Convivia.Application.Services
                 if (dto.EliminarUsuario.HasValue) existing.EliminarUsuario = dto.EliminarUsuario.Value;
                 if (dto.AsignarTarea.HasValue) existing.AsignarTarea = dto.AsignarTarea.Value;
                 if (dto.AsignarseTarea.HasValue) existing.AsignarseTarea = dto.AsignarseTarea.Value;
+                if (dto.EliminarResidencia.HasValue) existing.EliminarResidencia = dto.EliminarResidencia.Value;
             }
 
             try

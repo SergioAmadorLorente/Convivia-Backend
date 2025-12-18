@@ -2,6 +2,8 @@ using Mapster;
 using System.Reflection;
 using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
+using System;
+
 namespace Convivia.Application.Mappers
 {
     public static class MapsterBootstrap
@@ -43,7 +45,7 @@ namespace Convivia.Application.Mappers
             // Expandir las propiedades del Rol en el DTO para facilitar consumo en API
             config.NewConfig<Permiso, PermisoDto>()
                 .Map(dest => dest.Id, src => src.Id)
-                .Map(dest => dest.Rol, src => src.Rol != null && src.Rol.Nombre == "Admin" ? TipoRol.Admin : TipoRol.Usuario)
+                .Map(dest => dest.Rol, src => MapRolToTipoRol(src.Rol))
                 .Map(dest => dest, src => src.Rol); // Mapster copia automáticamente propiedades coincidentes
 
             // Invitacion mappings (DTO <-> Domain)
@@ -77,6 +79,23 @@ namespace Convivia.Application.Mappers
             {
                 // ignore if assembly not available during design-time operations
             }
+        }
+
+        /// <summary>
+        /// Mapea un objeto Rol a TipoRol enum
+        /// </summary>
+        private static TipoRol MapRolToTipoRol(Rol? rol)
+        {
+            if (rol == null || string.IsNullOrWhiteSpace(rol.Nombre))
+                return TipoRol.Usuario;
+
+            if (rol.Nombre.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Admin;
+            
+            if (rol.Nombre.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Moderador;
+            
+            return TipoRol.Usuario;
         }
     }
 }

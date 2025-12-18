@@ -20,10 +20,7 @@ namespace Convivia.Infrastructure.Mappers
             config.ForType<string, Rol>().MapWith(src => MapStringToRol(src));
 
             // Rol -> TipoRol
-            config.ForType<Rol, TipoRol>().MapWith(src => 
-                src != null && src.Nombre != null && src.Nombre.Equals("Admin", StringComparison.OrdinalIgnoreCase) 
-                    ? TipoRol.Admin 
-                    : TipoRol.Usuario);
+            config.ForType<Rol, TipoRol>().MapWith(src => MapRolToTipoRol(src));
 
             // Rol -> string (nombre)
             config.ForType<Rol, string>().MapWith(src => src != null ? src.Nombre ?? string.Empty : string.Empty);
@@ -32,13 +29,19 @@ namespace Convivia.Infrastructure.Mappers
         private static Rol MapTipoRolToRol(TipoRol tipoRol)
         {
             var rol = new Rol();
-            if (tipoRol == TipoRol.Admin)
+            
+            switch (tipoRol)
             {
-                rol.SetConfiguracionAdmin();
-            }
-            else
-            {
-                rol.SetConfiguracionUsuario();
+                case TipoRol.Admin:
+                    rol.SetConfiguracionAdmin();
+                    break;
+                case TipoRol.Moderador:
+                    rol.SetConfiguracionModerador();
+                    break;
+                case TipoRol.Usuario:
+                default:
+                    rol.SetConfiguracionUsuario();
+                    break;
             }
 
             rol.Nombre = tipoRol.ToString();
@@ -53,9 +56,14 @@ namespace Convivia.Infrastructure.Mappers
             }
 
             var rol = new Rol();
+            
             if (src.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 rol.SetConfiguracionAdmin();
+            }
+            else if (src.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
+            {
+                rol.SetConfiguracionModerador();
             }
             else
             {
@@ -64,6 +72,20 @@ namespace Convivia.Infrastructure.Mappers
 
             rol.Nombre = src;
             return rol;
+        }
+
+        private static TipoRol MapRolToTipoRol(Rol src)
+        {
+            if (src == null || string.IsNullOrWhiteSpace(src.Nombre))
+                return TipoRol.Usuario;
+
+            if (src.Nombre.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Admin;
+            
+            if (src.Nombre.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Moderador;
+            
+            return TipoRol.Usuario;
         }
     }
 }

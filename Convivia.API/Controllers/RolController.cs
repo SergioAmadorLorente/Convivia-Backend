@@ -19,6 +19,7 @@ namespace Convivia.API.Controllers
 
         // POST api/rol
         [HttpPost]
+       [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> Create([FromBody] CreateRolDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
@@ -36,6 +37,7 @@ namespace Convivia.API.Controllers
 
         // GET api/rol/{id}
         [HttpGet("{id}")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
@@ -63,29 +65,18 @@ namespace Convivia.API.Controllers
                 descripcion = new
                 {
                     Usuario = "Puede crear y editar tareas, y asignarse tareas",
-                    Admin = "Tiene todos los permisos disponibles"
+                    Admin = "Tiene todos los permisos disponibles",
+                    Moderador = "Puede crear, editar y eliminar tareas, asignar tareas y gestionar usuarios"
+
                 }
             });
         }
 
-        // GET api/rol/por-nombre/{nombre}
-        [HttpGet("nombre/{nombre}")]
-        public async Task<IActionResult> GetByNombre(TipoRol nombre, CancellationToken ct)
-        {
-            try
-            {
-                var rol = await _service.ObtenerPorNombreAsync(nombre, ct);
-                if (rol == null) return NotFound();
-                return Ok(rol);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-        }
+        
 
         // PUT api/rol/{id}
         [HttpPut("{id}")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateRolDto model, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");

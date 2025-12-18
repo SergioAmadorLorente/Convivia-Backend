@@ -54,11 +54,17 @@ namespace Convivia.Domain.Entities
             this.Karma = karma;
             this.Rol = rol;
 
-            if (rol == "admin")
+            if (rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 var rolAdmin = new Rol();
                 rolAdmin.SetConfiguracionAdmin();
                 this.Permiso = new Permiso(rolAdmin);
+            }
+            else if (rol.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
+            {
+                var rolModerador = new Rol();
+                rolModerador.SetConfiguracionModerador();
+                this.Permiso = new Permiso(rolModerador);
             }
             else
             {

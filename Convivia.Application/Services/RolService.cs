@@ -31,13 +31,18 @@ namespace Convivia.Application.Services
             // Crear rol con la configuración apropiada
             Rol rolDomain = new Rol();
             
-            if (dto.Nombre == TipoRol.Admin)
+            switch (dto.Nombre)
             {
-                rolDomain.SetConfiguracionAdmin();
-            }
-            else
-            {
-                rolDomain.SetConfiguracionUsuario();
+                case TipoRol.Admin:
+                    rolDomain.SetConfiguracionAdmin();
+                    break;
+                case TipoRol.Moderador:
+                    rolDomain.SetConfiguracionModerador();
+                    break;
+                case TipoRol.Usuario:
+                default:
+                    rolDomain.SetConfiguracionUsuario();
+                    break;
             }
 
             var rolDto = rolDomain.Adapt<RolDto>();

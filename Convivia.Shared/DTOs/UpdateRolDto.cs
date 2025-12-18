@@ -6,11 +6,14 @@ namespace Convivia.Shared.DTOs
     {
         public PermisosRolDto? Permisos { get; set; }
     }
+    
     public enum TipoRol
     {
         Admin,
-        Usuario
+        Usuario,
+        Moderador
     }
+    
     public class PermisosRolDto
     {
         // Permisos de Tareas
@@ -23,5 +26,8 @@ namespace Convivia.Shared.DTOs
         // Permisos de Usuarios
         public bool? AgregarUsuario { get; set; }
         public bool? EliminarUsuario { get; set; }
+        
+        // Permisos de Residencia
+        public bool? EliminarResidencia { get; set; }
     }
 }

@@ -11,6 +11,7 @@ namespace Convivia.Domain.Entities
         public bool EliminarUsuario { get; set; }
         public bool AsignarTarea { get; set; }
         public bool AsignarseTarea { get; set; }
+        public bool EliminarResidencia { get; set; }
 
         public Rol()
         {
@@ -40,6 +41,16 @@ namespace Convivia.Domain.Entities
             }
         }
 
+        public static Rol Moderador
+        {
+            get
+            {
+                var rol = new Rol("Moderador");
+                rol.SetConfiguracionModerador();
+                return rol;
+            }
+        }
+
         public void SetConfiguracionUsuario()
         {
             this.Nombre = "Usuario";
@@ -50,6 +61,7 @@ namespace Convivia.Domain.Entities
             this.EliminarUsuario = false;
             this.AsignarTarea = false;
             this.AsignarseTarea = true;
+            this.EliminarResidencia = false;
         }
         
         public void SetConfiguracionAdmin()
@@ -62,6 +74,20 @@ namespace Convivia.Domain.Entities
             this.EliminarUsuario = true;
             this.AsignarTarea = true;
             this.AsignarseTarea = true;
+            this.EliminarResidencia = true;
+        }
+
+        public void SetConfiguracionModerador()
+        {
+            this.Nombre = "Moderador";
+            this.CrearTarea = true;
+            this.EliminarTarea = true;
+            this.EditarTarea = true;
+            this.AñadirUsuario = true;
+            this.EliminarUsuario = true;
+            this.AsignarTarea = true;
+            this.AsignarseTarea = true;
+            this.EliminarResidencia = false;
         }
     }
 }
