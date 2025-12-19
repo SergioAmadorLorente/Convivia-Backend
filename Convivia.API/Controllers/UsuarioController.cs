@@ -17,22 +17,18 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        // POST api/usuarios
+        // POST api/usuario
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUsuarioDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(model.Nombre)) return BadRequest("Nombre es requerido.");
+            if (string.IsNullOrWhiteSpace(model.Email)) return BadRequest("Email es requerido.");
+            if (string.IsNullOrWhiteSpace(model.Password)) return BadRequest("Password es requerido.");
 
-          
-            if (string.IsNullOrWhiteSpace(model.Email) ||
-                string.IsNullOrWhiteSpace(model.Nombre))
-                
-            {
-                return BadRequest("email y nombre son requeridos");
-            }
 
             var created = await _service.CrearUsuarioAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id = created.IdUsuario }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // GET api/usuarios/{id}
@@ -45,16 +41,43 @@ namespace Convivia.API.Controllers
             if (usuario == null) return NotFound();
             return Ok(usuario);
         }
+        // GET api/Usuario
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken ct)
+        {
+            var list = await _service.ListarTodasAsync(ct);
+            return Ok(list);
+        }
 
-        // DELETE api/invitaciones/{id}
+        // PUT api/usuario
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+        // PATCH api/usuario/{id}
+        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+        // DELETE api/Usuario/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var removed = await _service.EliminarAsync(id, ct);
-            if (!removed) return NotFound();
-            return NoContent();
+            var resultat = await _service.EliminarUsuarioAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
     }
 }

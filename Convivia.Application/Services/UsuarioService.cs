@@ -42,7 +42,7 @@ namespace Convivia.Application.Services
             if (createdDomain == null)
             {
                 // Devolver dto mínimo con id evitar fallos en rutas 
-                return new UsuarioDto { IdUsuario = id };
+                return new UsuarioDto { Id = id };
             }
 
             var createdDto = _mapper.Map<UsuarioDto>(createdDomain);
@@ -68,7 +68,7 @@ namespace Convivia.Application.Services
         /// <summary>
         /// Overwrite completo: reemplaza todo el documento en Firestore.
         /// </summary>
-        public async Task<UsuarioDto?> ActualizarUsuarioCompletaAsync(string id, UpdateUsuarioDto dto, CancellationToken ct = default)
+        public async Task<UsuarioDto?> ActualizarUsuarioCompletoAsync(string id, UpdateUsuarioDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
@@ -77,41 +77,41 @@ namespace Convivia.Application.Services
             var domain = _mapper.Map<Usuario>(dto);
 
             // Asegurar que el Id de dominio coincide con el id pasado
-            domain.Id_Factura = id;
+            domain.Id = id;
 
             // Persistir como overwrite (merge = false)
-            await _facturaRepository.UpdateAsync(id, domain, merge: false, ct);
+            await _usuarioRepository.UpdateAsync(id, domain, merge: false, ct);
 
-            var updated = await _facturaRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<FacturaDto>(updated);
+            var updated = await _usuarioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<UsuarioDto>(updated);
         }
 
         /// <summary>
         /// Merge: fusiona los campos del objeto con los del documento existente (SetOptions.MergeAll).
         /// </summary>
-        public async Task<FacturaDto?> ActualizarFacturaMergeAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
+        public async Task<UsuarioDto?> ActualizarUsuarioMergeAsync(string id, UpdateUsuarioDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var existing = await _facturaRepository.GetByIdAsync(id, ct);
+            var existing = await _usuarioRepository.GetByIdAsync(id, ct);
             if (existing == null) return null;
 
             // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
             _mapper.Map(dto, existing);
 
             // Persistir con merge para evitar sobrescribir campos no mapeados
-            await _facturaRepository.UpdateAsync(id, existing, merge: true, ct);
+            await _usuarioRepository.UpdateAsync(id, existing, merge: true, ct);
 
-            var updated = await _facturaRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<FacturaDto>(updated);
+            var updated = await _usuarioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<UsuarioDto>(updated);
         }
 
         /// <summary>
         /// Parcial / PATCH: construye un diccionario con solo las propiedades no nulas del DTO
         /// y llama a la sobrecarga del repositorio que acepta IDictionary (update parcial).
         /// </summary>
-        public async Task<FacturaDto?> ActualizarFacturaParcialAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
+        public async Task<UsuarioDto?> ActualizarUsuarioParcialAsync(string id, UpdateUsuarioDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
@@ -120,29 +120,37 @@ namespace Convivia.Application.Services
             if (updates.Count == 0)
             {
                 // Nada que actualizar: devolver la entidad actual
-                var current = await _facturaRepository.GetByIdAsync(id, ct);
-                return current == null ? null : _mapper.Map<FacturaDto>(current);
+                var current = await _usuarioRepository.GetByIdAsync(id, ct);
+                return current == null ? null : _mapper.Map<UsuarioDto>(current);
             }
 
             // useSetMerge: false -> UpdateAsync estricto (fallará si no existe)
-            await _facturaRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
+            await _usuarioRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
 
-            var updated = await _facturaRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<FacturaDto>(updated);
+            var updated = await _usuarioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<UsuarioDto>(updated);
         }
-        public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
+        public async Task<bool> EliminarUsuarioAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return false;
-            try
-            {
-                await _usuarioRepository.DeleteAsync(id, ct);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error EliminarUsuario {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            var existing = await _usuarioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return false;
+
+            await _usuarioRepository.DeleteAsync(id, ct);
+            return true;
+        }
+        private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateUsuarioDto dto)
+        {
+            var updates = new Dictionary<string, object>();
+
+            if (dto.Nombre != null) updates["Nombre"] = dto.Nombre;
+            if (dto.Telefono != null) updates["Telefono"] = dto.Telefono;
+            if (dto.Email != null) updates["Email"] = dto.Email;
+            if (dto.Password != null) updates["Password"] = dto.Password;
+            if (dto.Premium != null) updates["Premium"] = dto.Premium;
+
+            return updates;
         }
     }
 }
