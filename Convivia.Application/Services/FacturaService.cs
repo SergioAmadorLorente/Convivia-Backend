@@ -184,7 +184,6 @@ namespace Convivia.Application.Services
         {
             var updates = new Dictionary<string, object>();
 
-            // Mapeo explícito por propiedad (seguro y claro)
             if (dto.Nombre != null) updates["Nombre"] = dto.Nombre;
             if (dto.Precio.HasValue) updates["Precio"] = dto.Precio.Value;
             if (dto.Reparto != null && dto.Reparto.Count > 0) updates["Reparto"] = dto.Reparto;

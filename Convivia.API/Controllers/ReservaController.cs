@@ -22,11 +22,12 @@ namespace Convivia.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateReservaDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(model.description)) return BadRequest("La descripción es necesaria");
+            if (string.IsNullOrWhiteSpace(model.idSala)) return BadRequest("IdSala es requqrido");
+            if (string.IsNullOrWhiteSpace(model.idUser)) return BadRequest("IdUser es requerido");
 
-            var reserva = await _service.AddAsync(model, ct);
-            if (reserva == null) return BadRequest("No se pudo crear la reserva.");
-
-            return CreatedAtAction(nameof(GetById), new { id = reserva.idReserva }, reserva);
+            var created = await _service.CrearReservaAsync(model, ct);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // GET api/reservas/{id}
@@ -35,10 +36,17 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var reserva = await _service.ObtenerPorIdAsync(id, ct);
+            var reserva = await _service.ObtenerReservaAsync(id, ct);
             if (reserva == null) return NotFound();
-
             return Ok(reserva);
+        }
+
+        // GET api/reserva
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken ct)
+        {
+            var list = await _service.ListarTodasAsync(ct);
+            return Ok(list);
         }
 
         // GET api/reservas/por-usuario/{usuarioId}
@@ -61,56 +69,50 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // PUT api/reservas/{id}
+        // PUT api/reserva/{id}
+        // Overwrite completo: reemplaza todo el documento en Firestore.
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] UpdateReservaDto model, CancellationToken ct)
+        public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdateReservaDto model, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-            if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            try
-            {
-                var updated = await _service.UpdateAsync(id, model, ct);
-                return Ok(updated);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var updated = await _service.ActualizarReservaCompletaAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
-        // PATCH api/reservas/{id}
+        // PUT api/reserva/{id}/merge
+        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        [HttpPut("{id}/merge")]
+        public async Task<IActionResult> PutMerge(string id, [FromBody] UpdateReservaDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarReservaMergeAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        // PATCH api/reserva/{id}
+        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
         [HttpPatch("{id}")]
-        public async Task<IActionResult> PartialUpdate(string id, [FromBody] UpdateReservaDto model, CancellationToken ct)
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdateReservaDto model, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-            if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            var result = await _service.ParcialActualizarAsync(id, model, ct);
-            if (!result) return NotFound();
-
-            return NoContent();
+            var updated = await _service.ActualizarReservaParcialAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
-        // DELETE api/reservas/{id}
+        // DELETE api/reserva/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            try
-            {
-                await _service.EliminarAsync(id, ct);
-                return NoContent();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var resultat = await _service.EliminarReservaAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
     }
 }

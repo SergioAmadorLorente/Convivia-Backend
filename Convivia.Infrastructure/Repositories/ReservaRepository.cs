@@ -12,10 +12,7 @@ namespace Convivia.Infrastructure.Repositories
         private readonly ILogger<ReservaRepository> _logger;
         private const string Collection = "reservas";
 
-        public ReservaRepository(
-            IFirebaseService firebase,
-            ILogger<ReservaRepository> logger,
-            ILoggerFactory loggerFactory)
+        public ReservaRepository(IFirebaseService firebase, ILogger<ReservaRepository> logger, ILoggerFactory loggerFactory)
             : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreReserva>>(), Collection)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
