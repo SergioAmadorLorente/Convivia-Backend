@@ -35,11 +35,14 @@ namespace Convivia.Shared.DTOs
         /// </summary>
         public DateTime? FechaFin { get; set; }
 
-        /// <summary>
-        /// ID del usuario a asignar a la tarea (1 solo usuario por tarea).
-        /// Para tareas puntuales este campo es obligatorio (validado en servicio).
+        /// <summary>        /// Lista obligatoria de usuarios a asignar a las tareas creadas.
+        /// Si solo contiene 1 elemento, ese usuario se asigna a todas las tareas.
+        /// Si contiene más de 1 elemento y la tarea es repetida, el número de usuarios debe
+        /// coincidir con el número de tareas creadas (DiasRepeticion.Count).
+        /// El orden de la lista determina la correspondencia usuario->tarea.
         /// </summary>
-        public string? UsuarioEspacioId { get; set; }
+        [Required]
+        public List<string> UsuariosAsignacion { get; set; } = new();
 
         public byte[]? Foto { get; set; }
     }

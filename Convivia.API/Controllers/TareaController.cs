@@ -48,11 +48,15 @@ namespace Convivia.API.Controllers
         }
 
         [HttpGet("filter")]
-        public async Task<ActionResult<IEnumerable<TareaDto>>> Filter(string espacioid, [FromQuery] int? diaSemana, [FromQuery] string? estado)
+        public async Task<ActionResult<IEnumerable<TareaDto>>> Filter(
+            string espacioid, 
+            [FromQuery] int? diaSemana, 
+            [FromQuery] string? estado,
+            [FromQuery] string? usuarioId)
         {
             try
             {
-                var res = await _service.FilterAsync(espacioid, diaSemana, estado);
+                var res = await _service.FilterAsync(espacioid, diaSemana, estado, usuarioId);
                 return (res == null || !res.Any()) ? NotFound() : Ok(res);
             }
             catch (ArgumentException ex)

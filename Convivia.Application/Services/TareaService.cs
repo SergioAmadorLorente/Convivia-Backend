@@ -60,14 +60,14 @@ namespace Convivia.Application.Services
             }
 
             // Validación 4: Verificar usuario si está presente (OPCIONAL)
-            if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
-            {
-                var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
-                if (!userValidation.IsValid)
-                    throw new InvalidOperationException(userValidation.ErrorMessage);
-            }
+            // Nota: la asignación de usuarios se realiza mediante la lista UsuariosAsignacion (requerida).
+            // Validaciones de usuarios concretas se harán más abajo al crear tareas.
 
             var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
+            // Ensure the plantilla dto preserves the incoming lists from the front-end
+            createPlantilla.DiasRepeticion = dto.DiasRepeticion ?? new List<int>();
+            createPlantilla.UsuariosAsignacion = dto.UsuariosAsignacion ?? new List<string>();
+
             var tareas = new List<Tarea>();
 
             if (esPuntual)
@@ -76,7 +76,16 @@ namespace Convivia.Application.Services
                 var tarea = _mapper.Map<Tarea>(dto);
                 tarea.DiaSemana = -1; // Indicador de tarea puntual
                 tarea.Estado = TareaEstado.Pendiente;
-                tarea.UsuarioEspacioId = dto.UsuarioEspacioId; // opcional
+
+                // UsuariosAsignacion ahora es obligatorio: debe contener exactamente 1 elemento para tareas puntuales
+                if (dto.UsuariosAsignacion == null || dto.UsuariosAsignacion.Count == 0)
+                    throw new ArgumentException("Se requiere al menos un Usuario en UsuariosAsignacion para crear tareas.");
+
+                if (dto.UsuariosAsignacion.Count != 1)
+                    throw new ArgumentException($"Tarea puntual requiere exactamente 1 usuario en UsuariosAsignacion. Se recibieron {dto.UsuariosAsignacion.Count}.");
+
+                // Respect the exact order / value sent by the front: assign the single provided user
+                tarea.UsuarioEspacioId = dto.UsuariosAsignacion[0];
                 tarea.FechaLimite = dto.FechaLimite;
                 createPlantilla.TareasId.Add(tarea.Id!);
                 tareas.Add(tarea);
@@ -84,13 +93,28 @@ namespace Convivia.Application.Services
             else
             {
                 // Tarea repetida: 1 tarea por día de repetición
-                foreach (int dia in createPlantilla.DiasRepeticion)
+                if (dto.UsuariosAsignacion == null || dto.UsuariosAsignacion.Count == 0)
+                    throw new ArgumentException("UsuariosAsignacion es obligatorio y debe contener los usuarios a asignar a cada tarea.");
+
+                var users = dto.UsuariosAsignacion;
+                var days = dto.DiasRepeticion ?? new List<int>();
+                var taskCount = days.Count;
+
+                if (users.Count != 1 && users.Count != taskCount)
+                    throw new ArgumentException($"Si envías más de un usuario, el número de usuarios ({users.Count}) debe coincidir con el número de tareas a crear ({taskCount}).");
+
+                // Iterate using the front-provided days order and preserve the users order
+                for (int i = 0; i < days.Count; i++)
                 {
+                    var dia = days[i];
                     var tarea = _mapper.Map<Tarea>(dto);
                     tarea.DiaSemana = dia;
                     tarea.Estado = TareaEstado.Pendiente;
                     tarea.FechaLimite = dto.FechaLimite;
-                    tarea.UsuarioEspacioId = dto.UsuarioEspacioId; // opcional
+
+                    // If single user -> same for all; otherwise assign according to the front-provided order
+                    tarea.UsuarioEspacioId = users.Count == 1 ? users[0] : users[i];
+
                     createPlantilla.TareasId.Add(tarea.Id!);
                     tareas.Add(tarea);
                 }
@@ -147,6 +171,8 @@ namespace Convivia.Application.Services
                     dto.FacturaId = plantilla.FacturaId;
                     dto.Estado = tarea.Estado.ToString();
                     dto.Overdue = IsOverdue(tarea, pt);
+                    dto.EsPuntual = tarea.DiaSemana == -1;
+                    dto.UsuarioEspacioId = tarea.UsuarioEspacioId;
 
                     tareasFiltered.Add(dto);
                 }
@@ -187,6 +213,8 @@ namespace Convivia.Application.Services
                     dto.FacturaId = plantilla.FacturaId;
                     dto.Estado = tarea.Estado.ToString();
                     dto.Overdue = IsOverdue(tarea, pt);
+                    dto.EsPuntual = tarea.DiaSemana == -1;
+                    dto.UsuarioEspacioId = tarea.UsuarioEspacioId;
 
                     tareasFiltered.Add(dto);
                 }
@@ -196,15 +224,15 @@ namespace Convivia.Application.Services
         }
 
         /// <summary>
-        /// Filtrar tareas por día y/o estado.
+        /// Filtrar tareas por día y/o estado y/o usuario.
         /// </summary>
-        public async Task<IEnumerable<TareaDto>> FilterAsync(string espacioid, int? diaSemana, string? estado)
+        public async Task<IEnumerable<TareaDto>> FilterAsync(string espacioid, int? diaSemana, string? estado, string? usuarioId = null)
         {
             if (string.IsNullOrWhiteSpace(espacioid))
                 throw new ArgumentNullException(nameof(espacioid));
 
-            if (!diaSemana.HasValue && string.IsNullOrWhiteSpace(estado))
-                throw new ArgumentException("Se requiere al menos 'diaSemana' o 'estado'.");
+            if (!diaSemana.HasValue && string.IsNullOrWhiteSpace(estado) && string.IsNullOrWhiteSpace(usuarioId))
+                throw new ArgumentException("Se requiere al menos uno de: 'diaSemana', 'estado' o 'usuarioId'.");
 
             if (diaSemana.HasValue && (diaSemana < 0 || diaSemana > 6))
                 throw new ArgumentException("diaSemana debe estar entre 0 y 6.");
@@ -217,13 +245,59 @@ namespace Convivia.Application.Services
                 parsedEstado = p;
             }
 
-            if (diaSemana.HasValue && parsedEstado.HasValue)
-                return await GetByDiaAndEstadoAsync(espacioid, diaSemana.Value, parsedEstado.Value);
+            // Delegate to FilterByMultipleCriteriaAsync which handles all combinations
+            return await FilterByMultipleCriteriaAsync(espacioid, diaSemana, parsedEstado, usuarioId);
+        }
 
-            if (diaSemana.HasValue)
-                return await GetByDiaAndEstadoAsync(espacioid, diaSemana.Value, TareaEstado.Pendiente);
+        /// <summary>
+        /// Filtra tareas por múltiples criterios: diaSemana, estado y/o usuarioId.
+        /// </summary>
+        private async Task<IEnumerable<TareaDto>> FilterByMultipleCriteriaAsync(
+            string espacioid, 
+            int? diaSemana, 
+            TareaEstado? estado,
+            string? usuarioId)
+        {
+            var pttareas = await _ptservice.GetAllByEspacioAsync(espacioid);
+            var tareasFiltered = new List<TareaDto>();
 
-            return await GetByEstadoAsync(espacioid, parsedEstado!.Value);
+            foreach (var plantilla in pttareas)
+            {
+                var pt = plantilla.Adapt<PlantillaTarea>();
+
+                foreach (var tareaId in plantilla.TareasId ?? new List<string>())
+                {
+                    var tarea = await _repository.GetAsync(plantilla.PlantillaId, tareaId);
+                    if (tarea == null) continue;
+
+                    // Filter by day if provided
+                    if (diaSemana.HasValue && tarea.DiaSemana != diaSemana)
+                        continue;
+
+                    // Filter by state if provided
+                    if (estado.HasValue && !MatchesEstado(tarea, pt, estado.Value))
+                        continue;
+
+                    // Filter by usuario if provided
+                    if (!string.IsNullOrWhiteSpace(usuarioId) && tarea.UsuarioEspacioId != usuarioId)
+                        continue;
+
+                    var dto = _mapper.Map<TareaDto>(tarea);
+                    dto.Nombre = plantilla.Nombre;
+                    dto.Descripcion = plantilla.Descripcion;
+                    dto.karma = plantilla.karma;
+                    dto.HoraLimite = plantilla.HoraLimite;
+                    dto.FacturaId = plantilla.FacturaId;
+                    dto.Estado = tarea.Estado.ToString();
+                    dto.Overdue = IsOverdue(tarea, pt);
+                    dto.EsPuntual = tarea.DiaSemana == -1;
+                    dto.UsuarioEspacioId = tarea.UsuarioEspacioId;
+
+                    tareasFiltered.Add(dto);
+                }
+            }
+
+            return tareasFiltered;
         }
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
@@ -275,6 +349,8 @@ namespace Convivia.Application.Services
             dto.FacturaId = plantilla.FacturaId;
             dto.Estado = tarea.Estado.ToString();
             dto.Overdue = IsOverdue(tarea, plantilla.Adapt<PlantillaTarea>());
+            dto.EsPuntual = tarea.DiaSemana == -1;
+            dto.UsuarioEspacioId = tarea.UsuarioEspacioId;
 
             return dto;
         }
@@ -315,9 +391,14 @@ namespace Convivia.Application.Services
                 {
                     if (parsedEstado == TareaEstado.Pendiente)
                     {
-                        var isOverdue = IsOverdue(existing, domPlantilla);
+                        var isOverdue = IsOverdueWithUpdates(existing, domPlantilla, dto);
                         if (isOverdue)
                             throw new InvalidOperationException("No se puede marcar como pendiente una tarea que está overdue.");
+                    }
+                    // If marking as completed and no FechaRealizacion provided, force now
+                    if (parsedEstado == TareaEstado.Completada && !dto.FechaRealizacion.HasValue)
+                    {
+                        dto.FechaRealizacion = DateTime.UtcNow;
                     }
                     existing.Estado = parsedEstado;
                 }
@@ -347,6 +428,8 @@ namespace Convivia.Application.Services
             dtoResp.FacturaId = plantilla.FacturaId;
             dtoResp.Estado = updated.Estado.ToString();
             dtoResp.Overdue = IsOverdue(updated, domPlantilla);
+            dtoResp.EsPuntual = updated.DiaSemana == -1;
+            dtoResp.UsuarioEspacioId = updated.UsuarioEspacioId;
 
             return dtoResp;
         }
@@ -426,9 +509,14 @@ namespace Convivia.Application.Services
                 {
                     if (parsedEstado == TareaEstado.Pendiente)
                     {
-                        var isOverdue = IsOverdue(existing, domPlantilla);
+                        var isOverdue = IsOverdueWithUpdates(existing, domPlantilla, dto);
                         if (isOverdue)
                             throw new InvalidOperationException("No se puede marcar como pendiente una tarea que está overdue.");
+                    }
+                    // If marking as completed and no FechaRealizacion provided, force now
+                    if (parsedEstado == TareaEstado.Completada && !dto.FechaRealizacion.HasValue)
+                    {
+                        dto.FechaRealizacion = DateTime.UtcNow;
                     }
                     existing.Estado = parsedEstado;
                 }
@@ -456,6 +544,8 @@ namespace Convivia.Application.Services
             dtoResp.FacturaId = plantilla.FacturaId;
             dtoResp.Estado = updated.Estado.ToString();
             dtoResp.Overdue = IsOverdue(updated, domPlantilla);
+            dtoResp.EsPuntual = updated.DiaSemana == -1;
+            dtoResp.UsuarioEspacioId = updated.UsuarioEspacioId;
 
             return dtoResp;
         }
@@ -496,9 +586,14 @@ namespace Convivia.Application.Services
                 {
                     if (parsedEstado == TareaEstado.Pendiente)
                     {
-                        var isOverdue = IsOverdue(existing, domPlantilla);
+                        var isOverdue = IsOverdueWithUpdates(existing, domPlantilla, dto);
                         if (isOverdue)
                             throw new InvalidOperationException("No se puede marcar como pendiente una tarea que está overdue.");
+                    }
+                    // If marking as completed and no FechaRealizacion provided, force now
+                    if (parsedEstado == TareaEstado.Completada && !dto.FechaRealizacion.HasValue)
+                    {
+                        dto.FechaRealizacion = DateTime.UtcNow;
                     }
                 }
                 else
@@ -519,6 +614,8 @@ namespace Convivia.Application.Services
                 dtoResp.FacturaId = plantilla.FacturaId;
                 dtoResp.Estado = current.Estado.ToString();
                 dtoResp.Overdue = IsOverdue(current, domPlantilla);
+                dtoResp.EsPuntual = current.DiaSemana == -1;
+                dtoResp.UsuarioEspacioId = current.UsuarioEspacioId;
                 return dtoResp;
             }
 
@@ -536,6 +633,8 @@ namespace Convivia.Application.Services
             dtoResult.FacturaId = plantilla.FacturaId;
             dtoResult.Estado = updated.Estado.ToString();
             dtoResult.Overdue = IsOverdue(updated, domPlantilla);
+            dtoResult.EsPuntual = updated.DiaSemana == -1;
+            dtoResult.UsuarioEspacioId = updated.UsuarioEspacioId;
 
             return dtoResult;
         }
@@ -574,20 +673,91 @@ namespace Convivia.Application.Services
             var nowUtc = DateTime.UtcNow;
             var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
 
+            // If task already completed => not overdue
+            if (tarea.FechaRealizacion.HasValue)
+                return false;
+
+            // If there is an explicit prorroga (extension), use it as the effective due datetime
+            if (tarea.Prorroga.HasValue)
+            {
+                // Treat Prorroga as local in plantilla timezone; construct unspecified DateTime then convert
+                var prorrogaLocal = new DateTime(
+                    tarea.Prorroga.Value.Year,
+                    tarea.Prorroga.Value.Month,
+                    tarea.Prorroga.Value.Day,
+                    tarea.Prorroga.Value.Hour,
+                    tarea.Prorroga.Value.Minute,
+                    tarea.Prorroga.Value.Second,
+                    DateTimeKind.Unspecified);
+
+                var dueUtcFromProrroga = new DateTimeOffset(prorrogaLocal, tz.GetUtcOffset(prorrogaLocal)).UtcDateTime;
+
+                if (plantilla.GracePeriodMinutes.HasValue)
+                    dueUtcFromProrroga = dueUtcFromProrroga.AddMinutes(plantilla.GracePeriodMinutes.Value);
+
+                return nowUtc >= dueUtcFromProrroga;
+            }
+
+            // If punctual task (DiaSemana == -1) use FechaLimite + HoraLimite
+            if (tarea.DiaSemana == -1)
+            {
+                if (!tarea.FechaLimite.HasValue)
+                    return false;
+
+                var fecha = tarea.FechaLimite.Value.Date;
+                var horaLimite = plantilla.HoraLimite;
+
+                var dueLocal = new DateTime(fecha.Year, fecha.Month, fecha.Day,
+                                            horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
+                var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
+
+                if (plantilla.GracePeriodMinutes.HasValue)
+                    dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
+
+                return nowUtc >= dueUtc;
+            }
+
+            // For repeated tasks, only consider overdue on the scheduled weekday
             if (tarea.DiaSemana != (int)nowLocal.DayOfWeek)
                 return false;
 
             var occurrenceDate = nowLocal.Date;
-            var horaLimite = plantilla.HoraLimite;
+            var horaLimiteRep = plantilla.HoraLimite;
 
-            var dueLocal = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
-                                        horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
-            var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
+            var dueLocalRep = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
+                                        horaLimiteRep.Hour, horaLimiteRep.Minute, 0, DateTimeKind.Unspecified);
+            var dueUtcRep = new DateTimeOffset(dueLocalRep, tz.GetUtcOffset(dueLocalRep)).UtcDateTime;
 
             if (plantilla.GracePeriodMinutes.HasValue)
-                dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
+                dueUtcRep = dueUtcRep.AddMinutes(plantilla.GracePeriodMinutes.Value);
 
-            return nowUtc >= dueUtc;
+            return nowUtc >= dueUtcRep;
+        }
+
+        // Helper that evaluates overdue considering incoming updates from UpdateTareaDto
+        private static bool IsOverdueWithUpdates(Tarea existing, PlantillaTarea plantilla, UpdateTareaDto? dto)
+        {
+            // If no updates affecting due/completion, fall back to current computation
+            if (dto == null)
+                return IsOverdue(existing, plantilla);
+
+            // Create a shallow clone of existing to apply potential updates
+            var temp = existing.Adapt<Tarea>();
+
+            if (dto.Prorroga.HasValue)
+                temp.Prorroga = dto.Prorroga.Value;
+            if (dto.FechaRealizacion.HasValue)
+                temp.FechaRealizacion = dto.FechaRealizacion.Value;
+
+            // If Estado is being set to Completada and FechaRealizacion provided, treat as completed
+            if (!string.IsNullOrWhiteSpace(dto.Estado) && Enum.TryParse<TareaEstado>(dto.Estado, ignoreCase: true, out var parsed) && parsed == TareaEstado.Completada)
+            {
+                // If FechaRealizacion is provided, completion overrides overdue
+                if (dto.FechaRealizacion.HasValue)
+                    return false;
+            }
+
+            return IsOverdue(temp, plantilla);
         }
 
         /// <summary>

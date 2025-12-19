@@ -42,7 +42,7 @@ namespace Convivia.Application.Mappers
                 .Map(dest => dest.DiasRepeticion, src => src.DiasRepeticion)
                 .Map(dest => dest.HoraLimite, src => src.HoraLimite)
                 .Map(dest => dest.FechaLimite, src => src.FechaLimite)
-                .Map(dest => dest.UsuariosAsignacion, src => src.UsuarioEspacioId != null ? new List<string> { src.UsuarioEspacioId } : new List<string>());
+                .Map(dest => dest.UsuariosAsignacion, src => src.UsuariosAsignacion ?? new List<string>());
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try
