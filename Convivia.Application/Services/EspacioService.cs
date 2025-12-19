@@ -15,15 +15,18 @@ namespace Convivia.Application.Services
 {
     public class EspacioService
     {
+        private readonly IPlantillaTareaRepository _plantillaTareaRepo;
         private readonly IEspacioRepository _repo;
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
         private readonly ILogger<EspacioService> _logger;
 
         public EspacioService(
+            IPlantillaTareaRepository plantillaTareaRepo,
             IEspacioRepository repo,
             IUsuarioEspacioRepository usuarioEspacioRepo,
             ILogger<EspacioService> logger)
         {
+            _plantillaTareaRepo = plantillaTareaRepo ?? throw new ArgumentNullException(nameof(plantillaTareaRepo));
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _usuarioEspacioRepo = usuarioEspacioRepo ?? throw new ArgumentNullException(nameof(usuarioEspacioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -67,14 +70,33 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido", nameof(id));
 
-            // Uso de ExistsByEspacioIdAsync para evitar materializar colecciones grandes
-            var tieneUsuarios = await _usuarioEspacioRepo.ExistsByEspacioIdAsync(id, ct);
-            if (tieneUsuarios)
-            {
+            // 1) RESTRICT: evita materializar colecciones grandes
+            if (await _usuarioEspacioRepo.ExistsByEspacioIdAsync(id, ct).ConfigureAwait(false))
                 throw new InvalidOperationException($"No se puede eliminar el espacio {id}: existen usuarios asociados.");
-            }
 
-            await _repo.DeleteAsync(id, ct);
+            // 2) Obtener espacio y plantillas (idempotente si no existe)
+            var espacio = await _repo.GetByIdAsync(id, ct).ConfigureAwait(false);
+            if (espacio == null) return;
+
+            var plantillas = espacio.Tareas ?? Enumerable.Empty<PlantillaTarea>();
+
+            // 3) Borrar plantillas en batches (BatchHelper maneja reintentos)
+            await BatchHelper.ProcessInBatchesAsync(
+                plantillas,
+                async (batch, token) =>
+                {
+                    var deletes = batch.Select(p => _plantillaTareaRepo.DeleteAsync(p.Id, token));
+                    await Task.WhenAll(deletes).ConfigureAwait(false);
+                },
+                batchSize: 200,
+                maxRetries: 3,
+                initialRetryDelay: TimeSpan.FromSeconds(1),
+                logger: _logger,
+                ct: ct
+            ).ConfigureAwait(false);
+
+            // 4) Borrar espacio al final
+            await _repo.DeleteAsync(id, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -110,7 +132,6 @@ namespace Convivia.Application.Services
                 },
                 batchSize: 500,
                 maxRetries: 3,
-                retryDelay: TimeSpan.FromSeconds(2),
                 ct: ct
             );
 

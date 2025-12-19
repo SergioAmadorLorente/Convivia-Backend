@@ -7,7 +7,7 @@ namespace Convivia.Shared.Repositories
 {
     public interface IEspacioRepository
     {
-        Task<EspacioDto?> GetByIdAsync(string id, CancellationToken ct = default);
+        Task<EspacioDto> GetByIdAsync(string id, CancellationToken ct = default);
         Task<IEnumerable<EspacioDto>> GetByDireccionAsync(string Direccion, CancellationToken ct = default);
         Task<string> AddAsync(EspacioDto espacio, CancellationToken ct = default);
         Task UpdateAsync(string id, EspacioDto espacio, CancellationToken ct = default);

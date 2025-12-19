@@ -29,6 +29,7 @@ namespace Convivia.Domain.Entities
 
         public List<Invitacion> InvitacionesEnviadas { get; set; } = new List<Invitacion>();
 
+        public List<PlantillaTarea> Tareas { get; set; } = new List<PlantillaTarea>(); 
         public Espacio() { }
 
         public Espacio(string name, string? direccion = null)
