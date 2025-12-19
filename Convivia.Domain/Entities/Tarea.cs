@@ -8,7 +8,8 @@ namespace Convivia.Domain.Entities
     {
         Pendiente = 0,
         FueraDePlazo = 1,
-        Completada = 2
+        Completada = 2,
+        CompletadaFueradePlazo = 3
     }
 
     public class Tarea
@@ -19,7 +20,8 @@ namespace Convivia.Domain.Entities
 
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
 
-        public DateTime? Prorroga { get; set; } // Puede ser null
+        // Prorroga ahora representa la duración (TimeSpan) que ha pasado desde el vencimiento
+        public TimeSpan? Prorroga { get; set; } // Puede ser null
 
         // Reemplazamos los booleanos Completada/Disponible por el enum Estado
         public TareaEstado Estado { get; set; } = TareaEstado.Pendiente;
@@ -34,6 +36,9 @@ namespace Convivia.Domain.Entities
         // Fecha limite para tarea puntual o referencia
         public DateTime? FechaLimite { get; set; }
 
+        // Hora límite específica para esta instancia de tarea (si es null usar la de la plantilla)
+        public TimeOnly? HoraLimite { get; set; }
+
         public Tarea()
         {
             // Constructor vacío necesario para la deserialización
@@ -41,7 +46,7 @@ namespace Convivia.Domain.Entities
 
         public Tarea(string usuarioEspacioId, string plantillaId)
         {
-            if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("PlantillaId es obligatoria.");
+            if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("PlantillaId es obligatoria.", nameof(plantillaId));
 
             UsuarioEspacioId = usuarioEspacioId;
             Estado = TareaEstado.Pendiente;

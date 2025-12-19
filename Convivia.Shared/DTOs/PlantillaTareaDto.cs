@@ -22,8 +22,6 @@ namespace Convivia.Shared.DTOs
 
         public string Descripcion { get; set; }
 
-        public TimeOnly HoraLimite { get; set; }
-
         public string? FacturaId { get; set; }
 
     }

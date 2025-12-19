@@ -31,8 +31,6 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public int IntervalWeeks { get; set; }
         [FirestoreProperty]
-        public string HoraLimite { get; set; }
-        [FirestoreProperty]
         public string TimeZoneId { get; set; } = "Europe/Madrid";
         [FirestoreProperty]
         public int? GracePeriodMinutes { get; set; }

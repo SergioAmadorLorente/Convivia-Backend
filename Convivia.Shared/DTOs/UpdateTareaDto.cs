@@ -9,7 +9,8 @@ namespace Convivia.Shared.DTOs
 
         public byte[]? Foto { get; set; }
 
-        public DateTime? Prorroga { get; set; }
+        // Prorroga ahora como duración (TimeSpan) que ha pasado desde el vencimiento
+        public TimeSpan? Prorroga { get; set; }
 
         // Estado como string - será parseado en el service
         public string? Estado { get; set; }
@@ -18,5 +19,7 @@ namespace Convivia.Shared.DTOs
         /// ID del usuario asignado a la tarea (1 solo) - OPCIONAL.
         /// </summary>
         public string? UsuarioEspacioId { get; set; }
+
+        public TimeOnly? HoraLimite { get; set; }
     }
 }

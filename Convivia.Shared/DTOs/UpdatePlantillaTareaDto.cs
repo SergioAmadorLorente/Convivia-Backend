@@ -9,6 +9,7 @@ namespace Convivia.Shared.DTOs
     {
         public string? Nombre { get; set; }
 
+        // Optional HoraLimite provided only to create new task instances when adding repetition days
         public TimeOnly? HoraLimite { get; set; }
 
         public string? Descripcion { get; set; }
@@ -32,5 +33,13 @@ namespace Convivia.Shared.DTOs
         /// Null/vacío = no cambiar días de repetición
         /// </summary>
         public List<int>? DiasRepeticion { get; set; }
+
+        /// <summary>
+        /// Usuarios a asignar a las tareas cuando se añaden nuevos días de repetición.
+        /// Requerido si DiasRepeticion contiene días nuevos.
+        /// Si se proporciona 1 usuario: se asigna a todos los días nuevos.
+        /// Si se proporcionan múltiples: el número debe coincidir con los días nuevos.
+        /// </summary>
+        public List<string>? UsuariosAsignacion { get; set; }
     }
 }

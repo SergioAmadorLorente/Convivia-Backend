@@ -24,7 +24,7 @@ namespace Convivia.Domain.Entities
 
         public List<string> TareasId { get; set; }
 
-        public TimeOnly HoraLimite { get; set; }
+        // HoraLimite removed from plantilla: hora se almacena por tarea individual
 
         public int? GracePeriodMinutes { get; set; } = 30;
 

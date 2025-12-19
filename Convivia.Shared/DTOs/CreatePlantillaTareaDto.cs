@@ -25,12 +25,6 @@ namespace Convivia.Shared.DTOs
         public List<int> DiasRepeticion { get; set; } = new();
 
         /// <summary>
-        /// Hora límite para completar la tarea.
-        /// </summary>
-        [Required]
-        public TimeOnly HoraLimite { get; set; }
-
-        /// <summary>
         /// Fecha límite (para puntual) o referencia para repetida.
         /// </summary>
         public DateTime? FechaLimite { get; set; }

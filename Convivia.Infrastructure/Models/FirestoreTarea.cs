@@ -21,8 +21,12 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public byte[]? Foto { get; set; } // Para almacenar imagen binaria
 
+        // Guardamos la prorroga como número de segundos (TimeSpan) en Firestore mediante DateTime como convencion: usar TimeSpan ticks no es soportado por Firestore directamente.
+        // Para compatibilidad simple, seguiremos guardando DateTime? representando 'DateTime.UtcNow - TimeSpan' no es ideal, mejor almacenar segundos en un campo "ProrrogaSegundos".
+        // Pero para mínimo cambio, almacenamos Prorroga como double segundos
+
         [FirestoreProperty]
-        public DateTime? Prorroga { get; set; } // Puede ser null
+        public double? ProrrogaSegundos { get; set; } // segundos de prorroga si existe
 
         // Guardamos el enum como int en Firestore
         [FirestoreProperty]
@@ -36,5 +40,9 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty]
         public DateTime? FechaLimite { get; set; }
+
+        // Store HoraLimite as string "HH:mm" because Firestore doesn't have TimeOnly natively
+        [FirestoreProperty]
+        public string? HoraLimite { get; set; }
     }
 }

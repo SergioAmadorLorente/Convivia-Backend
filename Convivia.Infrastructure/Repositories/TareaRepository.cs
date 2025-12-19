@@ -36,6 +36,18 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
 
             var firestoreEntity = tarea.Adapt<FirestoreTarea>();
+            // set ProrrogaSegundos if Prorroga present
+            if (tarea.Prorroga.HasValue)
+                firestoreEntity.ProrrogaSegundos = tarea.Prorroga.Value.TotalSeconds;
+            else
+                firestoreEntity.ProrrogaSegundos = null;
+
+            // Map HoraLimite TimeOnly? to string HH:mm
+            if (tarea.HoraLimite.HasValue)
+                firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
+            else
+                firestoreEntity.HoraLimite = null;
+
             var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
             await _firebase.AddAsync(subcollectionPath, tarea.Id, firestoreEntity, ct);
             return tarea.Id;
@@ -54,6 +66,16 @@ namespace Convivia.Infrastructure.Repositories
             {
                 if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
                 var firestoreEntity = tarea.Adapt<FirestoreTarea>();
+                if (tarea.Prorroga.HasValue)
+                    firestoreEntity.ProrrogaSegundos = tarea.Prorroga.Value.TotalSeconds;
+                else
+                    firestoreEntity.ProrrogaSegundos = null;
+
+                if (tarea.HoraLimite.HasValue)
+                    firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
+                else
+                    firestoreEntity.HoraLimite = null;
+
                 var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
                 await _firebase.AddAsync(subcollectionPath, tarea.Id, firestoreEntity, ct);
                 ids.Add(tarea.Id);
@@ -69,7 +91,28 @@ namespace Convivia.Infrastructure.Repositories
 
             var subcollectionPath = GetSubcollectionPath(plantillaId);
             var firestoreEntity = await _firebase.GetAsync<FirestoreTarea>(subcollectionPath, tareaId, ct);
-            var entity = firestoreEntity?.Adapt<Tarea>();
+            if (firestoreEntity == null) return null;
+            // Map FirestoreTarea to domain Tarea, converting ProrrogaSegundos to TimeSpan
+            var entity = firestoreEntity.Adapt<Tarea>();
+            // Map prorroga seconds
+            var ft = firestoreEntity;
+            if (ft.ProrrogaSegundos.HasValue)
+                entity.Prorroga = TimeSpan.FromSeconds(ft.ProrrogaSegundos.Value);
+            else
+                entity.Prorroga = null;
+
+            // Map HoraLimite string "HH:mm" to TimeOnly?
+            if (!string.IsNullOrWhiteSpace(ft.HoraLimite))
+            {
+                if (TimeOnly.TryParse(ft.HoraLimite, out var to))
+                    entity.HoraLimite = to;
+                else
+                    entity.HoraLimite = null;
+            }
+            else
+            {
+                entity.HoraLimite = null;
+            }
 
             return entity;
         }
@@ -91,6 +134,17 @@ namespace Convivia.Infrastructure.Repositories
                 throw new ArgumentException("Id de la tarea requerido", nameof(tareaActualizada));
 
             var firestoreEntity = tareaActualizada.Adapt<FirestoreTarea>();
+            // convert Prorroga TimeSpan? to ProrrogaSegundos
+            if (tareaActualizada.Prorroga.HasValue)
+                firestoreEntity.ProrrogaSegundos = tareaActualizada.Prorroga.Value.TotalSeconds;
+            else
+                firestoreEntity.ProrrogaSegundos = null;
+
+            // Map HoraLimite TimeOnly? to string HH:mm
+            if (tareaActualizada.HoraLimite.HasValue)
+                firestoreEntity.HoraLimite = tareaActualizada.HoraLimite.Value.ToString("HH:mm");
+            else
+                firestoreEntity.HoraLimite = null;
 
             var subcollectionPath = GetSubcollectionPath(tareaActualizada.PlantillaId);
 
@@ -112,6 +166,16 @@ namespace Convivia.Infrastructure.Repositories
 
             var firestoreEntity = tareaActualizada.Adapt<FirestoreTarea>();
             var subcollectionPath = GetSubcollectionPath(tareaActualizada.PlantillaId);
+            // convert Prorroga TimeSpan? to ProrrogaSegundos
+            if (tareaActualizada.Prorroga.HasValue)
+                firestoreEntity.ProrrogaSegundos = tareaActualizada.Prorroga.Value.TotalSeconds;
+            else
+                firestoreEntity.ProrrogaSegundos = null;
+
+            if (tareaActualizada.HoraLimite.HasValue)
+                firestoreEntity.HoraLimite = tareaActualizada.HoraLimite.Value.ToString("HH:mm");
+            else
+                firestoreEntity.HoraLimite = null;
             await _firebase.UpdateAsync(subcollectionPath, id, firestoreEntity, merge, ct);
         }
 

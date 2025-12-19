@@ -9,7 +9,7 @@ namespace Convivia.Shared.DTOs
 
         public string Nombre { get; set; }
 
-        public TimeOnly HoraLimite { get; set; }
+        public TimeOnly? HoraLimite { get; set; }
 
         public string? Descripcion { get; set; }
 
@@ -17,7 +17,7 @@ namespace Convivia.Shared.DTOs
 
         public byte[]? Foto { get; set; }
 
-        public DateTime? Prorroga { get; set; }
+        public TimeSpan? Prorroga { get; set; }
 
         // Reemplazamos Completada por Estado (como string en DTO)
         public string Estado { get; set; }

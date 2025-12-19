@@ -71,7 +71,6 @@ namespace Convivia.Infrastructure.Repositories
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
-            firestoreEntity.HoraLimite = plantilla.HoraLimite.ToString();
             firestoreEntity.StartDate = plantilla.StartDate?.ToString();
             await _firebase.UpdateAsync(COLLECTION, firestoreEntity.PlantillaId, firestoreEntity);
 

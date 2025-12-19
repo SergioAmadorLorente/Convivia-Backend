@@ -6,6 +6,7 @@ using Convivia.Domain.Entities;
 using MapsterMapper;
 using Convivia.Domain.Repositories;
 using Mapster;
+using Microsoft.Extensions.Logging;
 
 namespace Convivia.Application.Services
 {
@@ -25,11 +26,19 @@ namespace Convivia.Application.Services
     {
         private readonly IPlantillaTareaRepository _repository;
         private readonly IMapper _mapper;
+        private readonly ITareaRepository _tareaRepository;
+        private readonly ILogger<PlantillaTareaService> _logger;
 
-        public PlantillaTareaService(IPlantillaTareaRepository plantilla, IMapper _mapper)
+        public PlantillaTareaService(
+            IPlantillaTareaRepository plantilla,
+            IMapper _mapper,
+            ITareaRepository tareaRepository,
+            ILogger<PlantillaTareaService> logger)
         {
             _repository = plantilla ?? throw new ArgumentNullException(nameof(plantilla));
             this._mapper = _mapper ?? throw new ArgumentNullException(nameof(_mapper));
+            _tareaRepository = tareaRepository ?? throw new ArgumentNullException(nameof(tareaRepository));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<string> AddAsync(CreatePlantillaTareaDto dto, string espacioid)
@@ -59,7 +68,7 @@ namespace Convivia.Application.Services
             return plantillanovaid;
         }
 
-        public async Task<PlantillaTareaDto> UpdateAsync(string espacioid, string id, UpdatePlantillaTareaDto dto, ITareaRepository? tareaRepository = null)
+        public async Task<PlantillaTareaDto> UpdateAsync(string espacioid, string id, UpdatePlantillaTareaDto dto)
         {
             if (string.IsNullOrWhiteSpace(espacioid))
                 throw new ArgumentNullException(nameof(espacioid));
@@ -77,11 +86,10 @@ namespace Convivia.Application.Services
             if (!string.IsNullOrWhiteSpace(dto.Nombre) && string.IsNullOrWhiteSpace(dto.Nombre))
                 throw new ArgumentException("Nombre no puede estar vacío si se proporciona.", nameof(dto.Nombre));
 
-            // Validación 3: Verificar HoraLimite si se actualiza
+            // Validación 3: Verificar HoraLimite si se actualiza (solo se usa para creación de nuevas tareas)
             if (dto.HoraLimite.HasValue)
             {
-                // HoraLimite válido (TimeOnly)
-                // Se valida automáticamente por el tipo
+                // hora válida por el tipo TimeOnly
             }
 
             // Validación 4: Verificar FacturaId si se actualiza
@@ -129,8 +137,7 @@ namespace Convivia.Application.Services
             if (!string.IsNullOrWhiteSpace(dto.Nombre))
                 domPlantilla.Nombre = dto.Nombre;
 
-            if (dto.HoraLimite.HasValue)
-                domPlantilla.HoraLimite = dto.HoraLimite.Value;
+            // plantilla no almacena HoraLimite
 
             if (!string.IsNullOrWhiteSpace(dto.Descripcion))
                 domPlantilla.Descripcion = dto.Descripcion;
@@ -147,32 +154,115 @@ namespace Convivia.Application.Services
             if (dto.DiasRepeticion != null && dto.DiasRepeticion.Count >= 0)
                 domPlantilla.DiasRepeticion = dto.DiasRepeticion;
 
-            // Si DiasRepeticion cambió y tenemos tareaRepository, eliminar/crear tareas accordingly
-            if (diasRepeticionCambiaron && tareaRepository != null && domPlantilla.TareasId != null)
+            // Si DiasRepeticion cambió, sincronizar tareas
+            if (diasRepeticionCambiaron && domPlantilla.TareasId != null)
             {
-                // Eliminar tareas de días que se removieron
-                foreach (int diaRemovido in diasRemovidos)
-                {
-                    var tareasAEliminar = new List<string>();
-                    foreach (var tareaId in domPlantilla.TareasId)
-                    {
-                        var tarea = await tareaRepository.GetAsync(id, tareaId);
-                        if (tarea != null && tarea.DiaSemana == diaRemovido)
-                        {
-                            tareasAEliminar.Add(tareaId);
-                            await tareaRepository.DeleteAsync(tareaId);
-                        }
-                    }
-                    domPlantilla.TareasId = domPlantilla.TareasId.Except(tareasAEliminar).ToList();
-                }
-
-                // Nota: La creación de nuevas tareas para días añadidos debe hacerse en TareaService
-                // ya que necesita acceso a UsuariosAsignacion y otras lógicas complejas
+                // Pass HoraLimite from DTO so new tasks get the provided hour; if null, Syncronizar will try to infer from existing tasks
+                await SyncronizarTareasConDiasRepeticion(id, domPlantilla, diasRemovidos, diasAñadidos, dto.UsuariosAsignacion, dto.HoraLimite);
             }
 
             await _repository.UpdateAsync(id, domPlantilla);
 
             return _mapper.Map<PlantillaTareaDto>(domPlantilla);
+        }
+
+        /// <summary>
+        /// Sincroniza las tareas con los cambios en DiasRepeticion.
+        /// - Elimina tareas de días que se removieron
+        /// - Mantiene tareas de días que se mantienen
+        /// - Crea nuevas tareas para días que se añadieron (si se proporciona UsuariosAsignacion)
+        /// </summary>
+        private async Task SyncronizarTareasConDiasRepeticion(
+            string plantillaId,
+            PlantillaTarea plantilla,
+            List<int> diasRemovidos,
+            List<int> diasAñadidos,
+            List<string>? usuariosAsignacion,
+            TimeOnly? horaLimiteForNewTasks)
+        {
+            try
+            {
+                // 1. Eliminar tareas de días que se removieron
+                foreach (int diaRemovido in diasRemovidos)
+                {
+                    var tareasAEliminar = new List<string>();
+                    foreach (var tareaId in plantilla.TareasId ?? new List<string>())
+                    {
+                        var tarea = await _tareaRepository.GetAsync(plantillaId, tareaId);
+                        if (tarea != null && tarea.DiaSemana == diaRemovido)
+                        {
+                            tareasAEliminar.Add(tareaId);
+                            await _tareaRepository.DeleteAsync(tareaId);
+                            _logger.LogInformation("Tarea {TareaId} eliminada (día {Dia} removido)", tareaId, diaRemovido);
+                        }
+                    }
+                    plantilla.TareasId = plantilla.TareasId.Except(tareasAEliminar).ToList();
+                }
+
+                // 2. Crear tareas para días que se añadieron
+                if (diasAñadidos.Any())
+                {
+                    // Validar que se proporciona UsuariosAsignacion para crear nuevas tareas
+                    if (usuariosAsignacion == null || usuariosAsignacion.Count == 0)
+                    {
+                        throw new InvalidOperationException(
+                            $"Se agregaron nuevos días ({string.Join(",", diasAñadidos)}) pero no se proporcionó UsuariosAsignacion. " +
+                            "Debe asignar al menos un usuario para crear tareas en estos días.");
+                    }
+
+                    // If no hora provided, try to infer from an existing tarea in plantilla
+                    TimeOnly? horaToUse = horaLimiteForNewTasks;
+                    if (!horaToUse.HasValue)
+                    {
+                        foreach (var existingTareaId in plantilla.TareasId ?? new List<string>())
+                        {
+                            var existingTarea = await _tareaRepository.GetAsync(plantillaId, existingTareaId);
+                            if (existingTarea != null && existingTarea.HoraLimite.HasValue)
+                            {
+                                horaToUse = existingTarea.HoraLimite;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Require horaToUse to be present (either provided or inferred)
+                    if (!horaToUse.HasValue)
+                    {
+                        throw new InvalidOperationException("Se agregaron nuevos días de repetición, se requiere HoraLimite para crear las instancias de tarea o debe existir al menos una tarea previa con HoraLimite.");
+                    }
+
+                    foreach (int diaAñadido in diasAñadidos)
+                    {
+                        // Crear nueva tarea para este día
+                        var nuevaTarea = new Tarea
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            PlantillaId = plantillaId,
+                            DiaSemana = diaAñadido,
+                            Estado = TareaEstado.Pendiente,
+                            FechaLimite = plantilla.EndDate?.ToDateTime(TimeOnly.MinValue),
+                            HoraLimite = horaToUse,
+                            // Si se proporciona un solo usuario, asignarlo a todas las tareas nuevas
+                            // Si se proporcionan múltiples usuarios, usar el que corresponda por posición
+                            UsuarioEspacioId = usuariosAsignacion.Count == 1 
+                                ? usuariosAsignacion[0] 
+                                : usuariosAsignacion[Math.Min(diasAñadidos.IndexOf(diaAñadido), usuariosAsignacion.Count - 1)]
+                        };
+
+                        await _tareaRepository.AddAsync(nuevaTarea);
+                        plantilla.TareasId.Add(nuevaTarea.Id);
+
+                        _logger.LogInformation(
+                            "Tarea {TareaId} creada para día {Dia} con usuario {UsuarioId}",
+                            nuevaTarea.Id, diaAñadido, nuevaTarea.UsuarioEspacioId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sincronizando tareas con cambios en DiasRepeticion");
+                throw;
+            }
         }
 
         public async Task<bool> DeleteAsync(string espacioid, string id)
@@ -333,8 +423,12 @@ namespace Convivia.Application.Services
             if (tarea.DiaSemana != (int)nowLocal.DayOfWeek)
                 return false;
 
+            // Use task-specific HoraLimite; if missing, cannot compute overdue => return false
+            if (!tarea.HoraLimite.HasValue)
+                return false;
+
             var occurrenceDate = nowLocal.Date;
-            var horaLimite = plantilla.HoraLimite;
+            var horaLimite = tarea.HoraLimite.Value;
 
             var dueLocal = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
                                         horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
