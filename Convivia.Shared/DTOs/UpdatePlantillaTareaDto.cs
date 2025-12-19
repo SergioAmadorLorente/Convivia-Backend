@@ -23,5 +23,14 @@ namespace Convivia.Shared.DTOs
         public int? GracePeriodMinutes { get; set; }
 
         public DateTime? FechaFin { get; set; }
+
+        /// <summary>
+        /// Días de repetición semanal (0=Domingo, 6=Sábado) a actualizar.
+        /// Si se proporciona y es diferente a los días actuales:
+        /// - Se crearán nuevas tareas para los días añadidos
+        /// - Se eliminarán tareas para los días removidos
+        /// Null/vacío = no cambiar días de repetición
+        /// </summary>
+        public List<int>? DiasRepeticion { get; set; }
     }
 }

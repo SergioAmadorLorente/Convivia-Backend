@@ -59,7 +59,7 @@ namespace Convivia.Application.Services
             return plantillanovaid;
         }
 
-        public async Task<PlantillaTareaDto> UpdateAsync(string espacioid, string id, UpdatePlantillaTareaDto dto)
+        public async Task<PlantillaTareaDto> UpdateAsync(string espacioid, string id, UpdatePlantillaTareaDto dto, ITareaRepository? tareaRepository = null)
         {
             if (string.IsNullOrWhiteSpace(espacioid))
                 throw new ArgumentNullException(nameof(espacioid));
@@ -106,7 +106,24 @@ namespace Convivia.Application.Services
                 }
             }
 
+            // Validación 7: Verificar DiasRepeticion si se actualiza
+            if (dto.DiasRepeticion != null && dto.DiasRepeticion.Count > 0)
+            {
+                foreach (int dia in dto.DiasRepeticion)
+                {
+                    if (dia < 0 || dia > 6)
+                        throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Domingo, 6=Sábado).", nameof(dto.DiasRepeticion));
+                }
+            }
+
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+
+            // Detectar cambios en DiasRepeticion (para luego eliminar/crear tareas)
+            var diasAnterior = domPlantilla.DiasRepeticion ?? new List<int>();
+            var diasNuevo = dto.DiasRepeticion ?? diasAnterior;
+            var diasRemovidos = diasAnterior.Except(diasNuevo).ToList();
+            var diasAñadidos = diasNuevo.Except(diasAnterior).ToList();
+            bool diasRepeticionCambiaron = diasRemovidos.Any() || diasAñadidos.Any();
 
             // Aplicar cambios del DTO al dominio
             if (!string.IsNullOrWhiteSpace(dto.Nombre))
@@ -126,6 +143,32 @@ namespace Convivia.Application.Services
 
             if (dto.TareasId != null && dto.TareasId.Count > 0)
                 domPlantilla.TareasId = dto.TareasId;
+
+            if (dto.DiasRepeticion != null && dto.DiasRepeticion.Count >= 0)
+                domPlantilla.DiasRepeticion = dto.DiasRepeticion;
+
+            // Si DiasRepeticion cambió y tenemos tareaRepository, eliminar/crear tareas accordingly
+            if (diasRepeticionCambiaron && tareaRepository != null && domPlantilla.TareasId != null)
+            {
+                // Eliminar tareas de días que se removieron
+                foreach (int diaRemovido in diasRemovidos)
+                {
+                    var tareasAEliminar = new List<string>();
+                    foreach (var tareaId in domPlantilla.TareasId)
+                    {
+                        var tarea = await tareaRepository.GetAsync(id, tareaId);
+                        if (tarea != null && tarea.DiaSemana == diaRemovido)
+                        {
+                            tareasAEliminar.Add(tareaId);
+                            await tareaRepository.DeleteAsync(tareaId);
+                        }
+                    }
+                    domPlantilla.TareasId = domPlantilla.TareasId.Except(tareasAEliminar).ToList();
+                }
+
+                // Nota: La creación de nuevas tareas para días añadidos debe hacerse en TareaService
+                // ya que necesita acceso a UsuariosAsignacion y otras lógicas complejas
+            }
 
             await _repository.UpdateAsync(id, domPlantilla);
 
