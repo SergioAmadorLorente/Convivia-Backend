@@ -26,7 +26,7 @@ namespace Convivia.Application.Services
             var plantillaTarea = _mapper.Map<PlantillaTarea>(dto);
             plantillaTarea.Id = Guid.NewGuid().ToString("N");
             await _repository.AddAsync(plantillaTarea);
-            return _mapper.Map<PlantillaTareaDto>(plantillaTarea).PlantillaId;
+            return _mapper.Map<PlantillaTareaDto>(plantillaTarea).IdPlantilla;
 
         }
 

@@ -46,8 +46,8 @@ namespace Convivia.Application.Services
             }
 
             var createdDto = _mapper.Map<UsuarioDto>(createdDomain);
-            if (string.IsNullOrWhiteSpace(createdDto.IdUsuario))
-                createdDto.IdUsuario = id;
+            if (string.IsNullOrWhiteSpace(createdDto.Id))
+                createdDto.Id = id;
 
             return createdDto;
         }

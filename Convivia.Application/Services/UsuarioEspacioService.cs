@@ -11,7 +11,6 @@ namespace Convivia.Application.Services
     public class UsuarioEspacioService
     {
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
-
         private readonly IMapper _mapper;
         private readonly ILogger<UsuarioEspacioService> _logger;
 
@@ -35,9 +34,8 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId no puede estar vacío", nameof(dto.EspacioId));
             if (string.IsNullOrWhiteSpace(dto.UsuarioId)) throw new ArgumentException("UsuarioId no puede estar vacío", nameof(dto.UsuarioId));
             if (dto.TareasId == null) throw new ArgumentException("TareasId no puede ser nulo", nameof(dto.TareasId));
-
             if (string.IsNullOrWhiteSpace(dto.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacío", nameof(dto.PermisoId));
-            if (dto.UsuarioEspaciosId == null) throw new ArgumentException("UsuarioEspaciosId no puede ser nulo", nameof(dto.UsuarioEspaciosId));            
+
 
             // DTO -> Domain
             var UsuarioEspacioDomain = _mapper.Map<UsuarioEspacio>(dto);
@@ -110,6 +108,27 @@ namespace Convivia.Application.Services
             return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
         }
 
+        /// <summary>
+        /// Merge: fusiona los campos del objeto con los del documento existente (SetOptions.MergeAll).
+        /// </summary>
+        public async Task<UsuarioEspacioDto?> ActualizarUsuarioEspacioMergeAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var existing = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
+
+            // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
+            _mapper.Map(dto, existing);
+
+            // Persistir con merge para evitar sobrescribir campos no mapeados
+            await _usuarioEspacioRepository.UpdateAsync(id, existing, merge: true, ct);
+
+            var updated = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
+        }
+
         // Actualización parcial
         public async Task<UsuarioEspacioDto?> ActualizarUsuarioEspacioParcialAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
         {
@@ -132,7 +151,7 @@ namespace Convivia.Application.Services
         }
 
         // Eliminar UsuarioEspacio
-        public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
+        public async Task<bool> EliminarUsuarioEspacioAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
 

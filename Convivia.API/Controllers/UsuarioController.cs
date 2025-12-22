@@ -59,6 +59,19 @@ namespace Convivia.API.Controllers
             if (updated == null) return NotFound();
             return Ok(updated);
         }
+
+        // PUT api/usuario/{id}/merge
+        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        [HttpPut("{id}/merge")]
+        public async Task<IActionResult> PutMerge(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioMergeAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
         // PATCH api/usuario/{id}
         // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
         [HttpPatch("{id}")]
