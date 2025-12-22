@@ -10,11 +10,13 @@ namespace Convivia.Application.Services
     {
         private readonly IUsuarioEspacioRepository _repo;
         private readonly ILogger<UsuarioEspacioService> _logger;
+        private readonly IFacturaRepository _facturaRepo;
 
-        public UsuarioEspacioService(IUsuarioEspacioRepository repo, ILogger<UsuarioEspacioService> logger)
+        public UsuarioEspacioService(IUsuarioEspacioRepository repo, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _facturaRepo = facturaRepo ?? throw new ArgumentNullException(nameof(facturaRepo));  
         }
 
         // Crear UsuarioEspacio
@@ -95,9 +97,13 @@ namespace Convivia.Application.Services
         }
 
         // Eliminar UsuarioEspacio
+        // on delete restriction: no debe tener facturas asociadas (debe gestionarse en el back i no en el front para mejorar la experiencia de usuario)
         public async Task EliminarAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido", nameof(id));
+            if (await _facturaRepo.ExistsByUsuarioEspacioIdAsync(id, ct).ConfigureAwait(false))
+                throw new InvalidOperationException($"No se puede eliminar el UsuarioEspacio {id}: existen facturas asociadas.");
+
             await _repo.DeleteAsync(id, ct);
         }
     }

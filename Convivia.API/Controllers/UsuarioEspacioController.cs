@@ -82,8 +82,16 @@ namespace Convivia.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Eliminar(string id, CancellationToken ct)
         {
-            await _service.EliminarAsync(id, ct);
-            return NoContent();
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+            try
+            {
+                await _service.EliminarAsync(id, ct);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
     }
 }
