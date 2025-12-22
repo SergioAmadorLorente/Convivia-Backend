@@ -1,5 +1,6 @@
 ﻿using Convivia.Shared.DTOs;
 using Google.Api;
+using Google.Cloud.Firestore.V1;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Convivia.Domain.Repositories
         Task DeleteAsync(string id, CancellationToken ct = default);
         Task<IEnumerable<FacturaDto>> QueryByFieldAsync(string field, object value, CancellationToken ct = default);
         Task<bool> ExistsByUsuarioEspacioIdAsync(string espacioId, CancellationToken ct = default);
+        Task<Lsit<Factura?>> GetByUsuarioEspacioIdAsync(string usuarioespacioid, CancellationToken ct = default);
 
     }
 }

@@ -1,7 +1,8 @@
-using Mapster;
-using Convivia.Shared.DTOs;
 using Convivia.Domain.Entities;
 using Convivia.Domain.Repositories;
+using Convivia.Shared.DTOs;
+using Convivia.Shared.Helpers;
+using Mapster;
 using Microsoft.Extensions.Logging;
 
 namespace Convivia.Application.Services
@@ -11,6 +12,7 @@ namespace Convivia.Application.Services
         private readonly IUsuarioEspacioRepository _repo;
         private readonly ILogger<UsuarioEspacioService> _logger;
         private readonly IFacturaRepository _facturaRepo;
+        private readonly ITareaRepository _tareaRepo;
 
         public UsuarioEspacioService(IUsuarioEspacioRepository repo, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo)
         {
@@ -105,6 +107,48 @@ namespace Convivia.Application.Services
                 throw new InvalidOperationException($"No se puede eliminar el UsuarioEspacio {id}: existen facturas asociadas.");
 
             await _repo.DeleteAsync(id, ct);
+        }
+
+        /// <summary>
+        /// Cambia el Id de un UsuarioEspacio y propaga el nuevo Id a todos las Facturas i tareas (ON UPDATE CASCADE).
+        /// Nota: renombrar Id en Firestore implica crear nuevo documento y borrar el antiguo.
+        /// </summary>
+        public async Task ChangeUsuarioEspacioIdCascadeAsync(string oldId, string newId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(oldId)) throw new ArgumentException("oldId requerido");
+            if (string.IsNullOrWhiteSpace(newId)) throw new ArgumentException("newId requerido");
+            if (oldId == newId) return;
+
+            var usuarioEspacio = await _repo.GetByIdAsync(oldId, ct);
+            if (usuarioEspacio == null) throw new KeyNotFoundException($"Espacio {oldId} no encontrado");
+
+            // 1) Crear nuevo documento con newId
+            usuarioEspacio.Id = newId;
+            await _repo.AddAsync(usuarioEspacio, ct);
+
+            // 2) Obtener todos los elementos que referencian oldId
+            var facturas = (await _facturaRepo.GetByEspacioIdAsync(oldId, ct)).ToList();
+            var tareas = (await _tareaRepo.GetByEspacioIdAsync(oldId, ct)).ToList();
+
+
+            // 3) Actualizar en batches usando BatchHelper para no saturar
+            await BatchHelper.ProcessInBatchesAsync<UsuarioEspacio>(
+                usuarios,
+                async (batch, token) =>
+                {
+                    foreach (var ue in batch)
+                    {
+                        ue.EspacioId = newId;
+                        await _usuarioEspacioRepo.UpdateAsync(ue.Id_UsuarioEspacio, ue, token);
+                    }
+                },
+                batchSize: 500,
+                maxRetries: 3,
+                ct: ct
+            );
+
+            // 4) Borrar documento antiguo
+            await _repo.DeleteAsync(oldId, ct);
         }
     }
 }

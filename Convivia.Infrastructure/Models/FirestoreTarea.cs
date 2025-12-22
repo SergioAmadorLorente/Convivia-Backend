@@ -13,7 +13,7 @@ namespace Convivia.Infrastructure.Models
         public string Id { get; set; }
 
         [FirestoreProperty]
-        public List<string> UsuarioEspaciosIds { get; set; }
+        public string? UsuarioEspacioId { get; set; }
 
         [FirestoreProperty]
         public DateTime? FechaRealizacion { get; set; }
