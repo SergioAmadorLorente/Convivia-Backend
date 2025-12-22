@@ -240,7 +240,9 @@ namespace Convivia.Application.Services
                             PlantillaId = plantillaId,
                             DiaSemana = diaAñadido,
                             Estado = TareaEstado.Pendiente,
-                            FechaLimite = plantilla.EndDate?.ToDateTime(TimeOnly.MinValue),
+                            // Para tareas repetidas (DiaSemana >= 0): NO asignar FechaLimite
+                            // El control temporal viene de PlantillaTarea.StartDate y PlantillaTarea.EndDate
+                            FechaLimite = null,
                             HoraLimite = horaToUse,
                             // Si se proporciona un solo usuario, asignarlo a todas las tareas nuevas
                             // Si se proporcionan múltiples usuarios, usar el que corresponda por posición

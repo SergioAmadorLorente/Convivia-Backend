@@ -18,30 +18,24 @@ namespace Convivia.Domain.Entities
 
         public DateTime? FechaRealizacion { get; set; }
 
-        public byte[]? Foto { get; set; } // Para almacenar imagen binaria
+        public byte[]? Foto { get; set; }
 
-        // Prorroga ahora representa la duración (TimeSpan) que ha pasado desde el vencimiento
-        public TimeSpan? Prorroga { get; set; } // Puede ser null
+        public TimeSpan? Prorroga { get; set; }
 
-        // Reemplazamos los booleanos Completada/Disponible por el enum Estado
         public TareaEstado Estado { get; set; } = TareaEstado.Pendiente;
 
-        public string PlantillaId { get; set; } = string.Empty; // obligatorio
+        public string PlantillaId { get; set; } = string.Empty;
 
-        // Single assigned user per task
         public string? UsuarioEspacioId { get; set; }
 
         public int DiaSemana { get; set; }
 
-        // Fecha limite para tarea puntual o referencia
         public DateTime? FechaLimite { get; set; }
 
-        // Hora límite específica para esta instancia de tarea (si es null usar la de la plantilla)
         public TimeOnly? HoraLimite { get; set; }
 
         public Tarea()
         {
-            // Constructor vacío necesario para la deserialización
         }
 
         public Tarea(string usuarioEspacioId, string plantillaId)

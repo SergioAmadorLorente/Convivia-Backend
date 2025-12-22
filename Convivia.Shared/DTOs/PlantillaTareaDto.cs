@@ -24,5 +24,9 @@ namespace Convivia.Shared.DTOs
 
         public string? FacturaId { get; set; }
 
+        public DateOnly? StartDate { get; set; }
+
+        public DateOnly? EndDate { get; set; }
+
     }
 }

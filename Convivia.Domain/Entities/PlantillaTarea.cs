@@ -24,12 +24,10 @@ namespace Convivia.Domain.Entities
 
         public List<string> TareasId { get; set; }
 
-        // HoraLimite removed from plantilla: hora se almacena por tarea individual
-
         public int? GracePeriodMinutes { get; set; } = 30;
 
         public DateOnly? StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
-        public DateOnly? EndDate { get; set; } = null;
+        public DateOnly? EndDate { get; set; }
 
         public PlantillaTarea()
         {
