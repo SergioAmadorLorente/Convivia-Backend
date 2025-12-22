@@ -93,12 +93,6 @@ namespace Convivia.Application.Services
             }
 
             // Validación 4: Verificar FacturaId si se actualiza
-            if (!string.IsNullOrWhiteSpace(dto.FacturaId))
-            {
-                var facturaValidation = await ValidateFacturaExistsAsync(dto.FacturaId);
-                if (!facturaValidation.IsValid)
-                    throw new InvalidOperationException(facturaValidation.ErrorMessage);
-            }
 
             // Validación 5: Verificar karma si se actualiza
             if (dto.karma.HasValue && dto.karma < 0)
@@ -188,7 +182,7 @@ namespace Convivia.Application.Services
                     var tareasAEliminar = new List<string>();
                     foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                     {
-                        var tarea = await _tareaRepository.GetAsync(plantillaId, tareaId);
+                        var tarea = await _tareaRepository.GetInstanciaAsync(plantillaId, tareaId);
                         if (tarea != null && tarea.DiaSemana == diaRemovido)
                         {
                             tareasAEliminar.Add(tareaId);
@@ -216,7 +210,7 @@ namespace Convivia.Application.Services
                     {
                         foreach (var existingTareaId in plantilla.TareasId ?? new List<string>())
                         {
-                            var existingTarea = await _tareaRepository.GetAsync(plantillaId, existingTareaId);
+                            var existingTarea = await _tareaRepository.GetInstanciaAsync(plantillaId, existingTareaId);
                             if (existingTarea != null && existingTarea.HoraLimite.HasValue)
                             {
                                 horaToUse = existingTarea.HoraLimite;
@@ -329,93 +323,6 @@ namespace Convivia.Application.Services
                 return null;
             return _mapper.Map<PlantillaTareaDto>(plantilla);
         }
-
-        /// <summary>
-        /// Valida que el Espacio existe
-        /// </summary>
-        public async Task<ValidationResult> ValidateEspacioExistsAsync(string espacioid)
-        {
-            if (string.IsNullOrWhiteSpace(espacioid))
-                return ValidationResult.Failure("EspacioId no puede estar vacío.");
-
-            // TODO: Implementar consulta a IEspacioRepository cuando esté disponible
-            // Por ahora, solo validar que no es null/vacío
-            // En una implementación completa, verificar que el Espacio existe en BD
-
-            return ValidationResult.Success();
-        }
-
-        /// <summary>
-        /// Valida que los UsuarioEspacios existen y pertenecen al Espacio
-        /// </summary>
-        public async Task<ValidationResult> ValidateUsuariosEspacioExistAsync(string espacioid, List<string> usuarioEspaciosIds)
-        {
-            if (string.IsNullOrWhiteSpace(espacioid))
-                return ValidationResult.Failure("EspacioId no puede estar vacío.");
-
-            if (usuarioEspaciosIds == null || usuarioEspaciosIds.Count == 0)
-                return ValidationResult.Success();
-
-            foreach (var ueId in usuarioEspaciosIds)
-            {
-                if (string.IsNullOrWhiteSpace(ueId))
-                    return ValidationResult.Failure("UsuarioEspacioId contiene valores vacíos.");
-
-                // TODO: Implementar consulta a IUsuarioEspacioRepository cuando esté disponible
-                // Verificar que el UsuarioEspacio existe y pertenece al Espacio
-            }
-
-            return ValidationResult.Success();
-        }
-
-        /// <summary>
-        /// Valida que el UsuarioEspacio existe
-        /// </summary>
-        public async Task<ValidationResult> ValidateUsuarioEspacioExistAsync(string espacioid, string usuarioEspacioId)
-        {
-            if (string.IsNullOrWhiteSpace(espacioid))
-                return ValidationResult.Failure("EspacioId no puede estar vacío.");
-
-            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
-                return ValidationResult.Failure("UsuarioEspacioId no puede estar vacío.");
-
-            // TODO: Implementar consulta a IUsuarioEspacioRepository cuando esté disponible
-            // Verificar que el UsuarioEspacio existe y pertenece al Espacio
-
-            return ValidationResult.Success();
-        }
-
-        /// <summary>
-        /// Valida que la Sala existe y pertenece al Espacio
-        /// </summary>
-        public async Task<ValidationResult> ValidateSalaExistsAsync(string espacioid, string salaId)
-        {
-            if (string.IsNullOrWhiteSpace(espacioid))
-                return ValidationResult.Failure("EspacioId no puede estar vacío.");
-
-            if (string.IsNullOrWhiteSpace(salaId))
-                return ValidationResult.Failure("SalaId no puede estar vacío.");
-
-            // TODO: Implementar consulta a ISalaRepository cuando esté disponible
-            // Verificar que la Sala existe y pertenece al Espacio
-
-            return ValidationResult.Success();
-        }
-
-        /// <summary>
-        /// Valida que la Factura existe
-        /// </summary>
-        public async Task<ValidationResult> ValidateFacturaExistsAsync(string facturaId)
-        {
-            if (string.IsNullOrWhiteSpace(facturaId))
-                return ValidationResult.Failure("FacturaId no puede estar vacío.");
-
-            // TODO: Implementar consulta a IFacturaRepository cuando esté disponible
-            // Verificar que la Factura existe
-
-            return ValidationResult.Success();
-        }
-
         private static bool IsOverdue(Tarea tarea, PlantillaTarea plantilla)
         {
             var tz = TimeZoneInfo.FindSystemTimeZoneById(plantilla.TimeZoneId);

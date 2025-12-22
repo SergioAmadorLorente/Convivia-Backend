@@ -14,7 +14,7 @@ namespace Convivia.Application.Services
 {
     public class TareaService
     {
-        private readonly ITareaRepository _repository;
+        private readonly ITareaRepository _tareaRepository;
         private readonly IMapper _mapper;
         private readonly PlantillaTareaService _ptservice;
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
@@ -29,7 +29,7 @@ namespace Convivia.Application.Services
             IUsuarioEspacioRepository usuarioEspacioRepository,
             ILogger<TareaService> logger)
         {
-            _repository = tarea ?? throw new ArgumentNullException(nameof(tarea));
+            _tareaRepository = tarea ?? throw new ArgumentNullException(nameof(tarea));
             this._mapper = _mapper ?? throw new ArgumentNullException(nameof(_mapper));
             _ptservice = ptservice ?? throw new ArgumentNullException(nameof(ptservice));
             _usuarioEspacioRepository = usuarioEspacioRepository ?? throw new ArgumentNullException(nameof(usuarioEspacioRepository));
@@ -40,10 +40,6 @@ namespace Convivia.Application.Services
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
-
-            var plantillaValidation = await _ptservice.ValidateEspacioExistsAsync(espacioid);
-            if (!plantillaValidation.IsValid)
-                throw new InvalidOperationException(plantillaValidation.ErrorMessage);
 
             if (!KarmasValidos.Contains(dto.karma))
                 throw new ArgumentException("karma debe ser 5, 15, 25 o 50.", nameof(dto.karma));
@@ -132,7 +128,7 @@ namespace Convivia.Application.Services
                 tarea.PlantillaId = plantillaId;
             }
 
-            var ids = await _repository.AddAsyncList(tareas);
+            var ids = await _tareaRepository.AddAsyncList(tareas);
             return plantillaId;
         }
 
@@ -148,7 +144,7 @@ namespace Convivia.Application.Services
             {
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _repository.GetAsync(plantilla.PlantillaId, tareaId, ct);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId, ct);
                     if (tarea == null) continue;
 
                     if (tarea.DiaSemana < 0 || tarea.Estado != TareaEstado.Completada)
@@ -157,7 +153,7 @@ namespace Convivia.Application.Services
                     tarea.Estado = TareaEstado.Pendiente;
                     tarea.FechaRealizacion = null;
 
-                    await _repository.UpdateAsync(tareaId, tarea, merge: true, ct);
+                    await _tareaRepository.UpdateAsync(tareaId, tarea, merge: true, ct);
                     _logger.LogDebug("Tarea repetida {TareaId} reseteada a Pendiente.", tareaId);
                 }
             }
@@ -221,7 +217,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _repository.GetAsync(plantilla.PlantillaId, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
 
                     if (tarea.DiaSemana != diaSemana) continue;
@@ -264,7 +260,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _repository.GetAsync(plantilla.PlantillaId, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
 
                     if (!MatchesEstado(tarea, pt, estado)) continue;
@@ -333,7 +329,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _repository.GetAsync(plantilla.PlantillaId, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
 
                     if (diaSemana.HasValue && tarea.DiaSemana != diaSemana)
@@ -400,7 +396,7 @@ namespace Convivia.Application.Services
             if (plantilla == null)
                 return null;
 
-            var tarea = await _repository.GetAsync(plantillaId, tareaId);
+            var tarea = await _tareaRepository.GetInstanciaAsync(plantillaId, tareaId);
             if (tarea == null)
                 return null;
 
@@ -433,16 +429,9 @@ namespace Convivia.Application.Services
             if (plantilla == null)
                 return null;
 
-            var existing = await _repository.GetAsync(plantillaid, tareaid, ct);
+            var existing = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
             if (existing == null)
                 return null;
-
-            if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
-            {
-                var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
-                if (!userValidation.IsValid)
-                    throw new InvalidOperationException(userValidation.ErrorMessage);
-            }
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
 
@@ -504,9 +493,9 @@ namespace Convivia.Application.Services
                 }
             }
 
-            await _repository.UpdateAsync(tareaid, domain, merge: false, ct);
+            await _tareaRepository.UpdateAsync(tareaid, domain, merge: false, ct);
 
-            var updated = await _repository.GetAsync(plantillaid, tareaid, ct);
+            var updated = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
             if (updated == null)
                 return null;
 
@@ -548,7 +537,7 @@ namespace Convivia.Application.Services
 
                 try
                 {
-                    await _repository.DeleteAsync(tareaid, ct);
+                    await _tareaRepository.DeleteAsync(tareaid, ct);
                 }
                 catch (Exception ex)
                 {
@@ -578,16 +567,9 @@ namespace Convivia.Application.Services
             if (plantilla == null)
                 return null;
 
-            var existing = await _repository.GetAsync(plantillaid, tareaid, ct);
+            var existing = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
             if (existing == null)
                 return null;
-
-            if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
-            {
-                var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
-                if (!userValidation.IsValid)
-                    throw new InvalidOperationException(userValidation.ErrorMessage);
-            }
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
 
@@ -647,9 +629,9 @@ namespace Convivia.Application.Services
                 }
             }
 
-            await _repository.UpdateAsync(tareaid, existing, merge: true, ct);
+            await _tareaRepository.UpdateAsync(tareaid, existing, merge: true, ct);
 
-            var updated = await _repository.GetAsync(plantillaid, tareaid, ct);
+            var updated = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
             if (updated == null)
                 return null;
 
@@ -682,16 +664,9 @@ namespace Convivia.Application.Services
             if (plantilla == null)
                 return null;
 
-            var existing = await _repository.GetAsync(plantillaid, tareaid, ct);
+            var existing = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
             if (existing == null)
                 return null;
-
-            if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
-            {
-                var userValidation = await _ptservice.ValidateUsuarioEspacioExistAsync(espacioid, dto.UsuarioEspacioId);
-                if (!userValidation.IsValid)
-                    throw new InvalidOperationException(userValidation.ErrorMessage);
-            }
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
 
@@ -752,11 +727,11 @@ namespace Convivia.Application.Services
                 return dtoResp;
             }
 
-            await _repository.UpdateAsync(tareaid, updates, useSetMerge: false, ct);
+            await _tareaRepository.UpdateAsync(tareaid, updates, useSetMerge: false, ct);
 
             if (updates.ContainsKey("Estado") && (updates["Estado"]?.ToString() == TareaEstado.Completada.ToString() || updates["Estado"]?.ToString() == TareaEstado.CompletadaFueradePlazo.ToString()))
             {
-                var updatedAfter = await _repository.GetAsync(plantillaid, tareaid, ct);
+                var updatedAfter = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
                 if (updatedAfter != null)
                 {
                     var dueUtc = GetDueUtcForTask(updatedAfter, domPlantilla);
@@ -764,12 +739,12 @@ namespace Convivia.Application.Services
                     if (dueUtc.HasValue && nowUtc > dueUtc.Value)
                     {
                         updatedAfter.Prorroga = nowUtc - dueUtc.Value;
-                        await _repository.UpdateAsync(tareaid, updatedAfter, merge: true, ct);
+                        await _tareaRepository.UpdateAsync(tareaid, updatedAfter, merge: true, ct);
                     }
                 }
             }
 
-            var updated = await _repository.GetAsync(plantillaid, tareaid, ct);
+            var updated = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
             if (updated == null)
                 return null;
 

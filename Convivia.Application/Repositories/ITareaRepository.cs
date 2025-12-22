@@ -9,10 +9,7 @@ namespace Convivia.Domain.Repositories
 {
     public interface ITareaRepository : IRepository<Tarea>
     {
+        Task<Tarea?> GetInstanciaAsync(string plantillaId, string tareaId, CancellationToken ct = default);
         Task<List<string>> AddAsyncList(List<Tarea> tareas, CancellationToken ct = default);
-        Task<Tarea?> GetAsync(string plantillaId, string tareaId, CancellationToken ct = default);
-        Task UpdateAsync(string id, Tarea tarea, CancellationToken ct = default);
-        Task UpdateAsync(string id, Tarea tarea, bool merge, CancellationToken ct = default);
-        Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default);
     }
 }

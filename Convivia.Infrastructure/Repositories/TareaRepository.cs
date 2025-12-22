@@ -4,23 +4,16 @@ using Convivia.Infrastructure.Models;
 using Convivia.Shared.Services;
 using Mapster;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using System;
 
 namespace Convivia.Infrastructure.Repositories
 {
     public class TareaRepository : Repository<FirestoreTarea>, ITareaRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<TareaRepository> _logger;
 
         public TareaRepository(IFirebaseService firebase, ILogger<TareaRepository> logger)
-            : base(firebase, logger: logger as ILogger<Repository<FirestoreTarea>> ?? throw new ArgumentNullException(nameof(logger)), collection: "plantillatareas/*/tareas")
+             : base(firebase, logger: logger as ILogger<Repository<FirestoreTarea>> ?? throw new ArgumentNullException(nameof(logger)), collection: "tareas")
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -28,6 +21,32 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("plantillaId requerido", nameof(plantillaId));
             return $"plantillatareas/{plantillaId}/tareas";
+        }
+
+        public async Task<List<string>> AddAsyncList(List<Tarea> tareas, CancellationToken ct = default)
+        {
+            if (tareas == null) throw new ArgumentNullException(nameof(tareas));
+            var ids = new List<string>();
+            foreach (var tarea in tareas)
+            {
+                if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
+                var firestoreEntity = tarea.Adapt<FirestoreTarea>();
+                if (tarea.Prorroga.HasValue)
+                    firestoreEntity.ProrrogaSegundos = tarea.Prorroga.Value.TotalSeconds;
+                else
+                    firestoreEntity.ProrrogaSegundos = null;
+
+                if (tarea.HoraLimite.HasValue)
+                    firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
+                else
+                    firestoreEntity.HoraLimite = null;
+
+                var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
+                await _firebase.AddAsync(subcollectionPath, tarea.Id, firestoreEntity, ct);
+                ids.Add(tarea.Id);
+            }
+
+            return ids;
         }
 
         public async Task<string> AddAsync(Tarea tarea, CancellationToken ct = default)
@@ -58,33 +77,7 @@ namespace Convivia.Infrastructure.Repositories
             throw new NotImplementedException("Usar GetAsync.");
         }
 
-        public async Task<List<string>> AddAsyncList(List<Tarea> tareas, CancellationToken ct = default)
-        {
-            if (tareas == null) throw new ArgumentNullException(nameof(tareas));
-            var ids = new List<string>();
-            foreach (var tarea in tareas)
-            {
-                if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
-                var firestoreEntity = tarea.Adapt<FirestoreTarea>();
-                if (tarea.Prorroga.HasValue)
-                    firestoreEntity.ProrrogaSegundos = tarea.Prorroga.Value.TotalSeconds;
-                else
-                    firestoreEntity.ProrrogaSegundos = null;
-
-                if (tarea.HoraLimite.HasValue)
-                    firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
-                else
-                    firestoreEntity.HoraLimite = null;
-
-                var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
-                await _firebase.AddAsync(subcollectionPath, tarea.Id, firestoreEntity, ct);
-                ids.Add(tarea.Id);
-            }
-
-            return ids;
-        }
-
-        public async Task<Tarea?> GetAsync(string plantillaId, string tareaId, CancellationToken ct = default)
+        public async Task<Tarea?> GetInstanciaAsync(string plantillaId, string tareaId, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("plantillaId requerido", nameof(plantillaId));
             if (string.IsNullOrWhiteSpace(tareaId)) throw new ArgumentException("tareaId requerido", nameof(tareaId));

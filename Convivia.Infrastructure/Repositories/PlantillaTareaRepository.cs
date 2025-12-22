@@ -7,8 +7,6 @@ using Mapster;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Convivia.Domain.Repositories;
 
 namespace Convivia.Infrastructure.Repositories
@@ -16,13 +14,11 @@ namespace Convivia.Infrastructure.Repositories
     public class PlantillaTareaRepository : Repository<FirestorePlantillaTarea>, IPlantillaTareaRepository
     {
         private const string COLLECTION = "plantillatareas";
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<PlantillaTareaRepository> _logger;
 
         public PlantillaTareaRepository(IFirebaseService firebase, ILogger<PlantillaTareaRepository> logger)
             : base(firebase, logger: logger as ILogger<Repository<FirestorePlantillaTarea>> ?? throw new ArgumentNullException(nameof(logger)), collection: "plantillatareas")
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
