@@ -87,6 +87,20 @@ namespace Convivia.Infrastructure.Repositories
             return domainList.Adapt<List<FacturaDto>>();
         }
 
-    
+        public async Task<List<Tarea>> GetByUsuarioEspacioIdAsync(string usuarioEspacioid, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioEspacioid)) throw new ArgumentNullException(nameof(usuarioEspacioid));
+            var facturasUsuarioEspacio = await _firebase.QueryAsync<FirestoreTarea>(Collection, nameof(FirestoreTarea.UsuarioEspacioId), usuarioEspacioid);
+            List<Tarea> lista = new List<Tarea>();
+            if (!facturasUsuarioEspacio.Any())
+                return lista;
+            foreach (var pte in facturasUsuarioEspacio)
+            {
+                var facturaMapped = pte.Adapt<Tarea>();
+                lista.Add(facturaMapped);
+            }
+
+            return lista;
+        }
     }
 }
