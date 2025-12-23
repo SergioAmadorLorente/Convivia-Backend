@@ -1,10 +1,10 @@
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Domain.Entities;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Convivia.Domain.Repositories
+namespace Convivia.Application.Repositories
 {
     public interface IUsuarioEspacioRepository : IRepository<UsuarioEspacio>
     {

@@ -16,145 +16,85 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
+        // POST api/peticion
         [HttpPost]
-        [ProducesResponseType(typeof(PeticionDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> CrearPeticion([FromBody] CreatePeticionDto dto)
+        public async Task<IActionResult> Create([FromBody] CreatePeticionDto model, CancellationToken ct)
         {
-            try
-            {
-                var created = await _service.CrearPeticionAsync(dto);
-                return CreatedAtAction(nameof(GetPeticion), new { id = created.Id }, created);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Problem(title: "Error interno", detail: ex.Message);
-            }
+            if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(model.Mensaje)) return BadRequest("Mensaje es requerido.");
+            if (string.IsNullOrWhiteSpace(model.IdSolicitante)) return BadRequest("Id solicitante es requerido.");
+            if (string.IsNullOrWhiteSpace(model.IdEspacio)) return BadRequest("Id espacio es requerido.");
+
+            var created = await _service.CrearPeticionAsync(model, ct);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
+
+        // GET api/peticion/{id}
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(PeticionDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetPeticion(string id)
+        public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
-            try
-            {
-                var peticion = await _service.ObtenerPeticionAsync(id);
-                return peticion is not null ? Ok(peticion) : NotFound();
-            }
-            catch (Exception ex)
-            {
-                return Problem(title: "Error interno", detail: ex.Message);
-            }
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            var peticion = await _service.ObtenerPeticionAsync(id, ct);
+            if (peticion == null) return NotFound();
+            return Ok(peticion);
         }
 
+        // GET api/peticion
         [HttpGet]
-        [ProducesResponseType(typeof(List<PeticionDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> ListPeticiones([FromQuery] string? estado, [FromQuery] string? espacioId, [FromQuery] string? solicitanteId)
+        public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            try
-            {
-                var list = await _service.ListarTodasAsync();
-
-                // Aplicar filtros si se proporcionan
-                if (!string.IsNullOrWhiteSpace(estado))
-                {
-                    list = list.Where(p => p.Estado?.Equals(estado, StringComparison.OrdinalIgnoreCase) == true).ToList();
-                }
-
-                if (!string.IsNullOrWhiteSpace(espacioId))
-                {
-                    list = list.Where(p => p.IdEspacio?.Equals(espacioId, StringComparison.OrdinalIgnoreCase) == true).ToList();
-                }
-
-                if (!string.IsNullOrWhiteSpace(solicitanteId))
-                {
-                    list = list.Where(p => p.IdSolicitante?.Equals(solicitanteId, StringComparison.OrdinalIgnoreCase) == true).ToList();
-                }
-
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                return Problem(title: "Error interno", detail: ex.Message);
-            }
+            var list = await _service.ListarTodasAsync(ct);
+            return Ok(list);
         }
 
-        [HttpPost("{id}/estado")]
-        [ProducesResponseType(typeof(PeticionDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> CambiarEstadoPeticion(string id, [FromBody] CambiarEstadoPeticionDto dto)
+        // PUT api/peticion/{id}
+        // Overwrite completo: reemplaza todo el documento en Firestore.
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdatePeticionDto model, CancellationToken ct)
         {
-            try
-            {
-                var updated = await _service.CambiarEstadoAsync(id, dto.Accion);
-                return updated is not null ? Ok(updated) : NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Problem(title: "Error interno", detail: ex.Message);
-            }
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarPeticionCompletaAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
+        // PUT api/peticion/{id}/merge
+        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        [HttpPut("{id}/merge")]
+        public async Task<IActionResult> PutMerge(string id, [FromBody] UpdatePeticionDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarPeticionMergeAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        // PATCH api/peticion/{id}
+        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
         [HttpPatch("{id}")]
-        [ProducesResponseType(typeof(PeticionDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> PatchPeticion(string id, [FromBody] UpdatePeticionDto dto)
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdatePeticionDto model, CancellationToken ct)
         {
-            try
-            {
-                var updated = await _service.ActualizarParcialAsync(id, dto);
-                return updated is not null ? Ok(updated) : NotFound();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Problem(title: "Error interno", detail: ex.Message);
-            }
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarPeticionParcialAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
+
+        // DELETE api/peticion/{id}
         [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> EliminarPeticion(string id)
+        public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
-            try
-            {
-                var ok = await _service.EliminarPeticionAsync(id);
-                return ok ? NoContent() : NotFound();
-            }
-            catch (Exception ex)
-            {
-                return Problem(title: "Error interno", detail: ex.Message);
-            }
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            var resultat = await _service.EliminarPeticionAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
     }
 
-    // DTO auxiliar para cambiar estado
-    public class CambiarEstadoPeticionDto
-    {
-        public string Accion { get; set; } = string.Empty;
-    }
 }

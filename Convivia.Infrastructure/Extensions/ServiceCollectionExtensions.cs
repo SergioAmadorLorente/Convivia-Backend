@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Convivia.Shared.Repositories;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Repositories;
 using Convivia.Infrastructure.Services;
@@ -13,6 +12,9 @@ namespace Convivia.Infrastructure.Extensions
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            // Servicios de infraestructura
+            services.AddScoped<IFirebaseService, FirebaseService>();
+
             // Repositorios concretos
             services.AddScoped<IInvitacionRepository, InvitacionRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
@@ -23,11 +25,8 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<ITareaRepository, TareaRepository>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
             services.AddScoped<IReservaRepository, ReservaRepository>();
-            services.AddScoped<IUsuarioEspacioRepository, UsuarioEspacioRepository>();            services.AddScoped<IFacturaRepository, FacturaRepository>();
-
-            // Servicios de infraestructura
-            services.AddScoped<IFirebaseService, FirebaseService>();
-
+            services.AddScoped<IUsuarioEspacioRepository, UsuarioEspacioRepository>();            
+            services.AddScoped<IFacturaRepository, FacturaRepository>();
 
             return services;
         }

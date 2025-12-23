@@ -10,7 +10,7 @@ namespace Convivia.Infrastructure.Models
     public class FireStoreInvitacion
     {
         [FirestoreProperty("Id")]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         [FirestoreProperty("UsuarioSolicitanteId")]
         public string UsuarioSolicitanteId { get; set; } = string.Empty;

@@ -17,7 +17,7 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        // POST api/invitaciones
+        // POST api/invitacion
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateInvitacionDto model, CancellationToken ct)
         {
@@ -29,8 +29,8 @@ namespace Convivia.API.Controllers
                 return BadRequest("UsuarioSolicitanteId, UsuarioInvitadoId y EspacioId son requeridos.");
             }
 
-            var id = await _service.CrearAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+            var created = await _service.CrearInvitacionAsync(model, ct);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // GET api/invitaciones/{id}
@@ -39,7 +39,7 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var invitacion = await _service.ObtenerPorIdAsync(id, ct);
+            var invitacion = await _service.ObtenerInvitacionAsync(id, ct);
             if (invitacion == null) return NotFound();
             return Ok(invitacion);
         }
@@ -54,15 +54,22 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // PUT api/invitaciones/{id}
+        // PUT api/invitaciones/{id}  -> actualizar mensaje (flujo existente)
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] CreateInvitacionDto model, CancellationToken ct)
+        public async Task<IActionResult> UpdateMensaje(string id, [FromBody] CreateInvitacionDto model, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-            if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            await _service.ActualizarMensajeAsync(id, model, ct);
-            return NoContent();
+            try
+            {
+                await _service.ActualizarMensajeAsync(id, model, ct);
+                var updated = await _service.ObtenerInvitacionAsync(id, ct);
+                return updated == null ? NotFound() : Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         // DELETE api/invitaciones/{id}
@@ -71,9 +78,8 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var removed = await _service.EliminarAsync(id, ct);
-            if (!removed) return NotFound();
-            return NoContent();
+            var resultat = await _service.EliminarInvitacionAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
     }
 }

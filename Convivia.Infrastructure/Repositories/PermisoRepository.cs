@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Models;
 using Convivia.Domain.Entities;
@@ -13,69 +12,46 @@ using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class PermisoRepository : IPermisoRepository
+    public class PermisoRepository : Repository<FireStorePermiso>, IPermisoRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<PermisoRepository> _logger;
         private const string Collection = "permisos";
 
-        public PermisoRepository(IFirebaseService firebase, ILogger<PermisoRepository> logger)
+        public PermisoRepository(IFirebaseService firebase, ILogger<PermisoRepository> logger, ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStorePermiso>>(), Collection)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(PermisoDto permiso, CancellationToken ct = default)
+        public async Task<string> AddAsync(Permiso permiso, CancellationToken ct = default)
         {
             if (permiso == null) throw new ArgumentNullException(nameof(permiso));
-            
-            // Convertir PermisoDto ? Permiso (Domain) ? FireStorePermiso (Firestore)
-            var permisoDomain = permiso.Adapt<Permiso>();
-            var permisoPersist = permisoDomain.Adapt<FireStorePermiso>();
-            
-            if (string.IsNullOrWhiteSpace(permisoPersist.Id))
-            {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, permisoPersist, ct);
-                return generatedId;
-            }
-
-            // Si ya tiene id, lo usamos para crear el documento con ese id
-            await _firebase.AddAsync(Collection, permisoPersist.Id, permisoPersist, ct);
-            return permisoPersist.Id;
+            var persist = permiso.Adapt<FireStorePermiso>();
+            return await base.AddAsync(persist, persist.Id, ct);
         }
 
-        public async Task<PermisoDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<Permiso?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                // Obtener FireStorePermiso de Firestore
-                var permisoPersist = await _firebase.GetAsync<FireStorePermiso>(Collection, id, ct);
-                if (permisoPersist == null) return null;
-                
-                // Convertir FireStorePermiso ? Permiso (Domain) ? PermisoDto
-                var permisoDomain = permisoPersist.Adapt<Permiso>();
-                return permisoDomain.Adapt<PermisoDto>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-                throw;
-            }
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<Permiso>();
         }
 
-        public async Task<IEnumerable<PermisoDto>> GetByRolAsync(string rol, CancellationToken ct = default)
+        public async Task<IEnumerable<Permiso>> GetAllAsync(CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(rol)) return Array.Empty<PermisoDto>();
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Permiso>() : list.Adapt<List<Permiso>>();
+        }
+
+        public async Task<IEnumerable<Permiso>> GetByRolAsync(string rol, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(rol)) return Array.Empty<Permiso>();
             try
             {
-                // Consultar FireStorePermiso desde Firestore
                 var list = await _firebase.QueryAsync<FireStorePermiso>(Collection, nameof(FireStorePermiso.Rol), rol, ct);
-                if (list == null || !list.Any()) return new List<PermisoDto>();
+                if (list == null || !list.Any()) return new List<Permiso>();
                 
-                // Convertir FireStorePermiso ? Permiso (Domain) ? PermisoDto
-                return list.Select(pp => pp.Adapt<Permiso>().Adapt<PermisoDto>()).ToList();
+                return list.Select(pp => pp.Adapt<Permiso>()).ToList();
             }
             catch (Exception ex)
             {
@@ -84,56 +60,33 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task<IEnumerable<PermisoDto>> GetAllAsync(CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Permiso entity, CancellationToken ct = default)
         {
-            try
-            {
-                // Obtener todos los permisos desde Firestore
-                var list = await _firebase.GetAllAsync<FireStorePermiso>(Collection, ct);
-                if (list == null || !list.Any()) return new List<PermisoDto>();
-                
-                // Convertir FireStorePermiso ? Permiso (Domain) ? PermisoDto
-                return list.Select(pp => pp.Adapt<Permiso>().Adapt<PermisoDto>()).ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetAllAsync");
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            var persist = entity.Adapt<FireStorePermiso>();
+            await base.UpdateAsync(id, persist, ct);
         }
 
-        public async Task UpdateAsync(string id, PermisoDto permiso, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Permiso entity, bool merge, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            if (permiso == null) throw new ArgumentNullException(nameof(permiso));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-            try
-            {
-                // Convertir PermisoDto ? Permiso (Domain) ? FireStorePermiso
-                var permisoDomain = permiso.Adapt<Permiso>();
-                var permisoPersist = permisoDomain.Adapt<FireStorePermiso>();
-                
-                await _firebase.UpdateAsync(Collection, id, permisoPersist, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error UpdateAsync {Id}", id);
-                throw;
-            }
+            var persist = entity.Adapt<FireStorePermiso>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
+
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            try
-            {
-                await _firebase.DeleteAsync(Collection, id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            await base.DeleteAsync(id, ct);
         }
     }
 }

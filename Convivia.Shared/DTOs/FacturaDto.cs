@@ -11,7 +11,7 @@ namespace Convivia.Shared.DTOs
     {
         public FacturaDto() { }
 
-        public string IdFactura { get; set; }
+        public string Id { get; set; }
 
         public string Nombre { get; set; }
 
