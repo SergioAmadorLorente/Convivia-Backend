@@ -49,6 +49,16 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
+        // GET api/usuarios/correo/{correo}
+        [HttpGet("correo/{correo}")]
+        public async Task<IActionResult> GetByEmail(string correo, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(correo)) return BadRequest("El correo es requerido");
+
+            var usuario = await _service.ObtenerPorEmailAsync(correo, ct);
+            if (usuario == null) return NotFound($"No se encontró usuario con el correo: {correo}");
+            return Ok(usuario);
+        }
         // PUT api/usuario
         [HttpPut("{id}")]
         public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
@@ -92,5 +102,7 @@ namespace Convivia.API.Controllers
             var resultat = await _service.EliminarUsuarioAsync(id, ct);
             return resultat ? NoContent() : NotFound();
         }
+
+
     }
 }

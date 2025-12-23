@@ -64,7 +64,19 @@ namespace Convivia.Application.Services
             var list = await _usuarioRepository.GetAllAsync(ct);
             return list?.Select(f => _mapper.Map<UsuarioDto>(f)).ToList() ?? new List<UsuarioDto>();
         }
-
+        public async Task<UsuarioDto?> ObtenerPorEmailAsync(string email, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            try
+            {
+                return await _usuarioRepository.GetByEmailAsync(email, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ObtenerPorEmail {Email}", email);
+                throw;
+            }
+        }
         /// <summary>
         /// Overwrite completo: reemplaza todo el documento en Firestore.
         /// </summary>

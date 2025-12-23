@@ -9,5 +9,6 @@ namespace Convivia.Application.Repositories
     public interface IEspacioRepository : IRepository<Espacio>
     {
         Task<IEnumerable<Espacio>> GetByDireccionAsync(string Direccion, CancellationToken ct = default);
+        Task AddUsuarioEspacioIdAsync(string espacioId, string usuarioEspacioId, CancellationToken ct = default);
     }
 }

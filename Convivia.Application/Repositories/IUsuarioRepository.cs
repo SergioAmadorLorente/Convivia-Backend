@@ -10,6 +10,8 @@ namespace Convivia.Application.Repositories
 {
     public interface IUsuarioRepository : IRepository<Usuario>
     {
+        Task<UsuarioDto?> GetByEmailAsync(string email, CancellationToken ct = default);
+        Task AddUsuarioEspacioIdAsync(string espacioId, string usuarioEspacioId, CancellationToken ct = default);
 
     }
 }

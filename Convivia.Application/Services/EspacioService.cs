@@ -9,6 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Mapster;
+using Microsoft.Extensions.Caching.Memory;
+
 
 namespace Convivia.Application.Services
 {
@@ -17,12 +20,17 @@ namespace Convivia.Application.Services
         private readonly IEspacioRepository _espacioRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<EspacioService> _logger;
-
-        public EspacioService(IEspacioRepository espacioRepository, IMapper mapper, ILogger<EspacioService> logger)
+        private readonly IMemoryCache _cache;
+        private readonly UsuarioEspacioService _usuarioEspacioService;
+        private readonly IUsuarioRepository _usuarioRepo;
+        public EspacioService(IEspacioRepository espacioRepository, IMapper mapper, ILogger<EspacioService> logger, IUsuarioRepository usuarioRepo,IMemoryCache cache, UsuarioEspacioService usuarioEspacioService)
         {
             _espacioRepository = espacioRepository ?? throw new ArgumentNullException(nameof(espacioRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _usuarioRepo = usuarioRepo ?? throw new ArgumentNullException(nameof(usuarioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _usuarioEspacioService = usuarioEspacioService ?? throw new ArgumentNullException(nameof(usuarioEspacioService));
         }
 
         public async Task<EspacioDto> CrearEspacioAsync(CreateEspacioDto dto, CancellationToken ct = default)
@@ -40,7 +48,7 @@ namespace Convivia.Application.Services
             var createdDomain = await _espacioRepository.GetByIdAsync(id, ct);
             if (createdDomain == null)
             {
-                // devolver DTO mínimo con id para evitar fallos en rutas
+                // devolver DTO mï¿½nimo con id para evitar fallos en rutas
                 return new EspacioDto { Id = id };
             }
 
@@ -109,11 +117,11 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // Obtener existente para mapear sobre él y evitar perder campos no enviados
+            // Obtener existente para mapear sobre ï¿½l y evitar perder campos no enviados
             var existing = await _espacioRepository.GetByIdAsync(id, ct);
             if (existing == null) return null;
 
-            // Mapear solo valores no nulos (asegúrate de configurar Mapster: IgnoreNullValues = true)
+            // Mapear solo valores no nulos (asegï¿½rate de configurar Mapster: IgnoreNullValues = true)
             _mapper.Map(dto, existing);
 
             await _espacioRepository.UpdateAsync(id, existing, merge: true, ct);
@@ -129,7 +137,7 @@ namespace Convivia.Application.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             // Construir diccionario de actualizaciones (usa el helper que definiste)
-            var updates = ObtenerActualizacionesDesdeDto(dto); // método estático/privado que devuelve IDictionary<string, object>
+            var updates = ObtenerActualizacionesDesdeDto(dto); // mï¿½todo estï¿½tico/privado que devuelve IDictionary<string, object>
             if (updates.Count == 0)
             {
                 // Nada que actualizar: devolver la entidad actual
@@ -164,39 +172,127 @@ namespace Convivia.Application.Services
 
         /// <summary>
         /// Construye el diccionario de actualizaciones para PATCH de Espacio.
-        /// - Añade solo propiedades no nulas/no vacías del DTO.
-        /// - Usa los nombres exactos de Firestore según FireStoreEspacio.
+        /// - Aï¿½ade solo propiedades no nulas/no vacï¿½as del DTO.
+        /// - Usa los nombres exactos de Firestore segï¿½n FireStoreEspacio.
         /// - Filtra campos que no deben actualizarse por PATCH: "Id".
-        /// - Normaliza cadenas (Trim) y aplica validaciones mínimas (longitud).
+        /// - Normaliza cadenas (Trim) y aplica validaciones mï¿½nimas (longitud).
         /// </summary>
         public static IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateEspacioDto dto)
         {
             var updates = new Dictionary<string, object>();
             if (dto == null) return updates;
 
-            // Nombre: actualizar solo si se envía un valor no vacío
+            // Nombre: actualizar solo si se envï¿½a un valor no vacï¿½o
             if (!string.IsNullOrWhiteSpace(dto.Nombre))
             {
                 var nombre = dto.Nombre.Trim();
                 const int maxNombre = 200;
                 if (nombre.Length == 0)
-                    throw new ArgumentException("Nombre no puede quedar vacío.");
+                    throw new ArgumentException("Nombre no puede quedar vacï¿½o.");
                 if (nombre.Length > maxNombre)
-                    throw new ArgumentException($"Nombre demasiado largo. Máximo {maxNombre} caracteres.");
+                    throw new ArgumentException($"Nombre demasiado largo. Mï¿½ximo {maxNombre} caracteres.");
                 updates["Nombre"] = nombre;
             }
 
-            // Direccion: permitir cadena vacía intencionada; excluir null
+            // Direccion: permitir cadena vacï¿½a intencionada; excluir null
             if (dto.Direccion != null)
             {
                 var direccion = dto.Direccion.Trim();
                 const int maxDireccion = 1000;
                 if (direccion.Length > maxDireccion)
-                    throw new ArgumentException($"Dirección demasiado larga. Máximo {maxDireccion} caracteres.");
+                    throw new ArgumentException($"Direcciï¿½n demasiado larga. Mï¿½ximo {maxDireccion} caracteres.");
                 updates["Direccion"] = direccion;
             }
 
             return updates;
+        }
+
+        public async Task<string> GenerarCodigoInvitacionAsync(string espacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentException("Id requerido");
+
+            var espacio = await _espacioRepository.GetByIdAsync(espacioId, ct);
+            if (espacio == null) throw new KeyNotFoundException($"Espacio con Id {espacioId} no encontrado");
+
+            // Verificar si ya existe un cï¿½digo vï¿½lido para este espacio
+            var espacioKey = $"EspacioId_{espacioId}";
+            if (_cache.TryGetValue(espacioKey, out string codigoExistente))
+            {
+                _logger.LogInformation("Cï¿½digo de invitaciï¿½n existente {Codigo} devuelto para espacio {EspacioId}", codigoExistente, espacioId);
+                return codigoExistente;
+            }
+
+            // Generar un nuevo cï¿½digo ï¿½nico
+            string codigo;
+            do
+            {
+                codigo = GenerarCodigoAleatorio();
+            } while (_cache.TryGetValue($"InvitacionCode_{codigo}", out _));
+
+            var cacheKey = $"InvitacionCode_{codigo}";
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromHours(1));
+
+            // Guardar el cï¿½digo con el espacioId y viceversa
+            _cache.Set(cacheKey, espacioId, cacheOptions);
+            _cache.Set(espacioKey, codigo, cacheOptions);
+
+            _logger.LogInformation("Cï¿½digo de invitaciï¿½n {Codigo} generado para espacio {EspacioId}", codigo, espacioId);
+            return codigo;
+        }
+
+        public async Task<UsuarioEspacioDto> UnirUsuarioPorCodigoAsync(string codigo, string usuarioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(codigo)) throw new ArgumentException("Cï¿½digo requerido");
+            if (string.IsNullOrWhiteSpace(usuarioId)) throw new ArgumentException("UsuarioId requerido");
+
+            var cacheKey = $"InvitacionCode_{codigo}";
+            if (!_cache.TryGetValue(cacheKey, out string espacioId))
+            {
+                _logger.LogWarning("Cï¿½digo de invitaciï¿½n {Codigo} no vï¿½lido o expirado", codigo);
+                return null;
+            }
+
+            var espacio = await _espacioRepository.GetByIdAsync(espacioId, ct);
+            if (espacio == null)
+            {
+                _logger.LogWarning("Espacio {EspacioId} no encontrado para cï¿½digo {Codigo}", espacioId, codigo);
+                return null;
+            }
+
+            var usuariosEspaciosExistentes = await _usuarioEspacioService.ObtenerPorEspacioAsync(espacioId, ct);
+            if (usuariosEspaciosExistentes.Any(ue => ue.UsuarioId == usuarioId))
+            {
+                _logger.LogWarning("Usuario {UsuarioId} ya estï¿½ en el espacio {EspacioId}", usuarioId, espacioId);
+                return null;
+            }
+
+            var createDto = new CreateUsuarioEspacioDto
+            {
+                UsuarioId = usuarioId,
+                EspacioId = espacioId,
+                Ausente = false,
+                Karma = 0,
+                Rol = "Usuario"
+            };
+
+            var usuarioEspacio = await _usuarioEspacioService.CrearUsuarioEspacioAsync(createDto, ct);
+
+            if (usuarioEspacio != null)
+            {
+                // Actualizar las listas de referencias en Usuario y Espacio
+                await _espacioRepository.AddUsuarioEspacioIdAsync(espacioId, usuarioEspacio.Id, ct);
+                await _usuarioRepo.AddUsuarioEspacioIdAsync(usuarioId, usuarioEspacio.Id, ct);
+                _logger.LogInformation("Usuario {UsuarioId} se uniï¿½ al espacio {EspacioId} usando cï¿½digo {Codigo}. UsuarioEspacioId: {UsuarioEspacioId}", usuarioId, espacioId, codigo, usuarioEspacio.Id);
+            }
+
+            return usuarioEspacio;
+        }
+
+        private string GenerarCodigoAleatorio()
+        {
+            var random = new Random();
+            return random.Next(100000, 999999).ToString();
         }
     }
 }

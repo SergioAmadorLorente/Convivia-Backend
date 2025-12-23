@@ -29,5 +29,8 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty("FechaRegistro")]
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+
+        [FirestoreProperty("UsuarioEspacios")]
+        public List<string> UsuarioEspaciosIds { get; set; } = new List<string>();
     }
 }

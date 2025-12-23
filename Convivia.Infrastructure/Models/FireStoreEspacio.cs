@@ -17,5 +17,8 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty("Direccion")]
         public string? Direccion { get; set; }
+
+        [FirestoreProperty("UsuarioEspacioIds")]
+        public List<string> UsuarioEspaciosIds { get; set; } = new List<string>();
     }
 }

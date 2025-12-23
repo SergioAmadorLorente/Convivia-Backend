@@ -22,6 +22,9 @@ builder.Services.AddSingleton(provider =>
     return FirestoreDb.Create(projectId);
 });
 
+// Registrar MemoryCache
+builder.Services.AddMemoryCache();
+
 // Registrar Mapster antes de los servicios que lo usan
 builder.Services.AddMapster();
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
