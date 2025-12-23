@@ -9,20 +9,31 @@ namespace Convivia.Shared.DTOs
     {
         public string? Nombre { get; set; }
 
-        // Optional HoraLimite provided only to create new task instances when adding repetition days
+        /// <summary>
+        /// Hora límite opcional, solo se usa para crear nuevas instancias de tarea cuando se añaden días de repetición.
+        /// Formato: HH:mm:ss (se almacena como HH:mm).
+        /// </summary>
         public TimeOnly? HoraLimite { get; set; }
 
         public string? Descripcion { get; set; }
 
+        /// <summary>
+        /// Karma asociado a la plantilla.
+        /// Valores válidos: 5, 15, 25, 50.
+        /// </summary>
         [Range(5, 50, ErrorMessage = "Karma debe ser 5, 15, 25 o 50")]
         public int? karma { get; set; }
 
-        public string? FacturaId { get; set; } // Referencia a la factura asociada
-
-        public List<string>? TareasId { get; set; }
-
+        /// <summary>
+        /// Período de gracia en minutos antes de marcar overdue.
+        /// Rango: 1-60 minutos (máximo 1 hora).
+        /// </summary>
         public int? GracePeriodMinutes { get; set; }
 
+        /// <summary>
+        /// Fecha de finalización de la plantilla (solo para plantillas repetidas).
+        /// No se puede modificar StartDate (se establece como hoy cuando se crea).
+        /// </summary>
         public DateTime? FechaFin { get; set; }
 
         /// <summary>
@@ -30,7 +41,8 @@ namespace Convivia.Shared.DTOs
         /// Si se proporciona y es diferente a los días actuales:
         /// - Se crearán nuevas tareas para los días añadidos
         /// - Se eliminarán tareas para los días removidos
-        /// Null/vacío = no cambiar días de repetición
+        /// Null/vacío = no cambiar días de repetición.
+        /// Valores permitidos: 0-6 (sin duplicados, únicos).
         /// </summary>
         public List<int>? DiasRepeticion { get; set; }
 

@@ -18,8 +18,6 @@ namespace Convivia.Domain.Entities
 
         public DateTime? FechaRealizacion { get; set; }
 
-        public byte[]? Foto { get; set; }
-
         public TimeSpan? Prorroga { get; set; }
 
         public TareaEstado Estado { get; set; } = TareaEstado.Pendiente;

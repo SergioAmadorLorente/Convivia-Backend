@@ -55,13 +55,11 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
 
             var firestoreEntity = tarea.Adapt<FirestoreTarea>();
-            // set ProrrogaSegundos if Prorroga present
             if (tarea.Prorroga.HasValue)
                 firestoreEntity.ProrrogaSegundos = tarea.Prorroga.Value.TotalSeconds;
             else
                 firestoreEntity.ProrrogaSegundos = null;
 
-            // Map HoraLimite TimeOnly? to string HH:mm
             if (tarea.HoraLimite.HasValue)
                 firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
             else
@@ -85,16 +83,13 @@ namespace Convivia.Infrastructure.Repositories
             var subcollectionPath = GetSubcollectionPath(plantillaId);
             var firestoreEntity = await _firebase.GetAsync<FirestoreTarea>(subcollectionPath, tareaId, ct);
             if (firestoreEntity == null) return null;
-            // Map FirestoreTarea to domain Tarea, converting ProrrogaSegundos to TimeSpan
             var entity = firestoreEntity.Adapt<Tarea>();
-            // Map prorroga seconds
             var ft = firestoreEntity;
             if (ft.ProrrogaSegundos.HasValue)
                 entity.Prorroga = TimeSpan.FromSeconds(ft.ProrrogaSegundos.Value);
             else
                 entity.Prorroga = null;
 
-            // Map HoraLimite string "HH:mm" to TimeOnly?
             if (!string.IsNullOrWhiteSpace(ft.HoraLimite))
             {
                 if (TimeOnly.TryParse(ft.HoraLimite, out var to))
@@ -127,13 +122,11 @@ namespace Convivia.Infrastructure.Repositories
                 throw new ArgumentException("Id de la tarea requerido", nameof(tareaActualizada));
 
             var firestoreEntity = tareaActualizada.Adapt<FirestoreTarea>();
-            // convert Prorroga TimeSpan? to ProrrogaSegundos
             if (tareaActualizada.Prorroga.HasValue)
                 firestoreEntity.ProrrogaSegundos = tareaActualizada.Prorroga.Value.TotalSeconds;
             else
                 firestoreEntity.ProrrogaSegundos = null;
 
-            // Map HoraLimite TimeOnly? to string HH:mm
             if (tareaActualizada.HoraLimite.HasValue)
                 firestoreEntity.HoraLimite = tareaActualizada.HoraLimite.Value.ToString("HH:mm");
             else
@@ -145,7 +138,6 @@ namespace Convivia.Infrastructure.Repositories
                                         cancellationToken: ct);
         }
 
-        // New overload: Update with merge option
         public async Task UpdateAsync(string id, Tarea tareaActualizada, bool merge, CancellationToken ct = default)
         {
             if (tareaActualizada == null)
@@ -159,7 +151,6 @@ namespace Convivia.Infrastructure.Repositories
 
             var firestoreEntity = tareaActualizada.Adapt<FirestoreTarea>();
             var subcollectionPath = GetSubcollectionPath(tareaActualizada.PlantillaId);
-            // convert Prorroga TimeSpan? to ProrrogaSegundos
             if (tareaActualizada.Prorroga.HasValue)
                 firestoreEntity.ProrrogaSegundos = tareaActualizada.Prorroga.Value.TotalSeconds;
             else
@@ -172,14 +163,12 @@ namespace Convivia.Infrastructure.Repositories
             await _firebase.UpdateAsync(subcollectionPath, id, firestoreEntity, merge, ct);
         }
 
-        // New overload: partial update using dictionary (PATCH)
         public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
             if (updates == null) throw new ArgumentNullException(nameof(updates));
             if (updates.Count == 0) return;
 
-            // Locate plantillaId by scanning plantillatareas subcollections to avoid collection-group query index requirement.
             var plantillaId = await FindPlantillaIdForTareaAsync(id, ct);
             if (string.IsNullOrWhiteSpace(plantillaId)) throw new KeyNotFoundException($"Tarea {id} no encontrada");
 
@@ -187,7 +176,6 @@ namespace Convivia.Infrastructure.Repositories
             await _firebase.UpdateAsync(subcollectionPath, id, updates, useSetMerge, ct);
         }
 
-        // Override DeleteAsync to match base contract (avoid CS0114 hiding warning)
         public override async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
@@ -199,8 +187,6 @@ namespace Convivia.Infrastructure.Repositories
             await _firebase.DeleteAsync(subcollectionPath, id, ct);
         }
 
-        // Helper: look through plantillatareas subcollections to find which plantilla contains the tarea.
-        // This avoids performing a collection-group query that requires a composite index.
         private async Task<string?> FindPlantillaIdForTareaAsync(string tareaId, CancellationToken ct = default)
         {
             var plantillas = await _firebase.GetAllAsync<FirestorePlantillaTarea>("plantillatareas", ct);

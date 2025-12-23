@@ -44,14 +44,20 @@ namespace Convivia.Application.Services
             if (!KarmasValidos.Contains(dto.karma))
                 throw new ArgumentException("karma debe ser 5, 15, 25 o 50.", nameof(dto.karma));
 
+            if (dto.HoraLimite == default(TimeOnly))
+                throw new ArgumentException("HoraLimite es obligatoria para todas las tareas.", nameof(dto.HoraLimite));
+
             bool esPuntual = dto.DiasRepeticion == null || dto.DiasRepeticion.Count == 0;
 
             if (!esPuntual)
             {
+                var diasUnicos = new HashSet<int>();
                 foreach (int dia in dto.DiasRepeticion)
                 {
                     if (dia < 0 || dia > 6)
                         throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Domingo, 6=Sábado).");
+                    if (!diasUnicos.Add(dia))
+                        throw new ArgumentException("DiasRepeticion contiene valores duplicados.");
                 }
             }
             else
@@ -84,9 +90,7 @@ namespace Convivia.Application.Services
                 }
 
                 tarea.FechaLimite = dto.FechaLimite;
-
-                if (dto.HoraLimite != default(TimeOnly))
-                    tarea.HoraLimite = dto.HoraLimite;
+                tarea.HoraLimite = dto.HoraLimite;
 
                 createPlantilla.TareasId.Add(tarea.Id!);
                 tareas.Add(tarea);
@@ -113,8 +117,7 @@ namespace Convivia.Application.Services
                     else
                         tarea.UsuarioEspacioId = users.Count == 1 ? users[0] : users[i];
 
-                    if (dto.HoraLimite != default(TimeOnly))
-                        tarea.HoraLimite = dto.HoraLimite;
+                    tarea.HoraLimite = dto.HoraLimite;
 
                     createPlantilla.TareasId.Add(tarea.Id!);
                     tareas.Add(tarea);
@@ -195,6 +198,39 @@ namespace Convivia.Application.Services
             }
         }
 
+        /// <summary>
+        /// Actualiza automáticamente el estado de una tarea de Pendiente a FueraDePlazo si ha pasado su fecha/hora límite.
+        /// Solo afecta tareas en estado Pendiente; tareas Completadas no se modifican.
+        /// </summary>
+        private async Task UpdateToOverdueIfNeededAsync(Tarea tarea, PlantillaTarea plantilla, CancellationToken ct = default)
+        {
+            if (tarea == null || plantilla == null)
+                return;
+
+            // Solo cambiar si está pendiente
+            if (tarea.Estado != TareaEstado.Pendiente)
+                return;
+
+            // Si ya está completada (de cualquier forma), no hacer nada
+            if (tarea.FechaRealizacion.HasValue)
+                return;
+
+            // Verificar si está fuera de plazo
+            if (IsOverdue(tarea, plantilla))
+            {
+                try
+                {
+                    tarea.Estado = TareaEstado.FueraDePlazo;
+                    await _tareaRepository.UpdateAsync(tarea.Id, tarea, merge: true, ct);
+                    _logger.LogDebug("Tarea {TareaId} actualizada a FueraDePlazo", tarea.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error al actualizar tarea {TareaId} a FueraDePlazo", tarea.Id);
+                }
+            }
+        }
+
         public async Task<IEnumerable<TareaDto>> GetByDiaAndEstadoAsync(
             string espacioid,
             int diaSemana,
@@ -220,6 +256,9 @@ namespace Convivia.Application.Services
                     var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
 
+                    // Actualizar a FueraDePlazo si corresponde
+                    await UpdateToOverdueIfNeededAsync(tarea, pt);
+
                     if (tarea.DiaSemana != diaSemana) continue;
 
                     if (!MatchesEstado(tarea, pt, estado)) continue;
@@ -229,7 +268,6 @@ namespace Convivia.Application.Services
                     dto.Descripcion = plantilla.Descripcion;
                     dto.karma = plantilla.karma;
                     dto.HoraLimite = tarea.HoraLimite;
-                    dto.FacturaId = plantilla.FacturaId;
                     dto.Estado = tarea.Estado.ToString();
                     dto.Overdue = IsOverdue(tarea, pt);
                     dto.EsPuntual = tarea.DiaSemana == -1;
@@ -263,6 +301,9 @@ namespace Convivia.Application.Services
                     var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
 
+                    // Actualizar a FueraDePlazo si corresponde
+                    await UpdateToOverdueIfNeededAsync(tarea, pt);
+
                     if (!MatchesEstado(tarea, pt, estado)) continue;
 
                     var dto = _mapper.Map<TareaDto>(tarea);
@@ -270,7 +311,6 @@ namespace Convivia.Application.Services
                     dto.Descripcion = plantilla.Descripcion;
                     dto.karma = plantilla.karma;
                     dto.HoraLimite = tarea.HoraLimite;
-                    dto.FacturaId = plantilla.FacturaId;
                     dto.Estado = tarea.Estado.ToString();
                     dto.Overdue = IsOverdue(tarea, pt);
                     dto.EsPuntual = tarea.DiaSemana == -1;
@@ -327,10 +367,16 @@ namespace Convivia.Application.Services
 
                 var pt = plantilla.Adapt<PlantillaTarea>();
 
+                var validTareaIds = new List<string>();
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
                     var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
+
+                    // Actualizar a FueraDePlazo si corresponde
+                    await UpdateToOverdueIfNeededAsync(tarea, pt);
+
+                    validTareaIds.Add(tareaId);
 
                     if (diaSemana.HasValue && tarea.DiaSemana != diaSemana)
                         continue;
@@ -346,7 +392,6 @@ namespace Convivia.Application.Services
                     dto.Descripcion = plantilla.Descripcion;
                     dto.karma = plantilla.karma;
                     dto.HoraLimite = tarea.HoraLimite;
-                    dto.FacturaId = plantilla.FacturaId;
                     dto.Estado = tarea.Estado.ToString();
                     dto.Overdue = IsOverdue(tarea, pt);
                     dto.EsPuntual = tarea.DiaSemana == -1;
@@ -400,14 +445,18 @@ namespace Convivia.Application.Services
             if (tarea == null)
                 return null;
 
+            var pt = plantilla.Adapt<PlantillaTarea>();
+
+            // Actualizar a FueraDePlazo si corresponde
+            await UpdateToOverdueIfNeededAsync(tarea, pt);
+
             var dto = _mapper.Map<TareaDto>(tarea);
             dto.Nombre = plantilla.Nombre;
             dto.Descripcion = plantilla.Descripcion;
             dto.karma = plantilla.karma;
             dto.HoraLimite = tarea.HoraLimite;
-            dto.FacturaId = plantilla.FacturaId;
             dto.Estado = tarea.Estado.ToString();
-            dto.Overdue = IsOverdue(tarea, plantilla.Adapt<PlantillaTarea>());
+            dto.Overdue = IsOverdue(tarea, pt);
             dto.EsPuntual = tarea.DiaSemana == -1;
             dto.UsuarioEspacioId = tarea.UsuarioEspacioId;
 
@@ -504,7 +553,6 @@ namespace Convivia.Application.Services
             dtoResp.Descripcion = plantilla.Descripcion;
             dtoResp.karma = plantilla.karma;
             dtoResp.HoraLimite = updated.HoraLimite;
-            dtoResp.FacturaId = plantilla.FacturaId;
             dtoResp.Estado = updated.Estado.ToString();
             dtoResp.Overdue = IsOverdue(updated, domPlantilla);
             dtoResp.EsPuntual = updated.DiaSemana == -1;
@@ -640,7 +688,6 @@ namespace Convivia.Application.Services
             dtoResp.Descripcion = plantilla.Descripcion;
             dtoResp.karma = plantilla.karma;
             dtoResp.HoraLimite = updated.HoraLimite;
-            dtoResp.FacturaId = plantilla.FacturaId;
             dtoResp.Estado = updated.Estado.ToString();
             dtoResp.Overdue = IsOverdue(updated, domPlantilla);
             dtoResp.EsPuntual = updated.DiaSemana == -1;
@@ -719,7 +766,6 @@ namespace Convivia.Application.Services
                 dtoResp.Descripcion = plantilla.Descripcion;
                 dtoResp.karma = plantilla.karma;
                 dtoResp.HoraLimite = current.HoraLimite;
-                dtoResp.FacturaId = plantilla.FacturaId;
                 dtoResp.Estado = current.Estado.ToString();
                 dtoResp.Overdue = IsOverdue(current, domPlantilla);
                 dtoResp.EsPuntual = current.DiaSemana == -1;
@@ -753,7 +799,6 @@ namespace Convivia.Application.Services
             dtoResult.Descripcion = plantilla.Descripcion;
             dtoResult.karma = plantilla.karma;
             dtoResult.HoraLimite = updated.HoraLimite;
-            dtoResult.FacturaId = plantilla.FacturaId;
             dtoResult.Estado = updated.Estado.ToString();
             dtoResult.Overdue = IsOverdue(updated, domPlantilla);
             dtoResult.EsPuntual = updated.DiaSemana == -1;
@@ -771,10 +816,10 @@ namespace Convivia.Application.Services
         private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateTareaDto dto)
         {
             var updates = new Dictionary<string, object>();
+            
             if (dto.FechaRealizacion.HasValue)
                 updates["FechaRealizacion"] = dto.FechaRealizacion.Value;
-            if (dto.Foto != null)
-                updates["Foto"] = dto.Foto;
+
             if (dto.Prorroga.HasValue)
                 updates["ProrrogaSegundos"] = dto.Prorroga.Value.TotalSeconds;
 
@@ -789,6 +834,7 @@ namespace Convivia.Application.Services
 
             if (!string.IsNullOrWhiteSpace(dto.UsuarioEspacioId))
                 updates["UsuarioEspacioId"] = dto.UsuarioEspacioId;
+                
             return updates;
         }
 
@@ -803,6 +849,7 @@ namespace Convivia.Application.Services
 
             if (tarea.DiaSemana == -1)
             {
+                // Tarea puntual
                 if (!tarea.FechaLimite.HasValue)
                     return false;
 
@@ -822,27 +869,37 @@ namespace Convivia.Application.Services
                 return nowUtc >= dueUtc;
             }
 
-            var hoy = DateOnly.FromDateTime(nowLocal.Date);
-            if (plantilla.EndDate.HasValue && hoy > plantilla.EndDate.Value)
-                return false;
-
-            if (tarea.DiaSemana != (int)nowLocal.DayOfWeek)
+            // Tarea repetida semanal
+            if (plantilla.EndDate.HasValue && DateOnly.FromDateTime(nowLocal.Date) > plantilla.EndDate.Value)
                 return false;
 
             if (!tarea.HoraLimite.HasValue)
                 return false;
 
-            var occurrenceDate = nowLocal.Date;
             var horaLimiteRep = tarea.HoraLimite.Value;
+            int targetDay = tarea.DiaSemana;
+            int currentDay = (int)nowLocal.DayOfWeek;
 
-            var dueLocalRep = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
-                                        horaLimiteRep.Hour, horaLimiteRep.Minute, 0, DateTimeKind.Unspecified);
-            var dueUtcRep = new DateTimeOffset(dueLocalRep, tz.GetUtcOffset(dueLocalRep)).UtcDateTime;
+            // Calcular días hasta la próxima ocurrencia del día
+            int daysDiff = (targetDay - currentDay + 7) % 7;
 
-            if (plantilla.GracePeriodMinutes.HasValue)
-                dueUtcRep = dueUtcRep.AddMinutes(plantilla.GracePeriodMinutes.Value);
-
-            return nowUtc >= dueUtcRep;
+            if (daysDiff == 0)
+            {
+                // Es el mismo día de la semana. Verificar si la hora ya pasó.
+                if (nowLocal.Hour > horaLimiteRep.Hour || 
+                    (nowLocal.Hour == horaLimiteRep.Hour && nowLocal.Minute >= horaLimiteRep.Minute))
+                {
+                    // Ya pasó la hora límite hoy
+                    return true;
+                }
+                // Aún no ha pasado la hora límite hoy
+                return false;
+            }
+            else
+            {
+                // La próxima ocurrencia es en el futuro (en 1-6 días), así que NO está overdue
+                return false;
+            }
         }
 
         private static DateTime? GetDueUtcForTask(Tarea tarea, PlantillaTarea plantilla)
@@ -851,6 +908,7 @@ namespace Convivia.Application.Services
             
             if (tarea.DiaSemana == -1)
             {
+                // Tarea puntual
                 if (!tarea.FechaLimite.HasValue)
                     return null;
 
@@ -870,21 +928,24 @@ namespace Convivia.Application.Services
                 return dueUtc;
             }
 
+            // Tarea repetida semanal
             var nowUtc = DateTime.UtcNow;
             var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
 
-            var hoy = DateOnly.FromDateTime(nowLocal.Date);
-            if (plantilla.EndDate.HasValue && hoy > plantilla.EndDate.Value)
+            if (plantilla.EndDate.HasValue && DateOnly.FromDateTime(nowLocal.Date) > plantilla.EndDate.Value)
                 return null;
-
-            int targetDay = tarea.DiaSemana;
-            var daysDiff = ((int)nowLocal.DayOfWeek - targetDay + 7) % 7;
-            var occurrenceDate = nowLocal.Date.AddDays(-daysDiff);
 
             if (!tarea.HoraLimite.HasValue)
                 return null;
 
+            int targetDay = tarea.DiaSemana;
+            int currentDay = (int)nowLocal.DayOfWeek;
             var horaLimiteRep = tarea.HoraLimite.Value;
+
+            // Calcular la próxima ocurrencia (o la de hoy si aún no ha pasado)
+            int daysDiff = (targetDay - currentDay + 7) % 7;
+            var occurrenceDate = nowLocal.Date.AddDays(daysDiff);
+
             var dueLocalRep = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
                                         horaLimiteRep.Hour, horaLimiteRep.Minute, 0, DateTimeKind.Unspecified);
             var dueUtcRep = new DateTimeOffset(dueLocalRep, tz.GetUtcOffset(dueLocalRep)).UtcDateTime;
@@ -922,8 +983,8 @@ namespace Convivia.Application.Services
             {
                 TareaEstado.Completada => tarea.Estado == TareaEstado.Completada || tarea.Estado == TareaEstado.CompletadaFueradePlazo,
                 TareaEstado.CompletadaFueradePlazo => tarea.Estado == TareaEstado.CompletadaFueradePlazo,
-                TareaEstado.Pendiente => tarea.Estado == TareaEstado.Pendiente && !IsOverdue(tarea, plantilla),
-                TareaEstado.FueraDePlazo => tarea.Estado == TareaEstado.FueraDePlazo || (tarea.Estado != TareaEstado.Completada && tarea.Estado != TareaEstado.CompletadaFueradePlazo && IsOverdue(tarea, plantilla)),
+                TareaEstado.Pendiente => tarea.Estado == TareaEstado.Pendiente,
+                TareaEstado.FueraDePlazo => tarea.Estado == TareaEstado.FueraDePlazo || (tarea.Estado == TareaEstado.Pendiente && IsOverdue(tarea, plantilla)),
                 _ => false
             };
         }
