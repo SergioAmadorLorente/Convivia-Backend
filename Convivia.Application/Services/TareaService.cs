@@ -201,6 +201,7 @@ namespace Convivia.Application.Services
         /// <summary>
         /// Actualiza automáticamente el estado de una tarea de Pendiente a FueraDePlazo si ha pasado su fecha/hora límite.
         /// Solo afecta tareas en estado Pendiente; tareas Completadas no se modifican.
+        /// NOTA: Este método MODIFICA la BD y solo debe llamarse en operaciones de escritura, NO en lecturas/filtrados.
         /// </summary>
         private async Task UpdateToOverdueIfNeededAsync(Tarea tarea, PlantillaTarea plantilla, CancellationToken ct = default)
         {
@@ -231,6 +232,42 @@ namespace Convivia.Application.Services
             }
         }
 
+        /// <summary>
+        /// Versión de lectura que NO modifica la BD ni en memoria.
+        /// Solo calcula el estado efectivo sin persistencia.
+        /// </summary>
+        private static TareaEstado GetEffectiveEstado(Tarea tarea, PlantillaTarea plantilla)
+        {
+            if (tarea == null) throw new ArgumentNullException(nameof(tarea));
+            if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
+
+            if (tarea.FechaRealizacion.HasValue)
+                return tarea.Estado;
+
+            // Si está pendiente y está overdue, mostrar como FueraDePlazo
+            if (tarea.Estado == TareaEstado.Pendiente && IsOverdue(tarea, plantilla))
+                return TareaEstado.FueraDePlazo;
+
+            // En todos los demás casos, retornar el estado actual
+            return tarea.Estado;
+        }
+
+        private bool MatchesEstado(Tarea tarea, PlantillaTarea plantilla, TareaEstado estado)
+        {
+            // Filtrar contra el estado PERSISTIDO en BD, no el efectivo
+            // Esto permite encontrar todas las tareas Pendiente aunque algunas estén overdue
+            var persistedEstado = tarea.Estado;
+            
+            return estado switch
+            {
+                TareaEstado.Completada => persistedEstado == TareaEstado.Completada || persistedEstado == TareaEstado.CompletadaFueradePlazo,
+                TareaEstado.CompletadaFueradePlazo => persistedEstado == TareaEstado.CompletadaFueradePlazo,
+                TareaEstado.Pendiente => persistedEstado == TareaEstado.Pendiente,
+                TareaEstado.FueraDePlazo => persistedEstado == TareaEstado.FueraDePlazo,
+                _ => false
+            };
+        }
+
         public async Task<IEnumerable<TareaDto>> GetByDiaAndEstadoAsync(
             string espacioid,
             int diaSemana,
@@ -255,9 +292,6 @@ namespace Convivia.Application.Services
                 {
                     var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
-
-                    // Actualizar a FueraDePlazo si corresponde
-                    await UpdateToOverdueIfNeededAsync(tarea, pt);
 
                     if (tarea.DiaSemana != diaSemana) continue;
 
@@ -300,9 +334,6 @@ namespace Convivia.Application.Services
                 {
                     var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
-
-                    // Actualizar a FueraDePlazo si corresponde
-                    await UpdateToOverdueIfNeededAsync(tarea, pt);
 
                     if (!MatchesEstado(tarea, pt, estado)) continue;
 
@@ -367,16 +398,10 @@ namespace Convivia.Application.Services
 
                 var pt = plantilla.Adapt<PlantillaTarea>();
 
-                var validTareaIds = new List<string>();
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
                     var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
                     if (tarea == null) continue;
-
-                    // Actualizar a FueraDePlazo si corresponde
-                    await UpdateToOverdueIfNeededAsync(tarea, pt);
-
-                    validTareaIds.Add(tareaId);
 
                     if (diaSemana.HasValue && tarea.DiaSemana != diaSemana)
                         continue;
@@ -447,7 +472,7 @@ namespace Convivia.Application.Services
 
             var pt = plantilla.Adapt<PlantillaTarea>();
 
-            // Actualizar a FueraDePlazo si corresponde
+            // Este SÍ persiste porque es una lectura directa de una tarea específica
             await UpdateToOverdueIfNeededAsync(tarea, pt);
 
             var dto = _mapper.Map<TareaDto>(tarea);
@@ -878,26 +903,43 @@ namespace Convivia.Application.Services
 
             var horaLimiteRep = tarea.HoraLimite.Value;
             int targetDay = tarea.DiaSemana;
-            int currentDay = (int)nowLocal.DayOfWeek;
+            
+            // Convertir DayOfWeek de .NET (0=Domingo) a sistema del cliente (0=Lunes)
+            // .NET: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+            // Cliente: 0=Lun, 1=Mar, 2=Mié, 3=Jue, 4=Vie, 5=Sab, 6=Dom
+            int currentDay = ((int)nowLocal.DayOfWeek - 1 + 7) % 7;
 
             // Calcular días hasta la próxima ocurrencia del día
             int daysDiff = (targetDay - currentDay + 7) % 7;
 
+            // DEBUG: Log the calculation
+            System.Diagnostics.Debug.WriteLine($"[IsOverdue] TareaId={tarea.Id}, targetDay={targetDay}, " +
+                $"DayOfWeekNet={(int)nowLocal.DayOfWeek}, currentDay={currentDay}, " +
+                $"nowLocal={nowLocal:yyyy-MM-dd HH:mm:ss}, horaLimiteRep={horaLimiteRep}, daysDiff={daysDiff}");
+
             if (daysDiff == 0)
             {
-                // Es el mismo día de la semana. Verificar si la hora ya pasó.
-                if (nowLocal.Hour > horaLimiteRep.Hour || 
-                    (nowLocal.Hour == horaLimiteRep.Hour && nowLocal.Minute >= horaLimiteRep.Minute))
-                {
-                    // Ya pasó la hora límite hoy
-                    return true;
-                }
-                // Aún no ha pasado la hora límite hoy
+                // Es el mismo día de la semana. Verificar si la hora ya pasó HOY.
+                // Nota: Solo está overdue si ya pasó la hora límite en esta ocurrencia actual
+                bool isOverdue = nowLocal.Hour > horaLimiteRep.Hour || 
+                    (nowLocal.Hour == horaLimiteRep.Hour && nowLocal.Minute >= horaLimiteRep.Minute);
+                
+                System.Diagnostics.Debug.WriteLine($"[IsOverdue] Same day - nowLocal.Hour={nowLocal.Hour}, " +
+                    $"horaLimiteRep.Hour={horaLimiteRep.Hour}, result={isOverdue}");
+                
+                return isOverdue;
+            }
+            else if (daysDiff > 0)
+            {
+                // El día ocurrirá en el futuro (1-6 días), así que NO está overdue aún
+                System.Diagnostics.Debug.WriteLine($"[IsOverdue] Future day (daysDiff={daysDiff}), returning false");
                 return false;
             }
             else
             {
-                // La próxima ocurrencia es en el futuro (en 1-6 días), así que NO está overdue
+                // daysDiff < 0 significa que el día ya pasó esta semana (esto no debería ocurrir con la fórmula)
+                // pero por seguridad, tratarlo como futuro
+                System.Diagnostics.Debug.WriteLine($"[IsOverdue] daysDiff < 0 (unexpected), returning false");
                 return false;
             }
         }
@@ -939,7 +981,9 @@ namespace Convivia.Application.Services
                 return null;
 
             int targetDay = tarea.DiaSemana;
-            int currentDay = (int)nowLocal.DayOfWeek;
+            
+            // Convertir DayOfWeek de .NET (0=Domingo) a sistema del cliente (0=Lunes)
+            int currentDay = ((int)nowLocal.DayOfWeek - 1 + 7) % 7;
             var horaLimiteRep = tarea.HoraLimite.Value;
 
             // Calcular la próxima ocurrencia (o la de hoy si aún no ha pasado)
@@ -975,18 +1019,6 @@ namespace Convivia.Application.Services
             }
 
             return IsOverdue(temp, plantilla);
-        }
-
-        private bool MatchesEstado(Tarea tarea, PlantillaTarea plantilla, TareaEstado estado)
-        {
-            return estado switch
-            {
-                TareaEstado.Completada => tarea.Estado == TareaEstado.Completada || tarea.Estado == TareaEstado.CompletadaFueradePlazo,
-                TareaEstado.CompletadaFueradePlazo => tarea.Estado == TareaEstado.CompletadaFueradePlazo,
-                TareaEstado.Pendiente => tarea.Estado == TareaEstado.Pendiente,
-                TareaEstado.FueraDePlazo => tarea.Estado == TareaEstado.FueraDePlazo || (tarea.Estado == TareaEstado.Pendiente && IsOverdue(tarea, plantilla)),
-                _ => false
-            };
         }
     }
 }
