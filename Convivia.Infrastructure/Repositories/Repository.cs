@@ -48,7 +48,20 @@ namespace Convivia.Infrastructure.Repositories
                 throw;
             }
         }
-
+        public virtual async Task<string> AddAsync(T entitie, string id, CancellationToken ct = default)
+        {
+            if (entitie == null) throw new ArgumentNullException(nameof(entitie));
+            try
+            {
+                await _firebase.AddAsync(_collection, id, entitie, ct);
+                return id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error AddAsync en colección {Collection}", _collection);
+                throw;
+            }
+        }
         /// <summary>
         /// Update completo (overwrite por defecto).
         /// </summary>

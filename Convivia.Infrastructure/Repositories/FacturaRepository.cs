@@ -26,7 +26,7 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (factura == null) throw new ArgumentNullException(nameof(factura));
             var persist = factura.Adapt<FireStoreFactura>();
-            return await base.AddAsync(persist, ct);
+            return await base.AddAsync(persist,persist.Id, ct);
         }
 
         public async Task<Factura?> GetByIdAsync(string id, CancellationToken ct = default)

@@ -12,7 +12,7 @@ namespace Convivia.Domain.Entities
     /// </summary>
     public class Espacio
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString(); // <- ahora con setter
+        public string Id { get; set; } = Guid.NewGuid().ToString("N"); // <- ahora con setter
 
 
         public string Nombre { get; set; }

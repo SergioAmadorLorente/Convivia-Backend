@@ -27,7 +27,7 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (permiso == null) throw new ArgumentNullException(nameof(permiso));
             var persist = permiso.Adapt<FireStorePermiso>();
-            return await base.AddAsync(persist, ct);
+            return await base.AddAsync(persist, persist.Id, ct);
         }
 
         public async Task<Permiso?> GetByIdAsync(string id, CancellationToken ct = default)

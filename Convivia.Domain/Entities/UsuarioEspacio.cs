@@ -7,7 +7,7 @@ namespace Convivia.Domain.Entities
 
     public class UsuarioEspacio
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         public bool Ausente { get; set; }
 
@@ -45,7 +45,7 @@ namespace Convivia.Domain.Entities
         // Constructor que asigna el permiso según el rol proporcionado
         public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, string rol, bool ausente = false, int karma = 0)
         {
-            Id = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString("N");
             this.Usuario = usuario;
             this.UsuarioId = usuario?.Id ?? string.Empty;
             this.Espacio = espacio;
@@ -68,7 +68,7 @@ namespace Convivia.Domain.Entities
         // Constructor que recibe un objeto Permiso directamente
         public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, bool ausente = false, int karma = 0)
         {
-            Id = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString("N");
             this.Usuario = usuario;
             this.UsuarioId = usuario?.Id ?? string.Empty;
             this.Espacio = espacio;

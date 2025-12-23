@@ -23,7 +23,7 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (espacio == null) throw new ArgumentNullException(nameof(espacio));
             var persist = espacio.Adapt<FireStoreEspacio>();
-            return await base.AddAsync(persist, ct);
+            return await base.AddAsync(persist,persist.Id, ct);
         }
 
         public async Task<Espacio?> GetByIdAsync(string id, CancellationToken ct = default)

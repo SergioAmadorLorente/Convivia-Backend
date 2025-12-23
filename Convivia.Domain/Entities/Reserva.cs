@@ -7,7 +7,7 @@ namespace Convivia.Domain.Entities
     public class Reserva
     {
 
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         public string? description { get; set; }
 
