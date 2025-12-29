@@ -21,6 +21,9 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("Reparto")]
         public Dictionary<string, float> Reparto { get; set; } = new Dictionary<string, float>();
 
+        [FirestoreProperty("RepartoKeys")]
+        public List<string> RepartoKeys { get; set; } = new();
+
         [FirestoreProperty("Pagado")]
         public bool Pagado { get; set; }
 
