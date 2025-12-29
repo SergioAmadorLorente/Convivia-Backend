@@ -101,7 +101,7 @@ namespace Convivia.Domain.Entities
                 Espacio = this,
                 Permiso = Permiso.Usuario,
                 Ausente = false,
-                Karma = 0
+                karma = 0
             };
 
             UsuarioEspacios.Add(usuarioEspacio);

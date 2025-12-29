@@ -4,53 +4,47 @@ using System.Text.Json.Serialization;
 
 namespace Convivia.Domain.Entities
 {
+    public enum TareaEstado
+    {
+        Pendiente = 0,
+        FueraDePlazo = 1,
+        Completada = 2,
+        CompletadaFueradePlazo = 3
+    }
 
     public class Tarea
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        public string? Id { get; set; } = Guid.NewGuid().ToString("N");
 
-        public string Nombre { get; set; }
-
-        public List<UsuarioEspacio> Usuarios { get; set; }
-        
         public DateTime? FechaRealizacion { get; set; }
 
-        public DateTime HoraLimite { get; set; }
+        public TimeSpan? Prorroga { get; set; }
 
-        public byte[]? Foto { get; set; } // Para almacenar imagen binaria
+        public TareaEstado Estado { get; set; } = TareaEstado.Pendiente;
 
-        public DateTime? Prorroga { get; set; } // Puede ser null
+        public string PlantillaId { get; set; } = string.Empty;
 
-        public bool Estado { get; set; }
+        public string? UsuarioEspacioId { get; set; }
 
-        public Espacio espacio { get; set; }
+        public int DiaSemana { get; set; }
 
-        public string? FacturaId { get; set; }
-        public string EspacioId { get; set; }
-        public string? PlantillaId { get; set; }
-        public List<string> UsuarioEspaciosIds { get; set; } = new();
+        public DateTime? FechaLimite { get; set; }
 
-        public Factura? Factura { get; set; }
-
-        public int karma { get; set; }
+        public TimeOnly? HoraLimite { get; set; }
 
         public Tarea()
         {
-            // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(string nombre, List<string> usuarioEspaciosIds, DateTime horaLimite, int karma, string espacioId, string? plantillaId = null, string? facturaId = null)
+        public Tarea(string usuarioEspacioId, string plantillaId)
         {
-            if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
-            if (karma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
-            Nombre = nombre;
-            UsuarioEspaciosIds = usuarioEspaciosIds;
-            HoraLimite = horaLimite;
-            this.karma = karma;
-            Estado = false; // Por defecto, la tarea está incompleta
-            EspacioId = espacioId;
+            if (string.IsNullOrWhiteSpace(plantillaId)) throw new ArgumentException("PlantillaId es obligatoria.", nameof(plantillaId));
+
+            UsuarioEspacioId = usuarioEspacioId;
+            Estado = TareaEstado.Pendiente;
             PlantillaId = plantillaId;
-            FacturaId = facturaId;
         }
+
     }
+
 }

@@ -16,11 +16,8 @@ namespace Convivia.Infrastructure.Repositories
         private const string COLLECTION = "plantillatareas";
         private readonly ILogger<PlantillaTareaRepository> _logger;
 
-        public PlantillaTareaRepository(
-            IFirebaseService firebase,
-            ILogger<PlantillaTareaRepository> logger,
-            ILoggerFactory loggerFactory)
-            : base(firebase, loggerFactory.CreateLogger<Repository<FirestorePlantillaTarea>>(), COLLECTION)
+        public PlantillaTareaRepository(IFirebaseService firebase, ILogger<PlantillaTareaRepository> logger)
+            : base(firebase, logger: logger as ILogger<Repository<FirestorePlantillaTarea>> ?? throw new ArgumentNullException(nameof(logger)), collection: "plantillatareas")
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -34,8 +31,15 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task<PlantillaTarea?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            var firestoreEntity = await base.GetByIdAsync(id, ct);
-            return firestoreEntity?.Adapt<PlantillaTarea>();
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            var firestoreEntity = await _firebase.GetAsync<FirestorePlantillaTarea>(COLLECTION, id);
+            if (firestoreEntity == null)
+            {
+                return null;
+            }
+            var entity = firestoreEntity.Adapt<PlantillaTarea>();
+            return entity;
         }
 
         public async Task<IEnumerable<PlantillaTarea>> GetAllAsync(CancellationToken ct = default)
@@ -50,7 +54,8 @@ namespace Convivia.Infrastructure.Repositories
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
-            await base.UpdateAsync(id, firestoreEntity, ct);
+            firestoreEntity.StartDate = plantilla.StartDate?.ToString();
+            await _firebase.UpdateAsync(COLLECTION, firestoreEntity.PlantillaId, firestoreEntity);
         }
 
         public async Task UpdateAsync(string id, PlantillaTarea plantilla, bool merge, CancellationToken ct = default)
@@ -71,6 +76,47 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await base.DeleteAsync(id, ct);
+        }
+
+        public async Task<PlantillaTarea?> GetByEspacioAndIdAsync(string espacioid, string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentException("espacioid requerido", nameof(espacioid));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+
+            // Try direct get by document id first (faster and less error prone)
+            var direct = await _firebase.GetAsync<FirestorePlantillaTarea>(COLLECTION, id, ct);
+            if (direct != null)
+            {
+                
+                if (string.Equals(direct.EspacioId, espacioid, StringComparison.OrdinalIgnoreCase))
+                {
+                    return direct.Adapt<PlantillaTarea>();
+                }
+                else
+                {
+                    _logger.LogInformation("GetByEspacioAndIdAsync: direct document EspacioId does not match requested EspacioId. direct={DirectEspacio}, requested={Requested}", direct.EspacioId, espacioid);
+                    Console.WriteLine($"[DEBUG] GetByEspacioAndIdAsync: direct document EspacioId={direct.EspacioId} does not match requested EspacioId={espacioid}");
+                    // continue to query by fields in case the plantillaid passed is not document id but a field
+                }
+            }
+
+            var conditions = new (string field, object val)[]
+            {
+                (nameof(FirestorePlantillaTarea.EspacioId), espacioid),
+                (nameof(FirestorePlantillaTarea.PlantillaId), id)
+            };
+
+            var firestoreEntities = await _firebase.QueryMultipleConditionsAsync<FirestorePlantillaTarea>(COLLECTION, conditions, ct);
+            if (firestoreEntities == null)
+            {
+                return null;
+            }
+
+            var first = firestoreEntities.FirstOrDefault();
+
+            if (first == null) return null;
+
+            return first.Adapt<PlantillaTarea>();
         }
     }
 }

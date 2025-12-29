@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Cloud.Firestore;
+using System;
 using System.Collections.Generic;
 
 namespace Convivia.Shared.DTOs
@@ -13,11 +14,19 @@ namespace Convivia.Shared.DTOs
 
         public int karma { get; set; }
 
-        public bool Disponible { get; set; }
-
         public List<int> DiasRepeticion { get; set; }
 
-        public List<string> TareasId { get; set; }
+        public List<string> TareasId { get; set; } = new();
+
+        public string EspacioId { get; set; }
+
+        public string Descripcion { get; set; }
+
+        public string? FacturaId { get; set; }
+
+        public DateOnly? StartDate { get; set; }
+
+        public DateOnly? EndDate { get; set; }
 
     }
 }

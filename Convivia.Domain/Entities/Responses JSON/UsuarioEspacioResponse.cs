@@ -2,7 +2,7 @@
 {
     public string Id_UsuarioEspacio { get; set; }
     public bool Ausente { get; set; }
-    public int Karma { get; set; }
+    public int karma { get; set; }
     public string Rol { get; set; }
 
     public string UsuarioId { get; set; }

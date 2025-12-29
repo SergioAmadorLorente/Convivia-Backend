@@ -7,6 +7,7 @@ namespace Convivia.Application.Repositories
 {
     public interface ITareaRepository : IRepository<Tarea>
     {
-        Task<List<Tarea>> GetAllByEspacioIdAsync(string espacioid, CancellationToken ct = default);
+        Task<Tarea?> GetInstanciaAsync(string plantillaId, string tareaId, CancellationToken ct = default);
+        Task<List<string>> AddAsyncList(List<Tarea> tareas, CancellationToken ct = default);
     }
 }

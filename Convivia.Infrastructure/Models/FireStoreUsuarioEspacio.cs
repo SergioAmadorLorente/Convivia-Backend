@@ -16,7 +16,7 @@ namespace Convivia.Infrastructure.Models
         public bool Ausente { get; set; }
 
         [FirestoreProperty("Karma")]
-        public int Karma { get; set; }
+        public int karma { get; set; }
 
         [FirestoreProperty("Rol")]
         public string Rol { get; set; }
