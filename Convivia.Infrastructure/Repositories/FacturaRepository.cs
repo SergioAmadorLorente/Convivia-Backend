@@ -87,23 +87,30 @@ namespace Convivia.Infrastructure.Repositories
             return domainList.Adapt<List<FacturaDto>>();
         }
 
-        public async Task<IEnumerable<Factura>> GetByUsuarioEspacioIdAsync(string usuarioEspacioid, CancellationToken ct = default)
+        public async Task<IEnumerable<FacturaDto>> GetByUsuarioEspacioIdAsync(
+    string usuarioEspacioid,
+    CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(usuarioEspacioid))
                 throw new ArgumentNullException(nameof(usuarioEspacioid));
 
-            var facturasUsuarioEspacio = await _firebase.QueryArrayContainsAsync<FireStoreFactura>(
+            // 1) Consultar Firestore por facturas donde RepartoKeys contiene el usuario
+            var facturasFirestore = await _firebase.QueryArrayContainsAsync<FireStoreFactura>(
                 Collection,
                 "RepartoKeys",
                 usuarioEspacioid
             );
 
-            List<Factura> lista = new();
+            // 2) Mapear a DTOs
+            var lista = new List<FacturaDto>();
 
-            foreach (var pte in facturasUsuarioEspacio)
+            foreach (var dtoFirestore in facturasFirestore)
             {
-                var facturaMapped = pte.Adapt<Factura>();
-                lista.Add(facturaMapped);
+                if (dtoFirestore == null)
+                    continue;
+
+                var facturaDto = dtoFirestore.Adapt<FacturaDto>();
+                lista.Add(facturaDto);
             }
 
             return lista;

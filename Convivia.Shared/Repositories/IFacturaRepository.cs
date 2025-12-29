@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using static Google.Rpc.Context.AttributeContext.Types;
+using Convivia.Domain;
 
 namespace Convivia.Domain.Repositories
 {
@@ -17,6 +18,6 @@ namespace Convivia.Domain.Repositories
         Task DeleteAsync(string id, CancellationToken ct = default);
         Task<IEnumerable<FacturaDto>> QueryByFieldAsync(string field, object value, CancellationToken ct = default);
         Task<bool> ExistsByUsuarioEspacioIdAsync(string espacioId, CancellationToken ct = default);
-        Task<IEnumerable<Factura>> GetByUsuarioEspacioIdAsync(string usuarioespacioid, CancellationToken ct = default);
+        Task<IEnumerable<FacturaDto>> GetByUsuarioEspacioIdAsync(string usuarioespacioid, CancellationToken ct = default);
     }
 }
