@@ -78,7 +78,7 @@ namespace Convivia.Application.Services
             var espacio = await _repo.GetByIdAsync(id, ct).ConfigureAwait(false);
             if (espacio == null) return;
 
-            var plantillas = await _plantillaTareaRepo.GetByEspacioIdAsync(espacio.Id, ct).ConfigureAwait( false);
+            var plantillas = await _plantillaTareaRepo.GetByUsuarioEspacioIdAsync(espacio.Id, ct).ConfigureAwait( false);
 
             // 3) Borrar plantillas en batches (BatchHelper maneja reintentos)
             await BatchHelper.ProcessInBatchesAsync(

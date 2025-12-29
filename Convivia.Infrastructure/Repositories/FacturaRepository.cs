@@ -87,20 +87,36 @@ namespace Convivia.Infrastructure.Repositories
             return domainList.Adapt<List<FacturaDto>>();
         }
 
-        public async Task<List<Tarea>> GetByUsuarioEspacioIdAsync(string usuarioEspacioid, CancellationToken ct = default)
+        public async Task<IEnumerable<Factura>> GetByUsuarioEspacioIdAsync(string usuarioEspacioid, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(usuarioEspacioid)) throw new ArgumentNullException(nameof(usuarioEspacioid));
-            var facturasUsuarioEspacio = await _firebase.QueryAsync<FirestoreTarea>(Collection, nameof(FirestoreTarea.UsuarioEspacioId), usuarioEspacioid);
+            var facturasUsuarioEspacio = await _firebase.QueryAsync<FirestoreTarea>(Collection, nameof(FireStoreFactura.ususarioespacioid), usuarioEspacioid); //pendent de arreglar lo del dictionary
             List<Tarea> lista = new List<Tarea>();
             if (!facturasUsuarioEspacio.Any())
                 return lista;
             foreach (var pte in facturasUsuarioEspacio)
             {
-                var facturaMapped = pte.Adapt<Tarea>();
+                var facturaMapped = pte.Adapt<Factura>();
                 lista.Add(facturaMapped);
             }
 
             return lista;
+        }
+        // Nueva implementación: consulta eficiente que devuelve si existe al menos una asociación
+        public async Task<bool> ExistsByUsuarioEspacioIdAsync(string usuarioEspacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId)) return false;
+            try
+            {
+                // Usar el nombre real del campo en Firestore: "EspacioRef"
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "FacturaRef", usuarioEspacioId, ct);
+                return list != null && list.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ExistsByUsuarioEspacioId {usuarioEspacioId}", usuarioEspacioId);
+                throw;
+            }
         }
     }
 }

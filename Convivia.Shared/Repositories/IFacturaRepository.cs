@@ -17,7 +17,6 @@ namespace Convivia.Domain.Repositories
         Task DeleteAsync(string id, CancellationToken ct = default);
         Task<IEnumerable<FacturaDto>> QueryByFieldAsync(string field, object value, CancellationToken ct = default);
         Task<bool> ExistsByUsuarioEspacioIdAsync(string espacioId, CancellationToken ct = default);
-        Task<Lsit<Factura?>> GetByUsuarioEspacioIdAsync(string usuarioespacioid, CancellationToken ct = default);
-
+        Task<IEnumerable<Factura>> GetByUsuarioEspacioIdAsync(string usuarioespacioid, CancellationToken ct = default);
     }
 }

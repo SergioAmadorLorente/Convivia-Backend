@@ -4,6 +4,7 @@ using Convivia.Shared.DTOs;
 using Convivia.Shared.Helpers;
 using Mapster;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace Convivia.Application.Services
 {
@@ -123,23 +124,80 @@ namespace Convivia.Application.Services
             if (usuarioEspacio == null) throw new KeyNotFoundException($"Espacio {oldId} no encontrado");
 
             // 1) Crear nuevo documento con newId
-            usuarioEspacio.Id = newId;
+            usuarioEspacio.Id_UsuarioEspacio = newId;
             await _repo.AddAsync(usuarioEspacio, ct);
 
             // 2) Obtener todos los elementos que referencian oldId
-            var facturas = (await _facturaRepo.GetByEspacioIdAsync(oldId, ct)).ToList();
-            var tareas = (await _tareaRepo.GetByEspacioIdAsync(oldId, ct)).ToList();
+            var facturas = (await _facturaRepo.GetByUsuarioEspacioIdAsync(oldId, ct)).ToList();
+            var tareas = (await _tareaRepo.GetByUsuarioEspacioIdAsync(oldId, ct)).ToList();
 
-
-            // 3) Actualizar en batches usando BatchHelper para no saturar
-            await BatchHelper.ProcessInBatchesAsync<UsuarioEspacio>(
-                usuarios,
+            //mhe quedat per aqui, recorda que havia de fer batch per actualitzar les factures i les tasques pero que tareas es una mica rarete
+            // 3) Actualizar en batches usando BatchHelper para no saturar FACTURAS
+            await BatchHelper.ProcessInBatchesAsync<Factura>(
+                facturas,
                 async (batch, token) =>
                 {
-                    foreach (var ue in batch)
+                    foreach (var fa in batch)
                     {
-                        ue.EspacioId = newId;
-                        await _usuarioEspacioRepo.UpdateAsync(ue.Id_UsuarioEspacio, ue, token);
+                        if (fa is null)
+                            continue;
+
+                        if (fa.RepartoMap == null || fa.RepartoMap.Count == 0)
+                            continue;
+
+                        // Buscar entrada cuyo UsuarioEspacio.Id_UsuarioEspacio == oldId
+                        var entradaAntigua = fa.RepartoMap
+                            .FirstOrDefault(kvp =>
+                                kvp.Key != null &&
+                                kvp.Key.Id_UsuarioEspacio != null &&
+                                kvp.Key.Id_UsuarioEspacio == oldId
+                            );
+
+                        // Si no existe, saltamos
+                        if (entradaAntigua.Key == null)
+                            continue;
+
+                        float valor = entradaAntigua.Value;
+
+                        // Clonar diccionario
+                        var nuevoDic = new Dictionary<UsuarioEspacio, float>(fa.RepartoMap);
+
+                        // Eliminar clave antigua
+                        nuevoDic.Remove(entradaAntigua.Key);
+
+                        // Crear nueva clave
+                        var nuevoUsuarioEspacio = new UsuarioEspacio
+                        {
+                            Id_UsuarioEspacio = newId
+                            // Copia aquí otros campos si los hay
+                        };
+
+                        // Insertar nueva clave
+                        nuevoDic[nuevoUsuarioEspacio] = valor;
+
+                        // Asignar al campo privado mediante reflection
+                        typeof(Factura)
+                            .GetField("_repartoMap", BindingFlags.NonPublic | BindingFlags.Instance)
+                            .SetValue(fa, nuevoDic);
+
+                        await _facturaRepo.UpdateAsync(fa.Id_Factura, fa, token);
+                    }
+
+                },
+                batchSize: 500,
+                maxRetries: 3,
+                ct: ct
+            );
+
+            // 3) Actualizar en batches usando BatchHelper para no saturar
+            await BatchHelper.ProcessInBatchesAsync<Tarea>(
+                tareas,
+                async (batch, token) =>
+                {
+                    foreach (var ta in batch)
+                    {
+                        ta.UsuarioEspacioId = newId;
+                        await _tareaRepo.UpdateAsync(ta.Id, ta, token);
                     }
                 },
                 batchSize: 500,

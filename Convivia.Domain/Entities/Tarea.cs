@@ -28,7 +28,7 @@ namespace Convivia.Domain.Entities
         public string? FacturaId { get; set; }
         public string EspacioId { get; set; }
         public string? PlantillaId { get; set; }
-        public List<string> UsuarioEspaciosIds { get; set; } = new();
+        public string UsuarioEspacioId { get; set; }
 
         public Factura? Factura { get; set; }
 
