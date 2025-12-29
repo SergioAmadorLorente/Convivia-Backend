@@ -89,11 +89,17 @@ namespace Convivia.Infrastructure.Repositories
 
         public async Task<IEnumerable<Factura>> GetByUsuarioEspacioIdAsync(string usuarioEspacioid, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(usuarioEspacioid)) throw new ArgumentNullException(nameof(usuarioEspacioid));
-            var facturasUsuarioEspacio = await _firebase.QueryAsync<FirestoreTarea>(Collection, nameof(FireStoreFactura.ususarioespacioid), usuarioEspacioid); //pendent de arreglar lo del dictionary
-            List<Tarea> lista = new List<Tarea>();
-            if (!facturasUsuarioEspacio.Any())
-                return lista;
+            if (string.IsNullOrWhiteSpace(usuarioEspacioid))
+                throw new ArgumentNullException(nameof(usuarioEspacioid));
+
+            var facturasUsuarioEspacio = await _firebase.QueryArrayContainsAsync<FireStoreFactura>(
+                Collection,
+                "RepartoKeys",
+                usuarioEspacioid
+            );
+
+            List<Factura> lista = new();
+
             foreach (var pte in facturasUsuarioEspacio)
             {
                 var facturaMapped = pte.Adapt<Factura>();
