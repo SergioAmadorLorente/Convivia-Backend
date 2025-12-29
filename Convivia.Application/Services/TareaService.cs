@@ -75,6 +75,7 @@ namespace Convivia.Application.Services
             if (esPuntual)
             {
                 var tarea = _mapper.Map<Tarea>(dto);
+                tarea.Id = Guid.NewGuid().ToString("N"); // Formato sin guiones
                 tarea.DiaSemana = -1;
                 tarea.Estado = TareaEstado.Pendiente;
 
@@ -108,14 +109,17 @@ namespace Convivia.Application.Services
                 {
                     var dia = days[i];
                     var tarea = _mapper.Map<Tarea>(dto);
+                    tarea.Id = Guid.NewGuid().ToString("N"); // Formato sin guiones
                     tarea.DiaSemana = dia;
                     tarea.Estado = TareaEstado.Pendiente;
                     tarea.FechaLimite = null;
 
                     if (users.Count == 0)
                         tarea.UsuarioEspacioId = null;
+                    else if (users.Count == 1)
+                        tarea.UsuarioEspacioId = i == 0 ? users[0] : null;
                     else
-                        tarea.UsuarioEspacioId = users.Count == 1 ? users[0] : users[i];
+                        tarea.UsuarioEspacioId = users[i];
 
                     tarea.HoraLimite = dto.HoraLimite;
 

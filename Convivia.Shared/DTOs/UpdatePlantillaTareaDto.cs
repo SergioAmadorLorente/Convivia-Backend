@@ -11,7 +11,7 @@ namespace Convivia.Shared.DTOs
 
         /// <summary>
         /// Hora límite opcional, solo se usa para crear nuevas instancias de tarea cuando se añaden días de repetición.
-        /// Formato: HH:mm:ss (se almacena como HH:mm).
+        /// Formato: HH:mm (se almacena como HH:mm en la BD).
         /// </summary>
         public TimeOnly? HoraLimite { get; set; }
 

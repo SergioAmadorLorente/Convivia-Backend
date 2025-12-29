@@ -157,61 +157,82 @@ namespace Convivia.Application.Services
                         {
                             tareasAEliminar.Add(tareaId);
                             await _tareaRepository.DeleteAsync(tareaId);
-                            _logger.LogInformation("Tarea {TareaId} eliminada (d�a {Dia} removido)", tareaId, diaRemovido);
+                            _logger.LogInformation("Tarea {TareaId} eliminada (día {Dia} removido)", tareaId, diaRemovido);
                         }
                     }
                     plantilla.TareasId = plantilla.TareasId.Except(tareasAEliminar).ToList();
                 }
 
-                if (DiasAnadidos.Any())
-                {
-                    if (usuariosAsignacion == null || usuariosAsignacion.Count == 0)
-                    {
-                        throw new InvalidOperationException(
-                            $"Se agregaron nuevos d�as ({string.Join(",", DiasAnadidos)}) pero no se proporcion� UsuariosAsignacion. " +
-                            "Debe asignar al menos un usuario para crear tareas en estos d�as.");
-                    }
+                var diasNuevo = plantilla.DiasRepeticion ?? new List<int>();
 
-                    TimeOnly? horaToUse = horaLimiteForNewTasks;
-                    if (!horaToUse.HasValue)
+                if (usuariosAsignacion != null && usuariosAsignacion.Count > diasNuevo.Count)
+                    throw new ArgumentException("El número de UsuariosAsignacion no puede ser mayor que el número de DiasRepeticion.");
+
+                TimeOnly? horaToUse = horaLimiteForNewTasks;
+                if (!horaToUse.HasValue)
+                {
+                    foreach (var existingTareaId in plantilla.TareasId ?? new List<string>())
                     {
-                        foreach (var existingTareaId in plantilla.TareasId ?? new List<string>())
+                        var existingTarea = await _tareaRepository.GetInstanciaAsync(plantillaId, existingTareaId);
+                        if (existingTarea != null && existingTarea.HoraLimite.HasValue)
                         {
-                            var existingTarea = await _tareaRepository.GetInstanciaAsync(plantillaId, existingTareaId);
-                            if (existingTarea != null && existingTarea.HoraLimite.HasValue)
-                            {
-                                horaToUse = existingTarea.HoraLimite;
-                                break;
-                            }
+                            horaToUse = existingTarea.HoraLimite;
+                            break;
+                        }
+                    }
+                }
+
+                if (DiasAnadidos.Any() && !horaToUse.HasValue)
+                {
+                    throw new InvalidOperationException("Se agregaron nuevos días de repetición, se requiere HoraLimite para crear las instancias de tarea o debe existir al menos una tarea previa con HoraLimite.");
+                }
+
+                for (int idx = 0; idx < diasNuevo.Count; idx++)
+                {
+                    int dia = diasNuevo[idx];
+                    string? tareaExistenteId = null;
+                    Tarea? tareaExistente = null;
+                    foreach (var tareaId in plantilla.TareasId ?? new List<string>())
+                    {
+                        var t = await _tareaRepository.GetInstanciaAsync(plantillaId, tareaId);
+                        if (t != null && t.DiaSemana == dia)
+                        {
+                            tareaExistenteId = tareaId;
+                            tareaExistente = t;
+                            break;
                         }
                     }
 
-                    if (!horaToUse.HasValue)
-                    {
-                        throw new InvalidOperationException("Se agregaron nuevos d�as de repetici�n, se requiere HoraLimite para crear las instancias de tarea o debe existir al menos una tarea previa con HoraLimite.");
-                    }
+                    string? usuarioAsignado = null;
+                    if (usuariosAsignacion != null && idx < usuariosAsignacion.Count)
+                        usuarioAsignado = usuariosAsignacion[idx];
 
-                    foreach (int DiaAnadido in DiasAnadidos)
+                    if (tareaExistente != null)
+                    {
+                        if (usuariosAsignacion != null)
+                        {
+                            tareaExistente.UsuarioEspacioId = usuarioAsignado;
+                            await _tareaRepository.UpdateAsync(tareaExistente.Id, tareaExistente, merge: true);
+                            _logger.LogInformation("Tarea {TareaId} del día {Dia} actualizada con usuario {UsuarioId}", tareaExistente.Id, dia, usuarioAsignado ?? "sin asignar");
+                        }
+                    }
+                    else
                     {
                         var nuevaTarea = new Tarea
                         {
-                            Id = Guid.NewGuid().ToString(),
+                            Id = Guid.NewGuid().ToString("N"),
                             PlantillaId = plantillaId,
-                            DiaSemana = DiaAnadido,
+                            DiaSemana = dia,
                             Estado = TareaEstado.Pendiente,
                             FechaLimite = null,
                             HoraLimite = horaToUse,
-                            UsuarioEspacioId = usuariosAsignacion.Count == 1 
-                                ? usuariosAsignacion[0] 
-                                : usuariosAsignacion[Math.Min(DiasAnadidos.IndexOf(DiaAnadido), usuariosAsignacion.Count - 1)]
+                            UsuarioEspacioId = usuarioAsignado
                         };
 
                         await _tareaRepository.AddAsync(nuevaTarea);
                         plantilla.TareasId.Add(nuevaTarea.Id);
 
-                        _logger.LogInformation(
-                            "Tarea {TareaId} creada para d�a {Dia} con usuario {UsuarioId}",
-                            nuevaTarea.Id, DiaAnadido, nuevaTarea.UsuarioEspacioId);
+                        _logger.LogInformation("Tarea {TareaId} creada para día {Dia} con usuario {UsuarioId}", nuevaTarea.Id, dia, nuevaTarea.UsuarioEspacioId ?? "sin asignar");
                     }
                 }
             }
