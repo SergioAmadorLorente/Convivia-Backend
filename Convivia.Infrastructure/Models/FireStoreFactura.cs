@@ -41,5 +41,9 @@ namespace Convivia.Infrastructure.Models
             // Asegurar explícitamente Kind = Utc en caso de que algún mapper deje un DateTime sin especificar
             FechaCreacion = DateTime.SpecifyKind(FechaCreacion, DateTimeKind.Utc);
         }
+        public void SyncRepartoKeys()
+        {
+            RepartoKeys = Reparto.Keys.ToList(); //metodo auxiliar para sincronizar reparto y repartokeys
+        }
     }
 }
