@@ -147,7 +147,7 @@ namespace Convivia.Application.Services
             {
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId, ct);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.Id, tareaId, ct);
                     if (tarea == null) continue;
 
                     if (tarea.DiaSemana < 0 || tarea.Estado != TareaEstado.Completada)
@@ -162,7 +162,7 @@ namespace Convivia.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error reseteando tareas completadas para plantilla {PlantillaId}", plantilla.PlantillaId);
+                _logger.LogError(ex, "Error reseteando tareas completadas para plantilla {PlantillaId}", plantilla.Id);
             }
         }
 
@@ -290,7 +290,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.Id, tareaId);
                     if (tarea == null) continue;
 
                     if (tarea.DiaSemana != diaSemana) continue;
@@ -332,7 +332,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.Id, tareaId);
                     if (tarea == null) continue;
 
                     if (!MatchesEstado(tarea, pt, estado)) continue;
@@ -389,7 +389,7 @@ namespace Convivia.Application.Services
                 
                 if (isRepeated && !plantillaActive)
                 {
-                    _logger.LogDebug("Plantilla {PlantillaId} ha expirado (EndDate pasado). Tareas repetidas excluidas del filtro.", plantilla.PlantillaId);
+                    _logger.LogDebug("Plantilla {PlantillaId} ha expirado (EndDate pasado). Tareas repetidas excluidas del filtro.", plantilla.Id);
                     continue;
                 }
 
@@ -400,7 +400,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.PlantillaId, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.Id, tareaId);
                     if (tarea == null) continue;
 
                     if (diaSemana.HasValue && tarea.DiaSemana != diaSemana)

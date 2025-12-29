@@ -55,7 +55,7 @@ namespace Convivia.Infrastructure.Repositories
 
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
             firestoreEntity.StartDate = plantilla.StartDate?.ToString();
-            await _firebase.UpdateAsync(COLLECTION, firestoreEntity.PlantillaId, firestoreEntity);
+            await _firebase.UpdateAsync(COLLECTION, firestoreEntity.Id, firestoreEntity);
         }
 
         public async Task UpdateAsync(string id, PlantillaTarea plantilla, bool merge, CancellationToken ct = default)
@@ -103,7 +103,7 @@ namespace Convivia.Infrastructure.Repositories
             var conditions = new (string field, object val)[]
             {
                 (nameof(FirestorePlantillaTarea.EspacioId), espacioid),
-                (nameof(FirestorePlantillaTarea.PlantillaId), id)
+                (nameof(FirestorePlantillaTarea.Id), id)
             };
 
             var firestoreEntities = await _firebase.QueryMultipleConditionsAsync<FirestorePlantillaTarea>(COLLECTION, conditions, ct);

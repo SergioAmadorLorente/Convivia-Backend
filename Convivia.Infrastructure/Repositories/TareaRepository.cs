@@ -194,11 +194,11 @@ namespace Convivia.Infrastructure.Repositories
 
             foreach (var p in plantillas)
             {
-                if (string.IsNullOrWhiteSpace(p.PlantillaId)) continue;
-                var subPath = GetSubcollectionPath(p.PlantillaId);
+                if (string.IsNullOrWhiteSpace(p.Id)) continue;
+                var subPath = GetSubcollectionPath(p.Id);
                 var tarea = await _firebase.GetAsync<FirestoreTarea>(subPath, tareaId, ct);
                 if (tarea != null)
-                    return p.PlantillaId;
+                    return p.Id;
             }
 
             return null;
