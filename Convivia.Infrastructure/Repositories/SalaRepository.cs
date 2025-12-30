@@ -1,5 +1,5 @@
 ﻿using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Infrastructure.Models;
 using Convivia.Shared.Services;
 using Mapster;
@@ -7,41 +7,38 @@ using Microsoft.Extensions.Logging;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class SalaRepository : ISalaRepository
+    public class SalaRepository : Repository<FireStoreSala>, ISalaRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<SalaRepository> _logger;
         private const string Collection = "salas";
 
-        public SalaRepository(IFirebaseService firebase, ILogger<SalaRepository> logger)
+        public SalaRepository(
+            IFirebaseService firebase,
+            ILogger<SalaRepository> logger,
+            ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreSala>>(), Collection)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<Sala?> AddAsync(Sala entity, CancellationToken ct = default)
+        public async Task<string> AddAsync(Sala entity, CancellationToken ct = default)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
-
-            var fireStoreSala = entity.Adapt<FireStoreSala>();
-            await _firebase.AddAsync(Collection, entity.Id, fireStoreSala, ct);
-
-            return entity;
+            var persist = entity.Adapt<FireStoreSala>();
+            return await base.AddAsync(persist, ct);
         }
 
         public async Task<Sala?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                var fsala = await _firebase.GetAsync<FireStoreSala>(Collection, id, ct);
-                return fsala?.Adapt<Sala>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-                throw;
-            }
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<Sala>();
+        }
+
+        public async Task<IEnumerable<Sala>> GetAllAsync(CancellationToken ct = default)
+        {
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Sala>() : list.Adapt<List<Sala>>();
         }
 
         public async Task<IEnumerable<Sala>> GetByEspacioIdAsync(string idEspacio, CancellationToken ct = default)
@@ -59,33 +56,33 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task<Sala?> UpdateAsync(string id, Sala entity, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Sala entity, CancellationToken ct = default)
         {
-            var fsala = entity.Adapt<FireStoreSala>();
-            await _firebase.UpdateAsync(Collection, id, fsala, ct);
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-            var updated = await _firebase.GetAsync<FireStoreSala>(Collection, id, ct);
-            return updated?.Adapt<Sala>();
+            var persist = entity.Adapt<FireStoreSala>();
+            await base.UpdateAsync(id, persist, ct);
+        }
+
+        public async Task UpdateAsync(string id, Sala entity, bool merge, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            var persist = entity.Adapt<FireStoreSala>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
+
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            try
-            {
-                await _firebase.DeleteAsync(Collection, id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-                throw;
-            }
-        }
-
-        public async Task<IEnumerable<Sala>> GetAllAsync(CancellationToken ct = default)
-        {
-            var list = await _firebase.GetAllAsync<FireStoreSala>(Collection, ct);
-            return list.Select(fs => fs.Adapt<Sala>());
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            await base.DeleteAsync(id, ct);
         }
     }
 }

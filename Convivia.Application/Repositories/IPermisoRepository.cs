@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Shared.DTOs;
 using Convivia.Domain.Entities;
-namespace Convivia.Shared.Repositories
+using Convivia.Shared.DTOs;
+
+namespace Convivia.Application.Repositories
 {
-    public interface IPermisoRepository
+    public interface IPermisoRepository : IRepository<Permiso>
     {
         Task<IEnumerable<Permiso>> GetByRolAsync(TipoRol rol, CancellationToken ct = default);
     }

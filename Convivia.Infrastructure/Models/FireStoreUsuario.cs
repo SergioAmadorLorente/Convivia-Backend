@@ -10,7 +10,7 @@ namespace Convivia.Infrastructure.Models
     public class FireStoreUsuario
     {
         [FirestoreProperty("Id")]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        public string IdUsuario { get; set; } = Guid.NewGuid().ToString("N");
 
         [FirestoreProperty("Nombre")]
         public string Nombre { get; set; } = string.Empty;
@@ -29,5 +29,8 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty("FechaRegistro")]
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+
+        [FirestoreProperty("UsuarioEspacios")]
+        public List<string> UsuarioEspaciosIds { get; set; } = new List<string>();
     }
 }

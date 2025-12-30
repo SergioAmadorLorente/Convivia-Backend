@@ -10,10 +10,9 @@ namespace Convivia.Shared.DTOs
 {
     public class EspacioDto
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-
+        public EspacioDto() { }
+        public string Id { get; set; }
         public string Nombre { get; set; }
-
         public string? Direccion { get; set; }
     }
 }

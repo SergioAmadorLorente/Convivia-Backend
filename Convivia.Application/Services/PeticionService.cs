@@ -1,8 +1,10 @@
 using System;
 using Mapster;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+using Convivia.Domain.Entities;
+using Convivia.Application.Repositories;
 using Microsoft.Extensions.Logging;
+using MapsterMapper;
 
 namespace Convivia.Application.Services
 {
@@ -13,79 +15,69 @@ namespace Convivia.Application.Services
     /// </summary>
     public class PeticionService
     {
-        private readonly IPeticionRepository _repo;
+        private readonly IPeticionRepository _peticionRepository;
+        private readonly IMapper _mapper;
         private readonly ILogger<PeticionService> _logger;
 
-        public PeticionService(IPeticionRepository repo, ILogger<PeticionService> logger)
+        public PeticionService(IPeticionRepository peticionRepository, IMapper mapper, ILogger<PeticionService> logger)
         {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _peticionRepository = peticionRepository ?? throw new ArgumentNullException(nameof(peticionRepository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
         /// Crear nueva petición
         /// </summary>
-        public async Task<PeticionDto> CrearPeticionAsync(CreatePeticionDto dto)
+        public async Task<PeticionDto> CrearPeticionAsync(CreatePeticionDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Mensaje))
+            if (string.IsNullOrWhiteSpace(dto.Mensaje)) 
                 throw new ArgumentException("El mensaje no puede estar vacío", nameof(dto.Mensaje));
             if (string.IsNullOrWhiteSpace(dto.IdSolicitante))
                 throw new ArgumentException("El ID del solicitante no puede estar vacío", nameof(dto.IdSolicitante));
             if (string.IsNullOrWhiteSpace(dto.IdEspacio))
                 throw new ArgumentException("El ID del espacio no puede estar vacío", nameof(dto.IdEspacio));
 
-            // Usar Mapster para mapear CreatePeticionDto -> PeticionDto
-            var peticion = dto.Adapt<PeticionDto>();
-            peticion.Id = Guid.NewGuid().ToString("N");
-            peticion.Fecha = DateTime.UtcNow;
-            peticion.Estado = "pendiente";
+            // DTO -> Domain
+            var peticionDomain = _mapper.Map<Peticion>(dto);
 
-            try
+            // Persistir y obtener id           
+            var id = await _peticionRepository.AddAsync(peticionDomain, ct);
+
+            // Recuperar entidad guardada y devolver DTO consistente
+            var createdDomain = await _peticionRepository.GetByIdAsync(id, ct);
+            if (createdDomain == null)
             {
-                var id = await _repo.AddAsync(peticion);
-                peticion.Id = id;
-                return peticion;
+                // devolver DTO mínimo con id para evitar fallos en rutas
+                return new PeticionDto { Id = id };
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creando petición");
-                throw;
-            }
+
+            var createdDto = _mapper.Map<PeticionDto>(createdDomain);
+            if (string.IsNullOrWhiteSpace(createdDto.Id))
+                createdDto.Id = id;
+
+            return createdDto;
         }
 
         /// <summary>
         /// Obtener petición por ID
         /// </summary>
-        public async Task<PeticionDto?> ObtenerPeticionAsync(string id)
+        public async Task<PeticionDto?> ObtenerPeticionAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                return await _repo.GetByIdAsync(id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            var domain = await _peticionRepository.GetByIdAsync(id, ct);
+            return domain == null ? null : _mapper.Map<PeticionDto>(domain);
         }
+
 
         /// <summary>
         /// Listar todas las peticiones
         /// </summary>
-        public async Task<List<PeticionDto>> ListarTodasAsync()
+        public async Task<List<PeticionDto>> ListarTodasAsync(CancellationToken ct = default)
         {
-            try
-            {
-                var entities = await _repo.GetAllAsync();
-                return entities.ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ListarTodas");
-                throw;
-            }
+            var list = await _peticionRepository.GetAllAsync(ct);
+            return list?.Select(f => _mapper.Map<PeticionDto>(f)).ToList() ?? new List<PeticionDto>();
         }
 
         /// <summary>
@@ -96,8 +88,8 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(estado)) throw new ArgumentNullException(nameof(estado));
             try
             {
-                var entities = await _repo.GetByEstadoAsync(estado);
-                return entities.ToList();
+                var entities = await _peticionRepository.GetByEstadoAsync(estado);
+                return entities.Select(p => p.Adapt<PeticionDto>()).ToList();
             }
             catch (Exception ex)
             {
@@ -107,97 +99,99 @@ namespace Convivia.Application.Services
         }
 
         /// <summary>
-        /// Cambiar estado de petición (aceptar, rechazar, cancelar)
+        /// Overwrite completo: reemplaza todo el documento en Firestore.
         /// </summary>
-        public async Task<PeticionDto?> CambiarEstadoAsync(string id, string accion)
+        public async Task<PeticionDto?> ActualizarPeticionCompletaAsync(string id, UpdatePeticionDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            if (string.IsNullOrWhiteSpace(accion)) throw new ArgumentNullException(nameof(accion));
-
-            var peticion = await _repo.GetByIdAsync(id);
-            if (peticion == null) return null;
-
-            switch (accion.ToLower())
-            {
-                case "aceptar":
-                    if (peticion.Estado != "pendiente")
-                        throw new InvalidOperationException($"No se puede aceptar una petición en estado '{peticion.Estado}'.");
-                    peticion.Estado = "aceptada";
-                    break;
-                case "rechazar":
-                    if (peticion.Estado != "pendiente")
-                        throw new InvalidOperationException($"No se puede rechazar una petición en estado '{peticion.Estado}'.");
-                    peticion.Estado = "rechazada";
-                    break;
-                case "cancelar":
-                    if (peticion.Estado != "pendiente")
-                        throw new InvalidOperationException($"No se puede cancelar una petición en estado '{peticion.Estado}'.");
-                    peticion.Estado = "cancelada";
-                    break;
-                default:
-                    throw new ArgumentException($"Acción '{accion}' no válida. Use: aceptar, rechazar o cancelar.");
-            }
-
-            try
-            {
-                await _repo.UpdateAsync(id, peticion);
-                return peticion;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error CambiarEstado {Id}", id);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Actualización parcial (PATCH)
-        /// </summary>
-        public async Task<PeticionDto?> ActualizarParcialAsync(string id, UpdatePeticionDto dto)
-        {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var peticion = await _repo.GetByIdAsync(id);
-            if (peticion == null) return null;
+            // Mapear DTO -> Domain (nuevo objeto completo)
+            var domain = _mapper.Map<Peticion>(dto);
 
-            if (!string.IsNullOrWhiteSpace(dto.Mensaje))
-                peticion.Mensaje = dto.Mensaje;
-            if (!string.IsNullOrWhiteSpace(dto.Estado))
-                peticion.Estado = dto.Estado;
-            if (!string.IsNullOrWhiteSpace(dto.IdSolicitante))
-                peticion.IdSolicitante = dto.IdSolicitante;
-            if (!string.IsNullOrWhiteSpace(dto.IdEspacio))
-                peticion.IdEspacio = dto.IdEspacio;
+            // Asegurar que el Id de dominio coincide con el id pasado
+            domain.Id = id;
 
-            try
-            {
-                await _repo.UpdateAsync(id, peticion);
-                return peticion;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ActualizarParcial {Id}", id);
-                throw;
-            }
+            // Persistir como overwrite (merge = false)
+            await _peticionRepository.UpdateAsync(id, domain, merge: false, ct);
+
+            var updated = await _peticionRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<PeticionDto>(updated);
         }
 
         /// <summary>
-        /// Eliminar petición
+        /// Merge: fusiona los campos del objeto con los del documento existente (SetOptions.MergeAll).
         /// </summary>
-        public async Task<bool> EliminarPeticionAsync(string id)
+        public async Task<PeticionDto?> ActualizarPeticionMergeAsync(string id, UpdatePeticionDto dto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return false;
-            try
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var existing = await _peticionRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
+
+            // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
+            _mapper.Map(dto, existing);
+
+            // Persistir con merge para evitar sobrescribir campos no mapeados
+            await _peticionRepository.UpdateAsync(id, existing, merge: true, ct);
+
+            var updated = await _peticionRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<PeticionDto>(updated);
+        }
+
+        /// <summary>
+        /// Parcial / PATCH: construye un diccionario con solo las propiedades no nulas del DTO
+        /// y llama a la sobrecarga del repositorio que acepta IDictionary (update parcial).
+        /// </summary>
+        public async Task<PeticionDto?> ActualizarPeticionParcialAsync(string id, UpdatePeticionDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var updates = ObtenerActualizacionesDesdeDto(dto);
+            if (updates.Count == 0)
             {
-                await _repo.DeleteAsync(id);
-                return true;
+                // Nada que actualizar: devolver la entidad actual
+                var current = await _peticionRepository.GetByIdAsync(id, ct);
+                return current == null ? null : _mapper.Map<PeticionDto>(current);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error EliminarPeticion {Id}", id);
-                throw;
-            }
+
+            // useSetMerge: false -> UpdateAsync estricto (fallará si no existe)
+            await _peticionRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
+
+            var updated = await _peticionRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<PeticionDto>(updated);
+        }
+
+        /// <summary>
+        /// Elimina una peticion.
+        /// </summary>
+        public async Task<bool> EliminarPeticionAsync(string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            var existing = await _peticionRepository.GetByIdAsync(id, ct);
+            if (existing == null) return false;
+
+            await _peticionRepository.DeleteAsync(id, ct);
+            return true;
+        }
+
+
+
+        // Mapper manual per al patch
+        private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdatePeticionDto dto)
+        {
+            var updates = new Dictionary<string, object>();
+
+            // Mapeo explícito por propiedad (seguro y claro)
+            if (dto.Mensaje != null) updates["Mensaje"] = dto.Mensaje;
+            if (dto.Estado != null) updates["Estado"] = dto.Estado;
+            if (dto.IdSolicitante != null) updates["IdSolicitante"] = dto.IdSolicitante;
+            if (dto.IdEspacio != null) updates["IdEspacio"] = dto.IdEspacio;
+
+            return updates;
         }
     }
 }

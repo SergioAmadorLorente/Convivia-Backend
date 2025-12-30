@@ -72,6 +72,28 @@ namespace Convivia.Infrastructure.Services
             await _db.Collection(collection).Document(id).SetAsync(entity, options, cancellationToken: cancellationToken);
         }
 
+        public async Task UpdateAsync(string collection, string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id required", nameof(id));
+            if (updates == null) throw new ArgumentNullException(nameof(updates));
+            if (updates.Count == 0) return;
+
+            var docRef = _db.Collection(collection).Document(id);
+
+            if (useSetMerge)
+            {
+                // Tolerante: crea/mezcla si no existe
+                await docRef.SetAsync(updates, SetOptions.MergeAll, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                // Estricto: falla si no existe
+                await docRef.UpdateAsync(updates, null, cancellationToken);
+            }
+        }
+
+
         public async Task DeleteAsync(string collection, string id, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
@@ -174,9 +196,34 @@ namespace Convivia.Infrastructure.Services
             if (entity == null || string.IsNullOrWhiteSpace(id)) return;
             try
             {
-                var prop = typeof(T).GetProperty("Id");
-                if (prop != null && prop.CanWrite)
-                    prop.SetValue(entity, id);
+                var type = typeof(T);
+                // Buscar propiedades por nombre común
+                var candidates = new[] { "Id", "IdFactura", "Id_Factura", "IdFactura" };
+                var prop = candidates
+                    .Select(name => type.GetProperty(name))
+                    .FirstOrDefault(p => p != null && p.CanWrite);
+
+                // Si no encontramos por nombre exacto, buscar cualquier propiedad que contenga "id" (case-insensitive)
+                if (prop == null)
+                {
+                    prop = type.GetProperties()
+                               .FirstOrDefault(p => p.CanWrite && p.Name.IndexOf("id", StringComparison.OrdinalIgnoreCase) >= 0);
+                }
+
+                if (prop != null)
+                {
+                    // Convertir si la propiedad no es string
+                    if (prop.PropertyType == typeof(string))
+                    {
+                        prop.SetValue(entity, id);
+                    }
+                    else
+                    {
+                        // intentar convertir a tipo destino si es posible
+                        var converted = Convert.ChangeType(id, prop.PropertyType);
+                        prop.SetValue(entity, converted);
+                    }
+                }
             }
             catch (Exception ex)
             {

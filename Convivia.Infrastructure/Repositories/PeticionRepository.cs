@@ -1,6 +1,5 @@
 using Convivia.Domain.Entities;
-using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
@@ -8,80 +7,46 @@ using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class PeticionRepository : IPeticionRepository
+    public class PeticionRepository : Repository<FireStorePeticion>, IPeticionRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<PeticionRepository> _logger;
         private const string Collection = "peticiones";
 
-        public PeticionRepository(IFirebaseService firebase, ILogger<PeticionRepository> logger)
+        public PeticionRepository(IFirebaseService firebase, ILogger<PeticionRepository> logger, ILoggerFactory loggerFactory) 
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStorePeticion>>(), Collection)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(PeticionDto peticion, CancellationToken ct = default)
+        public async Task<string> AddAsync(Peticion entity, CancellationToken ct = default)
         {
-            if (peticion == null) throw new ArgumentNullException(nameof(peticion));
-
-            // Convertir PeticionDto ? Peticion (Domain) ? FireStorePeticion (Firestore)
-            var peticionDomain = peticion.Adapt<Peticion>();
-            var peticionPersist = peticionDomain.Adapt<FireStorePeticion>();
-
-            if (string.IsNullOrWhiteSpace(peticionPersist.Id))
-            {
-                var generatedId = await _firebase.AddAsync(Collection, peticionPersist, ct);
-                return generatedId;
-            }
-
-            await _firebase.AddAsync(Collection, peticionPersist.Id, peticionPersist, ct);
-            return peticionPersist.Id;
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            var persist = entity.Adapt<FireStorePeticion>();
+            return await base.AddAsync(persist, ct);
         }
 
-        public async Task<PeticionDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<Peticion?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                var peticionPersist = await _firebase.GetAsync<FireStorePeticion>(Collection, id, ct);
-                if (peticionPersist == null) return null;
-
-                // Convertir FireStorePeticion ? Peticion (Domain) ? PeticionDto
-                var peticionDomain = peticionPersist.Adapt<Peticion>();
-                return peticionDomain.Adapt<PeticionDto>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-                throw;
-            }
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<Peticion>();
         }
 
-        public async Task<IEnumerable<PeticionDto>> GetAllAsync(CancellationToken ct = default)
+        public async Task<IEnumerable<Peticion>> GetAllAsync(CancellationToken ct = default)
         {
-            try
-            {
-                var list = await _firebase.GetAllAsync<FireStorePeticion>(Collection, ct);
-                if (list == null || !list.Any()) return new List<PeticionDto>();
-
-                return list.Select(p => p.Adapt<Peticion>().Adapt<PeticionDto>()).ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetAllAsync");
-                throw;
-            }
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Peticion>() : list.Adapt<List<Peticion>>();
         }
 
-        public async Task<IEnumerable<PeticionDto>> GetByEstadoAsync(string estado, CancellationToken ct = default)
+        public async Task<IEnumerable<Peticion>> GetByEstadoAsync(string estado, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(estado)) return Array.Empty<PeticionDto>();
+            if (string.IsNullOrWhiteSpace(estado)) return Array.Empty<Peticion>();
             try
             {
                 var list = await _firebase.QueryAsync<FireStorePeticion>(Collection, nameof(FireStorePeticion.Estado), estado, ct);
-                if (list == null || !list.Any()) return new List<PeticionDto>();
+                if (list == null || !list.Any()) return new List<Peticion>();
 
-                return list.Select(p => p.Adapt<Peticion>().Adapt<PeticionDto>()).ToList();
+                return list.Select(p => p.Adapt<Peticion>()).ToList();
             }
             catch (Exception ex)
             {
@@ -90,38 +55,33 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task UpdateAsync(string id, PeticionDto peticion, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Peticion entity, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            if (peticion == null) throw new ArgumentNullException(nameof(peticion));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-            try
-            {
-                // Convertir PeticionDto ? Peticion (Domain) ? FireStorePeticion
-                var peticionDomain = peticion.Adapt<Peticion>();
-                var peticionPersist = peticionDomain.Adapt<FireStorePeticion>();
+            var persist = entity.Adapt<FireStorePeticion>();
+            await base.UpdateAsync(id, persist, ct);
+        }
 
-                await _firebase.UpdateAsync(Collection, id, peticionPersist, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error UpdateAsync {Id}", id);
-                throw;
-            }
+        public async Task UpdateAsync(string id, Peticion entity, bool merge, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            var persist = entity.Adapt<FireStorePeticion>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
+
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            try
-            {
-                await _firebase.DeleteAsync(Collection, id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            await base.DeleteAsync(id, ct);
         }
     }
 }

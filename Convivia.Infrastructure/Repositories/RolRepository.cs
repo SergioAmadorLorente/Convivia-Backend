@@ -1,88 +1,50 @@
-using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
-using Convivia.Shared.Services;
-using Convivia.Infrastructure.Models;
+using Convivia.Application.Repositories;
 using Convivia.Domain.Entities;
-using Microsoft.Extensions.Logging;
+using Convivia.Infrastructure.Models;
+using Convivia.Shared.DTOs;
+using Convivia.Shared.Services;
 using Mapster;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class RolRepository : IRolRepository
+    public class RolRepository : Repository<FireStoreRol>, IRolRepository
     {
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<RolRepository> _logger;
         private const string Collection = "roles";
 
-        public RolRepository(IFirebaseService firebase, ILogger<RolRepository> logger)
+        public RolRepository(IFirebaseService firebase, ILogger<RolRepository> logger, ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreRol>>(), Collection)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> AddAsync(RolDto rol, CancellationToken ct = default)
+        public async Task<string> AddAsync(Rol rol, CancellationToken ct = default)
         {
             if (rol == null) throw new ArgumentNullException(nameof(rol));
-            
-            // Convertir RolDto ? Rol (Domain) ? FireStoreRol (Firestore)
-            var rolDomain = rol.Adapt<Rol>();
-            var rolPersist = rolDomain.Adapt<FireStoreRol>();
-            
-            if (string.IsNullOrWhiteSpace(rolPersist.Id))
-            {
-                // Si no tiene id, pedimos a Firestore que genere una id y la devolvemos
-                var generatedId = await _firebase.AddAsync(Collection, rolPersist, ct);
-                return generatedId;
-            }
-
-            // Si ya tiene id, lo usamos para crear el documento con ese id
-            await _firebase.AddAsync(Collection, rolPersist.Id, rolPersist, ct);
-            return rolPersist.Id;
+            var persist = rol.Adapt<FireStoreRol>();
+            return await base.AddAsync(persist, persist.Id, ct);
         }
 
-        public async Task<RolDto?> GetByIdAsync(string id, CancellationToken ct = default)
+        public async Task<Rol?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                // Obtener FireStoreRol de Firestore
-                var rolPersist = await _firebase.GetAsync<FireStoreRol>(Collection, id, ct);
-                if (rolPersist == null) return null;
-                
-                // Convertir FireStoreRol ? Rol (Domain) ? RolDto
-                var rolDomain = rolPersist.Adapt<Rol>();
-                return rolDomain.Adapt<RolDto>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-                throw;
-            }
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<Rol>();
         }
 
-        public async Task<IEnumerable<RolDto>> GetAllAsync(CancellationToken ct = default)
+        public async Task<IEnumerable<Rol>> GetAllAsync(CancellationToken ct = default)
         {
-            try
-            {
-                // Obtener todos los FireStoreRol desde Firestore
-                var list = await _firebase.GetAllAsync<FireStoreRol>(Collection, ct);
-                if (list == null || !list.Any()) return new List<RolDto>();
-                
-                // Convertir FireStoreRol ? Rol (Domain) ? RolDto
-                return list.Select(rp => rp.Adapt<Rol>().Adapt<RolDto>()).ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetAllAsync");
-                throw;
-            }
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Rol>() : list.Adapt<List<Rol>>();
         }
 
-        public async Task<RolDto?> GetByNombreAsync(TipoRol nombre, CancellationToken ct = default)
+        public async Task<Rol?> GetByNombreAsync(TipoRol nombre, CancellationToken ct = default)
         {
             try
             {
@@ -96,9 +58,7 @@ namespace Convivia.Infrastructure.Repositories
                 var rolPersist = list.FirstOrDefault();
                 if (rolPersist == null) return null;
                 
-                // Convertir FireStoreRol ? Rol (Domain) ? RolDto
-                var rolDomain = rolPersist.Adapt<Rol>();
-                return rolDomain.Adapt<RolDto>();
+                return rolPersist.Adapt<Rol>();
             }
             catch (Exception ex)
             {
@@ -107,38 +67,33 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task UpdateAsync(string id, RolDto rol, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Rol rol, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (rol == null) throw new ArgumentNullException(nameof(rol));
 
-            try
-            {
-                // Convertir RolDto ? Rol (Domain) ? FireStoreRol
-                var rolDomain = rol.Adapt<Rol>();
-                var rolPersist = rolDomain.Adapt<FireStoreRol>();
-                
-                await _firebase.UpdateAsync(Collection, id, rolPersist, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error UpdateAsync {Id}", id);
-                throw;
-            }
+            var persist = rol.Adapt<FireStoreRol>();
+            await base.UpdateAsync(id, persist, ct);
         }
 
-        public async Task DeleteAsync(string id, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Rol rol, bool merge, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            try
-            {
-                await _firebase.DeleteAsync(Collection, id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (rol == null) throw new ArgumentNullException(nameof(rol));
+
+            var persist = rol.Adapt<FireStoreRol>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
+
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
+        }
+
+        public new async Task DeleteAsync(string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            await base.DeleteAsync(id, ct);
         }
     }
 }

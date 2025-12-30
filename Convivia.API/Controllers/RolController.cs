@@ -19,15 +19,15 @@ namespace Convivia.API.Controllers
 
         // POST api/rol
         [HttpPost]
-       [ApiExplorerSettings(IgnoreApi = true)]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> Create([FromBody] CreateRolDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
 
             try
             {
-                var id = await _service.CrearAsync(model, ct);
-                return CreatedAtAction(nameof(GetById), new { id }, new { id });
+                var created = await _service.CrearRolAsync(model, ct);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (ArgumentException ex)
             {
@@ -42,7 +42,7 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
 
-            var rol = await _service.ObtenerPorIdAsync(id, ct);
+            var rol = await _service.ObtenerRolAsync(id, ct);
             if (rol == null) return NotFound();
             return Ok(rol);
         }
@@ -51,7 +51,7 @@ namespace Convivia.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            var list = await _service.ObtenerTodosAsync(ct);
+            var list = await _service.ListarTodasAsync(ct);
             return Ok(list);
         }
 
@@ -67,12 +67,9 @@ namespace Convivia.API.Controllers
                     Usuario = "Puede crear y editar tareas, y asignarse tareas",
                     Admin = "Tiene todos los permisos disponibles",
                     Moderador = "Puede crear, editar y eliminar tareas, asignar tareas y gestionar usuarios"
-
                 }
             });
         }
-
-        
 
         // PUT api/rol/{id}
         [HttpPut("{id}")]
@@ -84,9 +81,9 @@ namespace Convivia.API.Controllers
 
             try
             {
-                var updated = await _service.ActualizarAsync(id, model, ct);
-                if (!updated) return NotFound();
-                return NoContent();
+                var updated = await _service.ActualizarRolCompletoAsync(id, model, ct);
+                if (updated == null) return NotFound();
+                return Ok(updated);
             }
             catch (KeyNotFoundException)
             {
@@ -106,7 +103,7 @@ namespace Convivia.API.Controllers
 
             try
             {
-                var removed = await _service.EliminarAsync(id, ct);
+                var removed = await _service.EliminarRolAsync(id, ct);
                 if (!removed) return NotFound();
                 return NoContent();
             }

@@ -8,7 +8,7 @@ namespace Convivia.Shared.DTOs
 {
     public class PermisoDto
     {
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         public TipoRol Rol { get; set; }
         
         // Permisos de Tareas

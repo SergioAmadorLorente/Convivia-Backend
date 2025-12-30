@@ -9,8 +9,7 @@ namespace Convivia.Shared.DTOs
 {
     public class RolDto
     {
-        [Required]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         
         [Required]
         public TipoRol Nombre { get; set; }

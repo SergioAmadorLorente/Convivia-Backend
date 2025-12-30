@@ -1,8 +1,7 @@
-    using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
+using Convivia.Domain.Entities;
 using Convivia.Infrastructure.Models;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
 using Mapster;
 using Microsoft.Extensions.Logging;
@@ -20,7 +19,7 @@ namespace Convivia.Infrastructure.Repositories
         private const string Collection = "permisos";
 
         public PermisoRepository(IFirebaseService firebase, ILogger<PermisoRepository> logger, ILoggerFactory loggerFactory)
-          : base(firebase, loggerFactory.CreateLogger<Repository<FireStorePermiso>>(), Collection)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStorePermiso>>(), Collection)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -39,6 +38,12 @@ namespace Convivia.Infrastructure.Repositories
             return persist.Adapt<Permiso>();
         }
 
+        public async Task<IEnumerable<Permiso>> GetAllAsync(CancellationToken ct = default)
+        {
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<Permiso>() : list.Adapt<List<Permiso>>();
+        }
+
         public async Task<IEnumerable<Permiso>> GetByRolAsync(TipoRol rol, CancellationToken ct = default)
         {
             try
@@ -50,20 +55,13 @@ namespace Convivia.Infrastructure.Repositories
                 var list = await _firebase.QueryAsync<FireStorePermiso>(Collection, nameof(FireStorePermiso.Rol), rolStr, ct);
                 if (list == null || !list.Any()) return new List<Permiso>();
                 
-                // Convertir FireStorePermiso ? Permiso (Domain) ? PermisoDto
-                return list.Select(pp => pp.Adapt<Permiso>().Adapt<PermisoDto>()).ToList();
+                return list.Select(pp => pp.Adapt<Permiso>()).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error GetByRolAsync {Rol}", rol);
                 throw;
             }
-        }
-
-        public async Task<IEnumerable<Permiso>> GetAllAsync(CancellationToken ct = default)
-        {
-            var list = await base.GetAllAsync(ct);
-            return list == null ? Array.Empty<Permiso>() : list.Adapt<List<Permiso>>();
         }
 
         public async Task UpdateAsync(string id, Permiso permiso, CancellationToken ct = default)
@@ -89,21 +87,7 @@ namespace Convivia.Infrastructure.Repositories
             await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
-        public async Task DeleteAsync(string id, CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-            try
-            {
-                await _firebase.DeleteAsync(Collection, id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-                throw;
-            }
-        }
-
-        public async Task DeleteAsync(string id, CancellationToken ct = default)
+        public new async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await base.DeleteAsync(id, ct);

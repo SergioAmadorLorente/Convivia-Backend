@@ -16,6 +16,7 @@ namespace Convivia.Infrastructure.Mappers
             // FireStorePermiso -> Permiso (Domain)
             // Mapear desde propiedades planas de Firestore al objeto Rol anidado
             config.NewConfig<FireStorePermiso, Permiso>()
+                .Map(dest => dest.Id, src => src.Id)
                 .AfterMapping((src, dest) =>
                 {
                     if (dest.Rol == null)
@@ -46,6 +47,47 @@ namespace Convivia.Infrastructure.Mappers
                 .Map(dest => dest.AsignarTarea, src => src.Rol != null && src.Rol.AsignarTarea)
                 .Map(dest => dest.AsignarseTarea, src => src.Rol != null && src.Rol.AsignarseTarea)
                 .Map(dest => dest.EliminarResidencia, src => src.Rol != null && src.Rol.EliminarResidencia);
+
+            // CreatePermisoDto -> Permiso (Domain)
+            config.NewConfig<CreatePermisoDto, Permiso>()
+                .AfterMapping((src, dest) =>
+                {
+                    switch (src.Rol)
+                    {
+                        case TipoRol.Admin:
+                            dest.Rol = Rol.Admin;
+                            break;
+                        case TipoRol.Moderador:
+                            dest.Rol = Rol.Moderador;
+                            break;
+                        default:
+                            dest.Rol = Rol.Usuario;
+                            break;
+                    }
+                });
+
+            // Permiso (Domain) -> PermisoDto
+            config.NewConfig<Permiso, PermisoDto>()
+                .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.Rol, src => ParseTipoRol(src.Rol != null ? src.Rol.Nombre : "Usuario"))
+                .Map(dest => dest.CrearTarea, src => src.Rol != null && src.Rol.CrearTarea)
+                .Map(dest => dest.EliminarTarea, src => src.Rol != null && src.Rol.EliminarTarea)
+                .Map(dest => dest.EditarTarea, src => src.Rol != null && src.Rol.EditarTarea)
+                .Map(dest => dest.AñadirUsuario, src => src.Rol != null && src.Rol.AñadirUsuario)
+                .Map(dest => dest.EliminarUsuario, src => src.Rol != null && src.Rol.EliminarUsuario)
+                .Map(dest => dest.AsignarTarea, src => src.Rol != null && src.Rol.AsignarTarea)
+                .Map(dest => dest.AsignarseTarea, src => src.Rol != null && src.Rol.AsignarseTarea)
+                .Map(dest => dest.EliminarResidencia, src => src.Rol != null && src.Rol.EliminarResidencia);
+        }
+
+        private static TipoRol ParseTipoRol(string rolName)
+        {
+            return rolName switch
+            {
+                "Admin" => TipoRol.Admin,
+                "Moderador" => TipoRol.Moderador,
+                _ => TipoRol.Usuario
+            };
         }
     }
 }

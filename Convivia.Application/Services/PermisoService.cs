@@ -5,34 +5,31 @@ using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Microsoft.Extensions.Logging;
-using Convivia.Shared.Repositories;
-using Convivia.Domain.Repositories;
-using Mapster;
+using Convivia.Application.Repositories;
 using Convivia.Domain.Entities;
+using MapsterMapper;
 
 namespace Convivia.Application.Services
 {
     public class PermisoService
     {
         private readonly IPermisoRepository _permisoRepository;
-        private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
+        private readonly IMapper _mapper;
         private readonly ILogger<PermisoService> _logger;
 
-        public PermisoService(IPermisoRepository permisoRepository, IUsuarioEspacioRepository usuarioEspacioRepo, IMapper mapper, ILogger<PermisoService> logger)
+        public PermisoService(IPermisoRepository permisoRepository, IMapper mapper, ILogger<PermisoService> logger)
         {
             _permisoRepository = permisoRepository ?? throw new ArgumentNullException(nameof(permisoRepository));
-            _usuarioEspacioRepo = usuarioEspacioRepo ?? throw new ArgumentNullException(nameof(usuarioEspacioRepo));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Crea una permiso y devuelve la permiso persistida (con Id y metadatos).
+        /// Crea un permiso y devuelve el permiso persistido (con Id y metadatos).
         /// </summary>
         public async Task<PermisoDto> CrearPermisoAsync(CreatePermisoDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (dto.Rol < 0) throw new ArgumentException("Precio no puede ser negativo", nameof(dto.Rol));
 
             // DTO -> Domain
             var permisoDomain = _mapper.Map<Permiso>(dto);
@@ -56,7 +53,7 @@ namespace Convivia.Application.Services
         }
 
         /// <summary>
-        /// Obtiene una permiso por id.
+        /// Obtiene un permiso por id.
         /// </summary>
         public async Task<PermisoDto?> ObtenerPermisoAsync(string id, CancellationToken ct = default)
         {
@@ -69,7 +66,8 @@ namespace Convivia.Application.Services
         {
             try
             {
-                return await _permisoRepository.GetByRolAsync(rol, ct);
+                var permisos = await _permisoRepository.GetByRolAsync(rol, ct);
+                return permisos.Select(p => _mapper.Map<PermisoDto>(p)).ToList();
             }
             catch (Exception ex)
             {
@@ -153,14 +151,20 @@ namespace Convivia.Application.Services
             return updated == null ? null : _mapper.Map<PermisoDto>(updated);
         }
 
-
         private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdatePermisoDto dto)
         {
             var updates = new Dictionary<string, object>();
-            if (dto.Rol.HasValue) updates[nameof(Permiso.Rol)] = dto.Rol.Value;
+            if (dto.Rol.HasValue) updates["Rol"] = dto.Rol.Value.ToString();
+            if (dto.CrearTarea.HasValue) updates["CrearTarea"] = dto.CrearTarea.Value;
+            if (dto.EliminarTarea.HasValue) updates["EliminarTarea"] = dto.EliminarTarea.Value;
+            if (dto.EditarTarea.HasValue) updates["EditarTarea"] = dto.EditarTarea.Value;
+            if (dto.AsignarTarea.HasValue) updates["AsignarTarea"] = dto.AsignarTarea.Value;
+            if (dto.AsignarseTarea.HasValue) updates["AsignarseTarea"] = dto.AsignarseTarea.Value;
+            if (dto.AñadirUsuario.HasValue) updates["AñadirUsuario"] = dto.AñadirUsuario.Value;
+            if (dto.EliminarUsuario.HasValue) updates["EliminarUsuario"] = dto.EliminarUsuario.Value;
+            if (dto.EliminarResidencia.HasValue) updates["EliminarResidencia"] = dto.EliminarResidencia.Value;
             return updates;
         }
-
 
         /// <summary>
         /// Elimina un permiso.

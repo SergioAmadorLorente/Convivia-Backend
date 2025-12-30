@@ -11,14 +11,11 @@ namespace Convivia.Domain.Entities
     /// </summary>
     public class Espacio
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString("N");
-
+        public string Id { get; set; } = string.Empty;
 
         public string Nombre { get; set; }
 
-
         public string? Direccion { get; set; }
-
 
         public List<Sala> Salas { get; set; } = new List<Sala>();
 

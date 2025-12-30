@@ -5,7 +5,7 @@ namespace Convivia.Shared.DTOs
 {
     public class UsuarioEspacioDto
     {
-        public string Id_UsuarioEspacio { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
         
         public bool Ausente { get; set; }
         

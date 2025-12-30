@@ -1,46 +1,79 @@
 ﻿using Mapster;
 using Convivia.Shared.DTOs;
 using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Microsoft.Extensions.Logging;
+using MapsterMapper;
 
 namespace Convivia.Application.Services
 {
     public class ReservaService
     {
-        private readonly IReservaRepository _repo;
+        private readonly IReservaRepository _reservaRepository;
+        private readonly IMapper _mapper;
         private readonly ILogger<ReservaService> _logger;
 
-        public ReservaService(IReservaRepository repo, ILogger<ReservaService> logger)
+        public ReservaService(IReservaRepository reservaRepository,IMapper mapper, ILogger<ReservaService> logger)
         {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _reservaRepository = reservaRepository ?? throw new ArgumentNullException(nameof(reservaRepository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // Crear reserva
-        public async Task<ReservaDto?> AddAsync(CreateReservaDto dto, CancellationToken ct = default)
+        /// <summary>
+        /// Crea una Reserva y devuelve la Reserva persistida (con Id y metadatos).
+        /// </summary>
+        public async Task<ReservaDto> CrearReservaAsync(CreateReservaDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            if (string.IsNullOrWhiteSpace(dto.idSala)) throw new ArgumentNullException(nameof(dto.idSala));
+            if (string.IsNullOrWhiteSpace(dto.idUser)) throw new ArgumentNullException(nameof(dto.idUser));
 
-            var reservaDomain = dto.Adapt<Reserva>(); // La entidad genera su id automáticamente
-            var createdReserva = await _repo.AddAsync(reservaDomain, ct);
+            // DTO -> Domain
+            var reservaDomain = _mapper.Map<Reserva>(dto);
 
-            return createdReserva?.Adapt<ReservaDto>();
+            // Persistir y obtener id           
+            var id = await _reservaRepository.AddAsync(reservaDomain, ct);
+
+            // Recuperar entidad guardada y devolver DTO consistente
+            var createdDomain = await _reservaRepository.GetByIdAsync(id, ct);
+            if (createdDomain == null)
+            {
+                // devolver DTO mínimo con id para evitar fallos en rutas
+                return new ReservaDto { Id = id };
+            }
+
+            var createdDto = _mapper.Map<ReservaDto>(createdDomain);
+            if (string.IsNullOrWhiteSpace(createdDto.Id))
+                createdDto.Id = id;
+
+            return createdDto;
         }
 
-        // Obtener reserva por id
-        public async Task<ReservaDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
+        /// <summary>
+        /// Obtiene una reserva por id.
+        /// </summary>
+        public async Task<ReservaDto?> ObtenerReservaAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            var reserva = await _repo.GetByIdAsync(id, ct);
-            return reserva?.Adapt<ReservaDto>();
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            var domain = await _reservaRepository.GetByIdAsync(id, ct);
+            return domain == null ? null : _mapper.Map<ReservaDto>(domain);
+        }
+
+        /// <summary>
+        /// Lista todas las resergvas.
+        /// </summary>
+        public async Task<List<ReservaDto>> ListarTodasAsync(CancellationToken ct = default)
+        {
+            var list = await _reservaRepository.GetAllAsync(ct);
+            return list?.Select(f => _mapper.Map<ReservaDto>(f)).ToList() ?? new List<ReservaDto>();
         }
 
         // Obtener reservas por usuario
         public async Task<IEnumerable<ReservaDto>> ObtenerPorUsuarioAsync(string idUser, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(idUser)) return Enumerable.Empty<ReservaDto>();
-            var reservas = await _repo.GetByUsuarioIdAsync(idUser, ct);
+            var reservas = await _reservaRepository.GetByUsuarioIdAsync(idUser, ct);
             return reservas.Select(r => r.Adapt<ReservaDto>());
         }
 
@@ -48,81 +81,98 @@ namespace Convivia.Application.Services
         public async Task<IEnumerable<ReservaDto>> ObtenerPorSalaAsync(string idSala, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(idSala)) return Enumerable.Empty<ReservaDto>();
-            var reservas = await _repo.GetBySalaIdAsync(idSala, ct);
+            var reservas = await _reservaRepository.GetBySalaIdAsync(idSala, ct);
             return reservas.Select(r => r.Adapt<ReservaDto>());
         }
 
-        // Actualizar reserva (update completo)
-        public async Task<ReservaDto> UpdateAsync(string id, UpdateReservaDto dto, CancellationToken ct = default)
+        /// <summary>
+        /// Overwrite completo: reemplaza todo el documento en Firestore.
+        /// </summary>
+        public async Task<ReservaDto?> ActualizarReservaCompletaAsync(string id, UpdateReservaDto dto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido");
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var reservaExistente = await _repo.GetByIdAsync(id, ct);
-            if (reservaExistente == null) throw new KeyNotFoundException($"Reserva con id {id} no encontrada");
+            // Mapear DTO -> Domain (nuevo objeto completo)
+            var domain = _mapper.Map<Reserva>(dto);
 
-            reservaExistente.description = dto.description ?? reservaExistente.description;
-            reservaExistente.startTime = dto.startTime ?? reservaExistente.startTime;
-            reservaExistente.endTime = dto.endTime ?? reservaExistente.endTime;
-            reservaExistente.idSala = dto.idSala ?? reservaExistente.idSala;
-            reservaExistente.idUser = dto.idUser ?? reservaExistente.idUser;
+            // Asegurar que el Id de dominio coincide con el id pasado
+            domain.Id = id;
 
-            var updated = await _repo.UpdateAsync(id, reservaExistente, ct);
-            return updated!.Adapt<ReservaDto>();
+            // Persistir como overwrite (merge = false)
+            await _reservaRepository.UpdateAsync(id, domain, merge: false, ct);
+
+            var updated = await _reservaRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<ReservaDto>(updated);
+        }
+
+        /// <summary>
+        /// Merge: fusiona los campos del objeto con los del documento existente (SetOptions.MergeAll).
+        /// </summary>
+        public async Task<ReservaDto?> ActualizarReservaMergeAsync(string id, UpdateReservaDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var existing = await _reservaRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
+
+            // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
+            _mapper.Map(dto, existing);
+
+            // Persistir con merge para evitar sobrescribir campos no mapeados
+            await _reservaRepository.UpdateAsync(id, existing, merge: true, ct);
+
+            var updated = await _reservaRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<ReservaDto>(updated);
+        }
+
+        /// <summary>
+        /// Parcial / PATCH: construye un diccionario con solo las propiedades no nulas del DTO
+        /// y llama a la sobrecarga del repositorio que acepta IDictionary (update parcial).
+        /// </summary>
+        public async Task<ReservaDto?> ActualizarReservaParcialAsync(string id, UpdateReservaDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var updates = ObtenerActualizacionesDesdeDto(dto);
+            if (updates.Count == 0)
+            {
+                // Nada que actualizar: devolver la entidad actual
+                var current = await _reservaRepository.GetByIdAsync(id, ct);
+                return current == null ? null : _mapper.Map<ReservaDto>(current);
+            }
+
+            // useSetMerge: false -> UpdateAsync estricto (fallará si no existe)
+            await _reservaRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
+
+            var updated = await _reservaRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<ReservaDto>(updated);
         }
 
         // Eliminar reserva
-        public async Task EliminarAsync(string id, CancellationToken ct = default)
+        public async Task<bool> EliminarReservaAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido");
-            await _repo.DeleteAsync(id, ct);
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException(nameof(id));
+
+            var existing = await _reservaRepository.GetByIdAsync(id, ct);
+            if (existing == null) return false;
+            
+            await _reservaRepository.DeleteAsync(id, ct);
+            return true;
         }
 
-        // Actualización parcial
-        public async Task<bool> ParcialActualizarAsync(string id, UpdateReservaDto dto, CancellationToken ct = default)
+        // Mapper interno para el patch
+        private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateReservaDto dto)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido");
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var updates = new Dictionary<string, object>();
 
-            var reserva = await _repo.GetByIdAsync(id, ct);
-            if (reserva == null) return false;
+            if (dto.description != null) updates["Descripcion"] = dto.description;
+            if (dto.idSala != null) updates["idSala"] = dto.idSala;
+            if (dto.idUser != null) updates["idUser"] = dto.idUser;
 
-            var changed = false;
-
-            if (!string.IsNullOrWhiteSpace(dto.description) && dto.description != reserva.description)
-            {
-                reserva.description = dto.description;
-                changed = true;
-            }
-
-            if (dto.startTime.HasValue && dto.startTime != reserva.startTime)
-            {
-                reserva.startTime = dto.startTime.Value;
-                changed = true;
-            }
-
-            if (dto.endTime.HasValue && dto.endTime != reserva.endTime)
-            {
-                reserva.endTime = dto.endTime.Value;
-                changed = true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(dto.idSala) && dto.idSala != reserva.idSala)
-            {
-                reserva.idSala = dto.idSala;
-                changed = true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(dto.idUser) && dto.idUser != reserva.idUser)
-            {
-                reserva.idUser = dto.idUser;
-                changed = true;
-            }
-
-            if (!changed) return true; // nada que actualizar
-
-            await _repo.UpdateAsync(id, reserva, ct);
-            return true;
+            return updates;
         }
     }
 }

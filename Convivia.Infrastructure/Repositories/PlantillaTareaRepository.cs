@@ -1,7 +1,6 @@
-﻿using Convivia.Shared.DTOs;
-using Convivia.Domain.Entities;
+﻿using Convivia.Domain.Entities;
+using Convivia.Application.Repositories;
 using Convivia.Infrastructure.Models;
-using Convivia.Shared.Repositories;
 using Convivia.Shared.Services;
 using Mapster;
 using Microsoft.Extensions.Logging;
@@ -9,71 +8,69 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Convivia.Domain.Repositories;
 
 namespace Convivia.Infrastructure.Repositories
 {
-    public class PlantillaTareaRepository : IPlantillaTareaRepository
+    public class PlantillaTareaRepository : Repository<FirestorePlantillaTarea>, IPlantillaTareaRepository
     {
         private const string COLLECTION = "plantillatareas";
-        private readonly IFirebaseService _firebase;
         private readonly ILogger<PlantillaTareaRepository> _logger;
 
-        public PlantillaTareaRepository(IFirebaseService firebase, ILogger<PlantillaTareaRepository> logger)
+        public PlantillaTareaRepository(
+            IFirebaseService firebase,
+            ILogger<PlantillaTareaRepository> logger,
+            ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FirestorePlantillaTarea>>(), COLLECTION)
         {
-            _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<string> AddAsync(PlantillaTarea plantilla, CancellationToken ct = default)
         {
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
-
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
-            await _firebase.AddAsync(COLLECTION, firestoreEntity.PlantillaId, firestoreEntity);
-            return firestoreEntity.PlantillaId;
+            return await base.AddAsync(firestoreEntity, ct);
         }
 
-        public async Task<PlantillaTarea?> GetAsync(string id, CancellationToken ct = default)
+        public async Task<PlantillaTarea?> GetByIdAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-
-            var firestoreEntity = await _firebase.GetAsync<FirestorePlantillaTarea>(COLLECTION, id);
-            var entity = firestoreEntity?.Adapt<PlantillaTarea>();
-            return entity;
+            var firestoreEntity = await base.GetByIdAsync(id, ct);
+            return firestoreEntity?.Adapt<PlantillaTarea>();
         }
 
-        public async Task<List<PlantillaTarea>> GetAllAsync(CancellationToken ct = default)
+        public async Task<IEnumerable<PlantillaTarea>> GetAllAsync(CancellationToken ct = default)
         {
-            var firestoreEntities = await _firebase.GetAllAsync<FirestorePlantillaTarea>(COLLECTION);
-
-            List<PlantillaTarea> lista = new List<PlantillaTarea>();
-
-            if (firestoreEntities == null || !firestoreEntities.Any())
-                return lista;
-
-            foreach (var entity in firestoreEntities)
-            {
-                var entityplantilla = entity.Adapt<PlantillaTarea>();
-                lista.Add(entityplantilla);
-            }
-
-            return lista;
+            var firestoreEntities = await base.GetAllAsync(ct);
+            return firestoreEntities == null ? new List<PlantillaTarea>() : firestoreEntities.Select(e => e.Adapt<PlantillaTarea>()).ToList();
         }
 
         public async Task UpdateAsync(string id, PlantillaTarea plantilla, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
-            await _firebase.UpdateAsync(COLLECTION, firestoreEntity.PlantillaId, firestoreEntity);
+            await base.UpdateAsync(id, firestoreEntity, ct);
+        }
 
+        public async Task UpdateAsync(string id, PlantillaTarea plantilla, bool merge, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
+
+            var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
+            await base.UpdateAsync(id, firestoreEntity, merge, ct);
+        }
+
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
+        {
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
         public async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            await _firebase.DeleteAsync(COLLECTION, id);
+            await base.DeleteAsync(id, ct);
         }
     }
 }
