@@ -1,4 +1,4 @@
-using Convivia.Domain.Entities;
+    using Convivia.Domain.Entities;
 using Convivia.Domain.Repositories;
 using Convivia.Infrastructure.Models;
 using Convivia.Shared.DTOs;
@@ -39,7 +39,7 @@ namespace Convivia.Infrastructure.Repositories
             return persist.Adapt<Permiso>();
         }
 
-        public async Task<IEnumerable<PermisoDto>> GetByRolAsync(TipoRol rol, CancellationToken ct = default)
+        public async Task<IEnumerable<Permiso>> GetByRolAsync(TipoRol rol, CancellationToken ct = default)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace Convivia.Infrastructure.Repositories
                 
                 // Consultar FireStorePermiso desde Firestore
                 var list = await _firebase.QueryAsync<FireStorePermiso>(Collection, nameof(FireStorePermiso.Rol), rolStr, ct);
-                if (list == null || !list.Any()) return new List<PermisoDto>();
+                if (list == null || !list.Any()) return new List<Permiso>();
                 
                 // Convertir FireStorePermiso ? Permiso (Domain) ? PermisoDto
                 return list.Select(pp => pp.Adapt<Permiso>().Adapt<PermisoDto>()).ToList();
