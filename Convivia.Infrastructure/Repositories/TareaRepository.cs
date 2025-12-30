@@ -41,6 +41,11 @@ namespace Convivia.Infrastructure.Repositories
                 else
                     firestoreEntity.HoraLimite = null;
 
+                if (tarea.FechaLimite.HasValue)
+                    firestoreEntity.FechaLimite = tarea.FechaLimite.Value.ToString("yyyy-MM-dd");
+                else
+                    firestoreEntity.FechaLimite = null;
+
                 var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
                 await _firebase.AddAsync(subcollectionPath, tarea.Id, firestoreEntity, ct);
                 ids.Add(tarea.Id);
@@ -64,6 +69,11 @@ namespace Convivia.Infrastructure.Repositories
                 firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
             else
                 firestoreEntity.HoraLimite = null;
+
+            if (tarea.FechaLimite.HasValue)
+                firestoreEntity.FechaLimite = tarea.FechaLimite.Value.ToString("yyyy-MM-dd");
+            else
+                firestoreEntity.FechaLimite = null;
 
             var subcollectionPath = GetSubcollectionPath(tarea.PlantillaId);
             await _firebase.AddAsync(subcollectionPath, tarea.Id, firestoreEntity, ct);
@@ -102,6 +112,18 @@ namespace Convivia.Infrastructure.Repositories
                 entity.HoraLimite = null;
             }
 
+            if (!string.IsNullOrWhiteSpace(ft.FechaLimite))
+            {
+                if (DateOnly.TryParse(ft.FechaLimite, out var fechaOnly))
+                    entity.FechaLimite = fechaOnly;
+                else
+                    entity.FechaLimite = null;
+            }
+            else
+            {
+                entity.FechaLimite = null;
+            }
+
             return entity;
         }
 
@@ -132,6 +154,11 @@ namespace Convivia.Infrastructure.Repositories
             else
                 firestoreEntity.HoraLimite = null;
 
+            if (tareaActualizada.FechaLimite.HasValue)
+                firestoreEntity.FechaLimite = tareaActualizada.FechaLimite.Value.ToString("yyyy-MM-dd");
+            else
+                firestoreEntity.FechaLimite = null;
+
             var subcollectionPath = GetSubcollectionPath(tareaActualizada.PlantillaId);
 
             await _firebase.UpdateAsync(subcollectionPath, id, firestoreEntity,
@@ -160,6 +187,11 @@ namespace Convivia.Infrastructure.Repositories
                 firestoreEntity.HoraLimite = tareaActualizada.HoraLimite.Value.ToString("HH:mm");
             else
                 firestoreEntity.HoraLimite = null;
+
+            if (tareaActualizada.FechaLimite.HasValue)
+                firestoreEntity.FechaLimite = tareaActualizada.FechaLimite.Value.ToString("yyyy-MM-dd");
+            else
+                firestoreEntity.FechaLimite = null;
             await _firebase.UpdateAsync(subcollectionPath, id, firestoreEntity, merge, ct);
         }
 

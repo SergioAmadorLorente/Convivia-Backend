@@ -32,12 +32,14 @@ namespace Convivia.Shared.DTOs
 
         /// <summary>
         /// Fecha de finalización de la plantilla (solo para plantillas repetidas).
+        /// Formato: YYYY-MM-DD (e.g., "2025-12-30")
         /// No se puede modificar StartDate (se establece como hoy cuando se crea).
         /// </summary>
-        public DateTime? FechaFin { get; set; }
+        public DateOnly? FechaFin { get; set; }
 
         /// <summary>
-        /// Días de repetición semanal (0=Domingo, 6=Sábado) a actualizar.
+        /// Días de repetición semanal a actualizar.
+        /// Formato del cliente: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
         /// Si se proporciona y es diferente a los días actuales:
         /// - Se crearán nuevas tareas para los días añadidos
         /// - Se eliminarán tareas para los días removidos

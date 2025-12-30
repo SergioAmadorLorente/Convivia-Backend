@@ -2,6 +2,9 @@ using Mapster;
 using System.Reflection;
 using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
+using System;
+using System.Collections.Generic;
+
 namespace Convivia.Application.Mappers
 {
     public static class MapsterBootstrap
@@ -50,6 +53,18 @@ namespace Convivia.Application.Mappers
                 .Map(dest => dest.DiasRepeticion, src => src.DiasRepeticion)
                 .Map(dest => dest.FechaLimite, src => src.FechaLimite)
                 .Map(dest => dest.UsuariosAsignacion, src => src.UsuariosAsignacion ?? new List<string>());
+
+            // Custom: map CreateTareaDto -> Tarea (para manejar DateOnly? -> DateTime?)
+            config.NewConfig<CreateTareaDto, Tarea>()
+                .Map(dest => dest.FechaLimite, src => src.FechaLimite.HasValue ? src.FechaLimite.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null)
+                .Map(dest => dest.HoraLimite, src => src.HoraLimite)
+                .Ignore(dest => dest.Id)
+                .Ignore(dest => dest.PlantillaId)
+                .Ignore(dest => dest.DiaSemana)
+                .Ignore(dest => dest.Estado)
+                .Ignore(dest => dest.UsuarioEspacioId)
+                .Ignore(dest => dest.FechaRealizacion)
+                .Ignore(dest => dest.Prorroga);
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try

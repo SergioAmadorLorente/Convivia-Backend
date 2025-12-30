@@ -15,14 +15,28 @@ namespace Convivia.Shared.DTOs
         [Range(5, 50, ErrorMessage = "Karma debe ser 5, 15, 25 o 50")]
         public int karma { get; set; }
 
+        /// <summary>
+        /// Días de repetición semanal enviados desde el front.
+        /// Formato del cliente: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
+        /// Se convierten internamente a: 0=Domingo, 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado
+        /// </summary>
         public List<int> DiasRepeticion { get; set; } = new();
 
         [Required]
         public TimeOnly HoraLimite { get; set; }
 
-        public DateTime? FechaLimite { get; set; }
+        /// <summary>
+        /// Fecha límite (solo fecha, sin hora).
+        /// Formato: YYYY-MM-DD (e.g., "2025-12-30")
+        /// Solo se usa para tareas puntuales (cuando DiasRepeticion está vacío).
+        /// </summary>
+        public DateOnly? FechaLimite { get; set; }
 
-        public DateTime? FechaFin { get; set; }
+        /// <summary>
+        /// Fecha de finalización de la plantilla (solo para tareas repetidas).
+        /// Formato: YYYY-MM-DD (e.g., "2025-12-30")
+        /// </summary>
+        public DateOnly? FechaFin { get; set; }
 
         public List<string>? UsuariosAsignacion { get; set; }
     }

@@ -22,6 +22,19 @@ namespace Convivia.Application.Services
 
         private static readonly int[] KarmasValidos = { 5, 15, 25, 50 };
 
+        /// <summary>
+        /// Convierte los días de semana del formato del cliente al formato del backend.
+        /// Cliente: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
+        /// Backend: 0=Domingo, 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado
+        /// </summary>
+        private static List<int> ConvertirDiasDelCliente(List<int> diasCliente)
+        {
+            if (diasCliente == null || diasCliente.Count == 0)
+                return new List<int>();
+
+            return diasCliente.Select(dia => (dia + 1) % 7).ToList();
+        }
+
         public TareaService(
             ITareaRepository tarea,
             IMapper _mapper,
@@ -55,7 +68,7 @@ namespace Convivia.Application.Services
                 foreach (int dia in dto.DiasRepeticion)
                 {
                     if (dia < 0 || dia > 6)
-                        throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Domingo, 6=Sábado).");
+                        throw new ArgumentException("DiasRepeticion debe contener valores entre 0 y 6 (0=Lunes, 6=Domingo).");
                     if (!diasUnicos.Add(dia))
                         throw new ArgumentException("DiasRepeticion contiene valores duplicados.");
                 }
@@ -67,7 +80,8 @@ namespace Convivia.Application.Services
             }
 
             var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
-            createPlantilla.DiasRepeticion = dto.DiasRepeticion ?? new List<int>();
+            // Convertir días del cliente al formato backend
+            createPlantilla.DiasRepeticion = ConvertirDiasDelCliente(dto.DiasRepeticion ?? new List<int>());
             createPlantilla.UsuariosAsignacion = dto.UsuariosAsignacion ?? new List<string>();
 
             var tareas = new List<Tarea>();
@@ -99,7 +113,7 @@ namespace Convivia.Application.Services
             else
             {
                 var users = dto.UsuariosAsignacion ?? new List<string>();
-                var days = dto.DiasRepeticion ?? new List<int>();
+                var days = createPlantilla.DiasRepeticion; // Usar los días ya convertidos
                 var taskCount = days.Count;
 
                 if (users.Count > 0 && users.Count != 1 && users.Count != taskCount)
@@ -872,23 +886,27 @@ namespace Convivia.Application.Services
             var tz = TimeZoneInfo.FindSystemTimeZoneById(plantilla.TimeZoneId);
             var nowUtc = DateTime.UtcNow;
             var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
+            var todayLocal = DateOnly.FromDateTime(nowLocal);
 
             if (tarea.FechaRealizacion.HasValue)
                 return false;
 
+            // Tareas puntuales (DiaSemana == -1): tienen una fecha límite específica
             if (tarea.DiaSemana == -1)
             {
-                // Tarea puntual
-                if (!tarea.FechaLimite.HasValue)
+                if (!tarea.FechaLimite.HasValue || !tarea.HoraLimite.HasValue)
                     return false;
 
-                if (!tarea.HoraLimite.HasValue)
-                    return false;
-
-                var fecha = tarea.FechaLimite.Value.Date;
+                var fechaLimite = tarea.FechaLimite.Value;
                 var horaLimite = tarea.HoraLimite.Value;
 
-                var dueLocal = new DateTime(fecha.Year, fecha.Month, fecha.Day,
+                if (todayLocal < fechaLimite)
+                    return false;
+
+                if (todayLocal > fechaLimite)
+                    return true;
+
+                var dueLocal = new DateTime(fechaLimite.Year, fechaLimite.Month, fechaLimite.Day,
                                             horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
                 var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
 
@@ -898,8 +916,8 @@ namespace Convivia.Application.Services
                 return nowUtc >= dueUtc;
             }
 
-            // Tarea repetida semanal
-            if (plantilla.EndDate.HasValue && DateOnly.FromDateTime(nowLocal.Date) > plantilla.EndDate.Value)
+            // Tareas repetidas (DiaSemana >= 0): se repiten semanalmente
+            if (plantilla.EndDate.HasValue && todayLocal > plantilla.EndDate.Value)
                 return false;
 
             if (!tarea.HoraLimite.HasValue)
@@ -907,64 +925,48 @@ namespace Convivia.Application.Services
 
             var horaLimiteRep = tarea.HoraLimite.Value;
             int targetDay = tarea.DiaSemana;
-            
-            // Convertir DayOfWeek de .NET (0=Domingo) a sistema del cliente (0=Lunes)
-            // .NET: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-            // Cliente: 0=Lun, 1=Mar, 2=Mié, 3=Jue, 4=Vie, 5=Sab, 6=Dom
             int currentDay = ((int)nowLocal.DayOfWeek - 1 + 7) % 7;
-
-            // Calcular días hasta la próxima ocurrencia del día
             int daysDiff = (targetDay - currentDay + 7) % 7;
 
-            // DEBUG: Log the calculation
-            System.Diagnostics.Debug.WriteLine($"[IsOverdue] TareaId={tarea.Id}, targetDay={targetDay}, " +
-                $"DayOfWeekNet={(int)nowLocal.DayOfWeek}, currentDay={currentDay}, " +
-                $"nowLocal={nowLocal:yyyy-MM-dd HH:mm:ss}, horaLimiteRep={horaLimiteRep}, daysDiff={daysDiff}");
-
+            // Si hoy es el día de la tarea (daysDiff == 0)
             if (daysDiff == 0)
             {
-                // Es el mismo día de la semana. Verificar si la hora ya pasó HOY.
-                // Nota: Solo está overdue si ya pasó la hora límite en esta ocurrencia actual
+                // Comparar hora: si ahora es >= hora límite, está overdue
                 bool isOverdue = nowLocal.Hour > horaLimiteRep.Hour || 
                     (nowLocal.Hour == horaLimiteRep.Hour && nowLocal.Minute >= horaLimiteRep.Minute);
                 
-                System.Diagnostics.Debug.WriteLine($"[IsOverdue] Same day - nowLocal.Hour={nowLocal.Hour}, " +
-                    $"horaLimiteRep.Hour={horaLimiteRep.Hour}, result={isOverdue}");
+                // Aplicar período de gracia si existe
+                if (!isOverdue && plantilla.GracePeriodMinutes.HasValue)
+                {
+                    var dueLocal = new DateTime(nowLocal.Year, nowLocal.Month, nowLocal.Day,
+                                                horaLimiteRep.Hour, horaLimiteRep.Minute, 0, DateTimeKind.Unspecified);
+                    var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
+                    dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
+                    isOverdue = nowUtc >= dueUtc;
+                }
                 
                 return isOverdue;
             }
-            else if (daysDiff > 0)
-            {
-                // El día ocurrirá en el futuro (1-6 días), así que NO está overdue aún
-                System.Diagnostics.Debug.WriteLine($"[IsOverdue] Future day (daysDiff={daysDiff}), returning false");
-                return false;
-            }
-            else
-            {
-                // daysDiff < 0 significa que el día ya pasó esta semana (esto no debería ocurrir con la fórmula)
-                // pero por seguridad, tratarlo como futuro
-                System.Diagnostics.Debug.WriteLine($"[IsOverdue] daysDiff < 0 (unexpected), returning false");
-                return false;
-            }
+            
+            // Si el día de la tarea aún no llega en esta semana (daysDiff > 0), no está overdue
+            // Si el día de la tarea ya pasó en esta semana (daysDiff < 0 en lógica pura, pero mod 7 hace esto imposible aquí)
+            return false;
         }
 
         private static DateTime? GetDueUtcForTask(Tarea tarea, PlantillaTarea plantilla)
         {
             var tz = TimeZoneInfo.FindSystemTimeZoneById(plantilla.TimeZoneId);
             
+            // Tareas puntuales: tienen una fecha límite específica
             if (tarea.DiaSemana == -1)
             {
-                // Tarea puntual
-                if (!tarea.FechaLimite.HasValue)
+                if (!tarea.FechaLimite.HasValue || !tarea.HoraLimite.HasValue)
                     return null;
 
-                if (!tarea.HoraLimite.HasValue)
-                    return null;
-
-                var fecha = tarea.FechaLimite.Value.Date;
+                var fechaLimite = tarea.FechaLimite.Value;
                 var horaLimite = tarea.HoraLimite.Value;
 
-                var dueLocal = new DateTime(fecha.Year, fecha.Month, fecha.Day,
+                var dueLocal = new DateTime(fechaLimite.Year, fechaLimite.Month, fechaLimite.Day,
                                             horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
                 var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
 
@@ -974,7 +976,7 @@ namespace Convivia.Application.Services
                 return dueUtc;
             }
 
-            // Tarea repetida semanal
+            // Tareas repetidas: se repiten semanalmente
             var nowUtc = DateTime.UtcNow;
             var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
 
@@ -985,13 +987,13 @@ namespace Convivia.Application.Services
                 return null;
 
             int targetDay = tarea.DiaSemana;
-            
-            // Convertir DayOfWeek de .NET (0=Domingo) a sistema del cliente (0=Lunes)
             int currentDay = ((int)nowLocal.DayOfWeek - 1 + 7) % 7;
             var horaLimiteRep = tarea.HoraLimite.Value;
 
-            // Calcular la próxima ocurrencia (o la de hoy si aún no ha pasado)
             int daysDiff = (targetDay - currentDay + 7) % 7;
+            
+            // Si daysDiff == 0, el vencimiento es hoy a la hora configurada
+            // Si daysDiff > 0, el vencimiento es en daysDiff días a la hora configurada
             var occurrenceDate = nowLocal.Date.AddDays(daysDiff);
 
             var dueLocalRep = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
