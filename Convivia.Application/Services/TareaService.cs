@@ -62,6 +62,7 @@ namespace Convivia.Application.Services
 
             bool esPuntual = dto.DiasRepeticion == null || dto.DiasRepeticion.Count == 0;
 
+            // Validar días de repetición si se proporcionan
             if (!esPuntual)
             {
                 var diasUnicos = new HashSet<int>();
@@ -75,9 +76,11 @@ namespace Convivia.Application.Services
             }
             else
             {
+                // Solo si es puntual (sin días de repetición) se requiere FechaLimite
                 if (!dto.FechaLimite.HasValue)
-                    throw new ArgumentException("FechaLimite es obligatoria para tareas puntuales.", nameof(dto.FechaLimite));
+                    throw new ArgumentException("FechaLimite es obligatoria para tareas puntuales (sin diasRepeticion).", nameof(dto.FechaLimite));
             }
+            // Si tiene diasRepeticion, FechaLimite es opcional
 
             var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
             // Convertir días del cliente al formato backend
@@ -88,6 +91,7 @@ namespace Convivia.Application.Services
 
             if (esPuntual)
             {
+                // Tarea puntual: DiaSemana = -1, requiere FechaLimite
                 var tarea = _mapper.Map<Tarea>(dto);
                 tarea.Id = Guid.NewGuid().ToString("N"); // Formato sin guiones
                 tarea.DiaSemana = -1;
@@ -112,6 +116,7 @@ namespace Convivia.Application.Services
             }
             else
             {
+                // Tarea repetida: se crean instancias para cada día de repetición
                 var users = dto.UsuariosAsignacion ?? new List<string>();
                 var days = createPlantilla.DiasRepeticion; // Usar los días ya convertidos
                 var taskCount = days.Count;
@@ -126,7 +131,8 @@ namespace Convivia.Application.Services
                     tarea.Id = Guid.NewGuid().ToString("N"); // Formato sin guiones
                     tarea.DiaSemana = dia;
                     tarea.Estado = TareaEstado.Pendiente;
-                    tarea.FechaLimite = null;
+                    // Para tareas repetidas, FechaLimite es opcional (se puede guardar si se proporciona)
+                    tarea.FechaLimite = dto.FechaLimite;
 
                     if (users.Count == 0)
                         tarea.UsuarioEspacioId = null;
@@ -917,10 +923,21 @@ namespace Convivia.Application.Services
             }
 
             // Tareas repetidas (DiaSemana >= 0): se repiten semanalmente
-            if (plantilla.EndDate.HasValue && todayLocal > plantilla.EndDate.Value)
+            if (!tarea.HoraLimite.HasValue)
                 return false;
 
-            if (!tarea.HoraLimite.HasValue)
+            // Si la tarea repetida tiene una FechaLimite, verificar primero si ya pasó esa fecha
+            if (tarea.FechaLimite.HasValue)
+            {
+                if (todayLocal > tarea.FechaLimite.Value)
+                    return true; // Ya pasó la fecha límite, está overdue
+                if (todayLocal < tarea.FechaLimite.Value)
+                    return false; // Aún no llega la fecha límite, no es overdue
+                // Si hoy == FechaLimite, continuar con el cálculo de hora
+            }
+
+            // Verificar si ha pasado el EndDate de la plantilla
+            if (plantilla.EndDate.HasValue && todayLocal > plantilla.EndDate.Value)
                 return false;
 
             var horaLimiteRep = tarea.HoraLimite.Value;
@@ -949,7 +966,6 @@ namespace Convivia.Application.Services
             }
             
             // Si el día de la tarea aún no llega en esta semana (daysDiff > 0), no está overdue
-            // Si el día de la tarea ya pasó en esta semana (daysDiff < 0 en lógica pura, pero mod 7 hace esto imposible aquí)
             return false;
         }
 
@@ -980,10 +996,19 @@ namespace Convivia.Application.Services
             var nowUtc = DateTime.UtcNow;
             var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
 
-            if (plantilla.EndDate.HasValue && DateOnly.FromDateTime(nowLocal.Date) > plantilla.EndDate.Value)
+            if (!tarea.HoraLimite.HasValue)
                 return null;
 
-            if (!tarea.HoraLimite.HasValue)
+            // Si la tarea repetida tiene una FechaLimite y ya pasó, no tiene vencimiento futuro
+            if (tarea.FechaLimite.HasValue)
+            {
+                var todayLocal = DateOnly.FromDateTime(nowLocal);
+                if (todayLocal > tarea.FechaLimite.Value)
+                    return null; // Ya expiró la fecha límite
+            }
+
+            // Verificar si ha pasado el EndDate de la plantilla
+            if (plantilla.EndDate.HasValue && DateOnly.FromDateTime(nowLocal.Date) > plantilla.EndDate.Value)
                 return null;
 
             int targetDay = tarea.DiaSemana;

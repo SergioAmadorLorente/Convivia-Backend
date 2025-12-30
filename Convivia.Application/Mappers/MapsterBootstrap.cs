@@ -54,9 +54,9 @@ namespace Convivia.Application.Mappers
                 .Map(dest => dest.FechaLimite, src => src.FechaLimite)
                 .Map(dest => dest.UsuariosAsignacion, src => src.UsuariosAsignacion ?? new List<string>());
 
-            // Custom: map CreateTareaDto -> Tarea (para manejar DateOnly? -> DateTime?)
+            // Custom: map CreateTareaDto -> Tarea (para manejar DateOnly?)
             config.NewConfig<CreateTareaDto, Tarea>()
-                .Map(dest => dest.FechaLimite, src => src.FechaLimite.HasValue ? src.FechaLimite.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null)
+                .Map(dest => dest.FechaLimite, src => src.FechaLimite)
                 .Map(dest => dest.HoraLimite, src => src.HoraLimite)
                 .Ignore(dest => dest.Id)
                 .Ignore(dest => dest.PlantillaId)

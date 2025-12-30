@@ -28,7 +28,13 @@ namespace Convivia.Shared.DTOs
         /// <summary>
         /// Fecha límite (solo fecha, sin hora).
         /// Formato: YYYY-MM-DD (e.g., "2025-12-30")
-        /// Solo se usa para tareas puntuales (cuando DiasRepeticion está vacío).
+        /// 
+        /// OBLIGATORIA: Si DiasRepeticion está vacío (tarea puntual)
+        /// OPCIONAL: Si DiasRepeticion tiene valores (tarea repetida)
+        /// 
+        /// - Tarea puntual: DiasRepeticion=[], FechaLimite=requerida
+        /// - Tarea repetida: DiasRepeticion=[0,1,2], FechaLimite=opcional
+        /// - Tarea repetida con fecha límite: DiasRepeticion=[0,1,2], FechaLimite=2025-12-30
         /// </summary>
         public DateOnly? FechaLimite { get; set; }
 

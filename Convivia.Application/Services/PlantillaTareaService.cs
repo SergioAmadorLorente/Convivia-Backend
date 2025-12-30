@@ -122,7 +122,7 @@ namespace Convivia.Application.Services
                 domPlantilla.GracePeriodMinutes = dto.GracePeriodMinutes.Value;
 
             if (dto.FechaFin.HasValue)
-                domPlantilla.EndDate = DateOnly.FromDateTime(dto.FechaFin.Value);
+                domPlantilla.EndDate = dto.FechaFin.Value;
 
             if (dto.DiasRepeticion != null && dto.DiasRepeticion.Count >= 0)
                 domPlantilla.DiasRepeticion = dto.DiasRepeticion;
