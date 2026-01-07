@@ -96,22 +96,30 @@ namespace Convivia.Infrastructure.Repositories
             await _firebase.DeleteAsync(COLLECTION, id);
         }
 
-        public async Task<List<Tarea>> GetByUsuarioEspacioIdAsync(string usuarioEspacioid, CancellationToken ct = default)
+        public async Task<List<Tarea>> GetByUsuarioEspacioIdAsync(string usuarioEspacioId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(usuarioEspacioid)) throw new ArgumentNullException(nameof(usuarioEspacioid));
-            var tareasUsuarioEspacio = await _firebase.QueryAsync<FirestoreTarea>(COLLECTION, nameof(FirestoreTarea.UsuarioEspacioId), usuarioEspacioid);
-            List<Tarea> lista = new List<Tarea>();
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
+                throw new ArgumentNullException(nameof(usuarioEspacioId));
+
+            // Consulta Firestore por UsuarioEspacioId
+            var tareasUsuarioEspacio = await _firebase
+                .QueryAsync<FirestoreTarea>(COLLECTION, nameof(FirestoreTarea.UsuarioEspacioId), usuarioEspacioId)
+                .ConfigureAwait(false);
+
+            // Si no hay tareas, devolver lista vacía
             if (!tareasUsuarioEspacio.Any())
-                return lista;
+                return new List<Tarea>();
+
+            // Mapear FirestoreTarea → Tarea
+            var lista = new List<Tarea>();
             foreach (var pte in tareasUsuarioEspacio)
             {
-
-                var tareamapped = pte.Adapt<Tarea>();
-                lista.Add(tareamapped);
-
+                var tareaMapped = pte.Adapt<Tarea>()!;
+                lista.Add(tareaMapped);
             }
 
             return lista;
         }
+
     }
 }

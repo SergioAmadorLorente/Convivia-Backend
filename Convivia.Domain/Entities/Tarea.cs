@@ -39,12 +39,12 @@ namespace Convivia.Domain.Entities
             // Constructor vacío necesario para la deserialización
         }
 
-        public Tarea(string nombre, List<string> usuarioEspaciosIds, DateTime horaLimite, int karma, string espacioId, string? plantillaId = null, string? facturaId = null)
+        public Tarea(string nombre, string usuarioEspacioIds, DateTime horaLimite, int karma, string espacioId, string? plantillaId = null, string? facturaId = null)
         {
             if (string.IsNullOrWhiteSpace(nombre)) throw new ArgumentException("El nombre no puede estar vacío.");
             if (karma < 0) throw new ArgumentException("Los puntos karma deben ser positivos.");
             Nombre = nombre;
-            UsuarioEspaciosIds = usuarioEspaciosIds;
+            UsuarioEspacioId = usuarioEspacioIds; //arreglar quan sapigesem com fer-ho si es necessari que una tasca pugi tenir molts usuaris o no
             HoraLimite = horaLimite;
             this.karma = karma;
             Estado = false; // Por defecto, la tarea está incompleta

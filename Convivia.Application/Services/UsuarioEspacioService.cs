@@ -15,11 +15,12 @@ namespace Convivia.Application.Services
         private readonly IFacturaRepository _facturaRepo;
         private readonly ITareaRepository _tareaRepo;
 
-        public UsuarioEspacioService(IUsuarioEspacioRepository repo, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo)
+        public UsuarioEspacioService(IUsuarioEspacioRepository repo, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo, ITareaRepository tareaRepo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _facturaRepo = facturaRepo ?? throw new ArgumentNullException(nameof(facturaRepo));  
+            _facturaRepo = facturaRepo ?? throw new ArgumentNullException(nameof(facturaRepo)); 
+            _tareaRepo = tareaRepo ?? throw new ArgumentNullException(nameof(tareaRepo));
         }
 
         // Crear UsuarioEspacio
@@ -39,33 +40,41 @@ namespace Convivia.Application.Services
         public async Task<UsuarioEspacioDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
+
             var usuarioEspacio = await _repo.GetByIdAsync(id, ct);
             return usuarioEspacio?.Adapt<UsuarioEspacioDto>();
         }
 
-        // Obtener UsuariosEspacios por EspacioId
+        // Obtener UsuariosEspacios por EspacioId (lista)
         public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerPorEspacioAsync(string espacioId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(espacioId)) return Enumerable.Empty<UsuarioEspacioDto>();
-            var usuariosEspacios = await _repo.GetByEspacioIdAsync(espacioId, ct);
-            return usuariosEspacios.Select(ue => ue.Adapt<UsuarioEspacioDto>());
+            if (string.IsNullOrWhiteSpace(espacioId))
+                return Enumerable.Empty<UsuarioEspacioDto>();
+
+            var lista = await _repo.GetByEspacioIdAsync(espacioId, ct);
+            return lista.Adapt<IEnumerable<UsuarioEspacioDto>>();
         }
 
-        // Obtener UsuariosEspacios por UsuarioId
-        public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerPorUsuarioAsync(string usuarioId, CancellationToken ct = default)
+        // Obtener UsuarioEspacio por UsuarioId (único)
+        public async Task<UsuarioEspacioDto?> ObtenerPorUsuarioAsync(string usuarioId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(usuarioId)) return Enumerable.Empty<UsuarioEspacioDto>();
-            var usuariosEspacios = await _repo.GetByUsuarioIdAsync(usuarioId, ct);
-            return usuariosEspacios.Select(ue => ue.Adapt<UsuarioEspacioDto>());
+            if (string.IsNullOrWhiteSpace(usuarioId))
+                return null;
+
+            var usuarioEspacio = await _repo.GetByUsuarioIdAsync(usuarioId, ct);
+            return usuarioEspacio?.Adapt<UsuarioEspacioDto>();
         }
 
         // Obtener todos
         public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerTodosAsync(CancellationToken ct = default)
         {
             _logger.LogInformation("Llamando a GetAllAsync desde UsuarioEspacioService");
+
             var usuariosEspacios = await _repo.GetAllAsync(ct);
+
             _logger.LogInformation("GetAllAsync devolvió {Count} elementos", usuariosEspacios?.Count() ?? 0);
-            return usuariosEspacios.Select(ue => ue.Adapt<UsuarioEspacioDto>());
+
+            return usuariosEspacios.Adapt<IEnumerable<UsuarioEspacioDto>>();
         }
 
         // Actualizar UsuarioEspacio
@@ -75,7 +84,8 @@ namespace Convivia.Application.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             var usuarioEspacioExistente = await _repo.GetByIdAsync(id, ct);
-            if (usuarioEspacioExistente == null) throw new KeyNotFoundException($"UsuarioEspacio con Id {id} no encontrado");
+            if (usuarioEspacioExistente == null)
+                throw new KeyNotFoundException($"UsuarioEspacio con Id {id} no encontrado");
 
             if (dto.Ausente.HasValue) usuarioEspacioExistente.Ausente = dto.Ausente.Value;
             if (dto.Karma.HasValue) usuarioEspacioExistente.Karma = dto.Karma.Value;
@@ -100,113 +110,23 @@ namespace Convivia.Application.Services
         }
 
         // Eliminar UsuarioEspacio
-        // on delete restriction: no debe tener facturas asociadas (debe gestionarse en el back i no en el front para mejorar la experiencia de usuario)
         public async Task EliminarAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido", nameof(id));
-            if (await _facturaRepo.ExistsByUsuarioEspacioIdAsync(id, ct).ConfigureAwait(false))
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentException("Id requerido", nameof(id));
+
+            if (await _facturaRepo.ExistsByUsuarioEspacioIdAsync(id, ct))
                 throw new InvalidOperationException($"No se puede eliminar el UsuarioEspacio {id}: existen facturas asociadas.");
 
+            var tareas = await _tareaRepo.GetByUsuarioEspacioIdAsync(id, ct);
+
+            foreach (var tarea in tareas)
+            {
+                tarea!.UsuarioEspacioId = null;
+                await _tareaRepo.UpdateAsync(tarea.Id, tarea, ct);
+            }
+
             await _repo.DeleteAsync(id, ct);
-        }
-
-        /// <summary>
-        /// Cambia el Id de un UsuarioEspacio y propaga el nuevo Id a todos las Facturas i tareas (ON UPDATE CASCADE).
-        /// Nota: renombrar Id en Firestore implica crear nuevo documento y borrar el antiguo.
-        /// </summary>
-        public async Task ChangeUsuarioEspacioIdCascadeAsync(string oldId, string newId, CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(oldId)) throw new ArgumentException("oldId requerido");
-            if (string.IsNullOrWhiteSpace(newId)) throw new ArgumentException("newId requerido");
-            if (oldId == newId) return;
-
-            var usuarioEspacio = await _repo.GetByIdAsync(oldId, ct);
-            if (usuarioEspacio == null) throw new KeyNotFoundException($"Espacio {oldId} no encontrado");
-
-            // 1) Crear nuevo documento con newId
-            usuarioEspacio.Id_UsuarioEspacio = newId;
-            await _repo.AddAsync(usuarioEspacio, ct);
-
-            // 2) Obtener todos los elementos que referencian oldId
-            var facturas = (await _facturaRepo.GetByUsuarioEspacioIdAsync(oldId, ct)).ToList();
-            var tareas = (await _tareaRepo.GetByUsuarioEspacioIdAsync(oldId, ct)).ToList();
-
-            //mhe quedat per aqui, recorda que havia de fer batch per actualitzar les factures i les tasques pero que tareas es una mica rarete
-            // 3) Actualizar en batches usando BatchHelper para no saturar FACTURAS
-            await BatchHelper.ProcessInBatchesAsync<Factura>(
-                facturas,
-                async (batch, token) =>
-                {
-                    foreach (var fa in batch)
-                    {
-                        if (fa is null)
-                            continue;
-
-                        if (fa.RepartoMap == null || fa.RepartoMap.Count == 0)
-                            continue;
-
-                        // Buscar entrada cuyo UsuarioEspacio.Id_UsuarioEspacio == oldId
-                        var entradaAntigua = fa.RepartoMap
-                            .FirstOrDefault(kvp =>
-                                kvp.Key != null &&
-                                kvp.Key.Id_UsuarioEspacio != null &&
-                                kvp.Key.Id_UsuarioEspacio == oldId
-                            );
-
-                        // Si no existe, saltamos
-                        if (entradaAntigua.Key == null)
-                            continue;
-
-                        float valor = entradaAntigua.Value;
-
-                        // Clonar diccionario
-                        var nuevoDic = new Dictionary<UsuarioEspacio, float>(fa.RepartoMap);
-
-                        // Eliminar clave antigua
-                        nuevoDic.Remove(entradaAntigua.Key);
-
-                        // Crear nueva clave
-                        var nuevoUsuarioEspacio = new UsuarioEspacio
-                        {
-                            Id_UsuarioEspacio = newId
-                            // Copia aquí otros campos si los hay
-                        };
-
-                        // Insertar nueva clave
-                        nuevoDic[nuevoUsuarioEspacio] = valor;
-
-                        // Asignar al campo privado mediante reflection
-                        typeof(Factura)
-                            .GetField("_repartoMap", BindingFlags.NonPublic | BindingFlags.Instance)
-                            .SetValue(fa, nuevoDic);
-
-                        await _facturaRepo.UpdateAsync(fa.Id_Factura, fa, token);
-                    }
-
-                },
-                batchSize: 500,
-                maxRetries: 3,
-                ct: ct
-            );
-
-            // 3) Actualizar en batches usando BatchHelper para no saturar
-            await BatchHelper.ProcessInBatchesAsync<Tarea>(
-                tareas,
-                async (batch, token) =>
-                {
-                    foreach (var ta in batch)
-                    {
-                        ta.UsuarioEspacioId = newId;
-                        await _tareaRepo.UpdateAsync(ta.Id, ta, token);
-                    }
-                },
-                batchSize: 500,
-                maxRetries: 3,
-                ct: ct
-            );
-
-            // 4) Borrar documento antiguo
-            await _repo.DeleteAsync(oldId, ct);
         }
     }
 }
