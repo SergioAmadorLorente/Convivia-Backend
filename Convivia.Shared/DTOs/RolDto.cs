@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace Convivia.Shared.DTOs
 {
-    public class PermisoDto
+    public class RolDto
     {
         public string Id { get; set; } = string.Empty;
-        public TipoRol Rol { get; set; }
+        
+        [Required]
+        public TipoRol Nombre { get; set; }
         
         // Permisos de Tareas
         public bool CrearTarea { get; set; }
@@ -19,12 +22,12 @@ namespace Convivia.Shared.DTOs
         public bool AsignarseTarea { get; set; }
         
         // Permisos de Usuarios
-        public bool AñadirUsuario { get; set; }
+        public bool AÃ±adirUsuario { get; set; }
         public bool EliminarUsuario { get; set; }
         
         // Permisos de Residencia
         public bool EliminarResidencia { get; set; }
 
-        public PermisoDto() { }
+        public RolDto() { }
     }
 }

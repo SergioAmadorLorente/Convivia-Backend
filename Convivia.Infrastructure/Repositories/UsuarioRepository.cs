@@ -27,7 +27,7 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (usuario == null) throw new ArgumentNullException(nameof(usuario));
             var persist = usuario.Adapt<FireStoreUsuario>();
-            return await base.AddAsync(persist,persist.IdUsuario, ct);
+            return await base.AddAsync(persist,persist.Id, ct);
         }
 
         public async Task<Usuario?> GetByIdAsync(string id, CancellationToken ct = default)

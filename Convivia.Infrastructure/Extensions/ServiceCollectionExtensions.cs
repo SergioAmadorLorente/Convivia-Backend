@@ -23,8 +23,9 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<IPlantillaTareaRepository, PlantillaTareaRepository>();
             services.AddScoped<ITareaRepository, TareaRepository>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
+            services.AddScoped<IRolRepository, RolRepository>();
             services.AddScoped<IReservaRepository, ReservaRepository>();
-            services.AddScoped<IUsuarioEspacioRepository, UsuarioEspacioRepository>();            
+            services.AddScoped<IUsuarioEspacioRepository, UsuarioEspacioRepository>();
             services.AddScoped<IFacturaRepository, FacturaRepository>();
 
             return services;

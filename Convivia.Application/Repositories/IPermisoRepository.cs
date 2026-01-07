@@ -8,6 +8,6 @@ namespace Convivia.Application.Repositories
 {
     public interface IPermisoRepository : IRepository<Permiso>
     {
-        Task<IEnumerable<Permiso>> GetByRolAsync(string rol, CancellationToken ct = default);
+        Task<IEnumerable<Permiso>> GetByRolAsync(TipoRol rol, CancellationToken ct = default);
     }
 }

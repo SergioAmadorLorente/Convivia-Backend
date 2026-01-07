@@ -99,7 +99,7 @@ namespace Convivia.Infrastructure.Repositories
             await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
-        public async Task DeleteAsync(string id, CancellationToken ct = default)
+        public new async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await base.DeleteAsync(id, ct);

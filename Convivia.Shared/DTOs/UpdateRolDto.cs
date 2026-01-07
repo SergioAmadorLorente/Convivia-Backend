@@ -1,26 +1,30 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Convivia.Shared.DTOs
 {
-    public class UpdatePermisoDto
+    public class UpdateRolDto
     {
-        [EnumDataType(typeof(TipoRol), ErrorMessage = "El rol debe ser válido")]
-        public TipoRol? Rol { get; set; }
-        
+        public PermisosRolDto? Permisos { get; set; }
+    }
+    
+    public enum TipoRol
+    {
+        Admin,
+        Usuario,
+        Moderador
+    }
+    
+    public class PermisosRolDto
+    {
         // Permisos de Tareas
         public bool? CrearTarea { get; set; }
-        public bool? EliminarTarea { get; set; }
         public bool? EditarTarea { get; set; }
+        public bool? EliminarTarea { get; set; }
         public bool? AsignarTarea { get; set; }
         public bool? AsignarseTarea { get; set; }
         
         // Permisos de Usuarios
-        public bool? AñadirUsuario { get; set; }
+        public bool? AgregarUsuario { get; set; }
         public bool? EliminarUsuario { get; set; }
         
         // Permisos de Residencia

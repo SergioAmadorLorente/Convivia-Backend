@@ -7,13 +7,13 @@ namespace Convivia.Infrastructure.Models
     /// Coincide exactamente con la estructura en Firebase
     /// </summary>
     [FirestoreData]
-    public class FireStorePermiso
+    public class FireStoreRol
     {
         [FirestoreProperty("Id")]
-        public string Id { get; set; } = string.Empty;
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
-        [FirestoreProperty("Rol")]
-        public string Rol { get; set; } = string.Empty;
+        [FirestoreProperty("Nombre")]
+        public string Nombre { get; set; } = string.Empty;
 
         [FirestoreProperty("CrearTarea")]
         public bool CrearTarea { get; set; }
@@ -35,8 +35,5 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty("AsignarseTarea")]
         public bool AsignarseTarea { get; set; }
-
-        [FirestoreProperty("EliminarResidencia")]
-        public bool EliminarResidencia { get; set; }
     }
 }
