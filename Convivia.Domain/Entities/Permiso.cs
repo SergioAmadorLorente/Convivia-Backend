@@ -2,7 +2,7 @@ namespace Convivia.Domain.Entities
 {
     public class Permiso
     {
-        public string Id { get; set; } = string.Empty;
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
         public Rol Rol { get; set; }
 
         public Permiso()

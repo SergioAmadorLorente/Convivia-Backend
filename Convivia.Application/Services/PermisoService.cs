@@ -87,11 +87,16 @@ namespace Convivia.Application.Services
 
         /// <summary>
         /// Overwrite completo: reemplaza todo el documento en Firestore.
+        /// Si solo envías Rol, los demás permisos se resetean a los valores por defecto del rol.
         /// </summary>
         public async Task<PermisoDto?> ActualizarPermisoCompletaAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            // Verificar que existe
+            var existing = await _permisoRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
 
             // Mapear DTO -> Domain (nuevo objeto completo)
             var domain = _mapper.Map<Permiso>(dto);
@@ -107,7 +112,8 @@ namespace Convivia.Application.Services
         }
 
         /// <summary>
-        /// Merge: fusiona los campos del objeto con los del documento existente (SetOptions.MergeAll).
+        /// Merge: fusiona los campos del objeto con los del documento existente.
+        /// Solo modifica los campos que envías, preservando los demás.
         /// </summary>
         public async Task<PermisoDto?> ActualizarPermisoMergeAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
         {
@@ -117,10 +123,38 @@ namespace Convivia.Application.Services
             var existing = await _permisoRepository.GetByIdAsync(id, ct);
             if (existing == null) return null;
 
-            // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
-            _mapper.Map(dto, existing);
+            // Aplicar cambios manualmente para preservar valores existentes
+            if (existing.Rol == null)
+                existing.Rol = new Rol();
 
-            // Persistir con merge para evitar sobrescribir campos no mapeados
+            // Si se especifica un nuevo TipoRol, aplicar la configuración base del rol
+            if (dto.Rol.HasValue)
+            {
+                switch (dto.Rol.Value)
+                {
+                    case TipoRol.Admin:
+                        existing.Rol.SetConfiguracionAdmin();
+                        break;
+                    case TipoRol.Moderador:
+                        existing.Rol.SetConfiguracionModerador();
+                        break;
+                    default:
+                        existing.Rol.SetConfiguracionUsuario();
+                        break;
+                }
+            }
+
+            // Sobrescribir permisos individuales si se especifican
+            if (dto.CrearTarea.HasValue) existing.Rol.CrearTarea = dto.CrearTarea.Value;
+            if (dto.EliminarTarea.HasValue) existing.Rol.EliminarTarea = dto.EliminarTarea.Value;
+            if (dto.EditarTarea.HasValue) existing.Rol.EditarTarea = dto.EditarTarea.Value;
+            if (dto.AsignarTarea.HasValue) existing.Rol.AsignarTarea = dto.AsignarTarea.Value;
+            if (dto.AsignarseTarea.HasValue) existing.Rol.AsignarseTarea = dto.AsignarseTarea.Value;
+            if (dto.AñadirUsuario.HasValue) existing.Rol.AñadirUsuario = dto.AñadirUsuario.Value;
+            if (dto.EliminarUsuario.HasValue) existing.Rol.EliminarUsuario = dto.EliminarUsuario.Value;
+            if (dto.EliminarResidencia.HasValue) existing.Rol.EliminarResidencia = dto.EliminarResidencia.Value;
+
+            // Persistir con merge
             await _permisoRepository.UpdateAsync(id, existing, merge: true, ct);
 
             var updated = await _permisoRepository.GetByIdAsync(id, ct);

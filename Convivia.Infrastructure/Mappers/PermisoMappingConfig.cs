@@ -66,6 +66,42 @@ namespace Convivia.Infrastructure.Mappers
                     }
                 });
 
+            // UpdatePermisoDto -> Permiso (Domain)
+            // Este mapeo se usa para ActualizarPermisoCompletaAsync (PUT overwrite)
+            config.NewConfig<UpdatePermisoDto, Permiso>()
+                .AfterMapping((src, dest) =>
+                {
+                    if (dest.Rol == null)
+                        dest.Rol = new Rol();
+
+                    // Aplicar el TipoRol si se especifica
+                    if (src.Rol.HasValue)
+                    {
+                        switch (src.Rol.Value)
+                        {
+                            case TipoRol.Admin:
+                                dest.Rol = Rol.Admin;
+                                break;
+                            case TipoRol.Moderador:
+                                dest.Rol = Rol.Moderador;
+                                break;
+                            default:
+                                dest.Rol = Rol.Usuario;
+                                break;
+                        }
+                    }
+
+                    // Sobrescribir permisos individuales si se especifican
+                    if (src.CrearTarea.HasValue) dest.Rol.CrearTarea = src.CrearTarea.Value;
+                    if (src.EliminarTarea.HasValue) dest.Rol.EliminarTarea = src.EliminarTarea.Value;
+                    if (src.EditarTarea.HasValue) dest.Rol.EditarTarea = src.EditarTarea.Value;
+                    if (src.AsignarTarea.HasValue) dest.Rol.AsignarTarea = src.AsignarTarea.Value;
+                    if (src.AsignarseTarea.HasValue) dest.Rol.AsignarseTarea = src.AsignarseTarea.Value;
+                    if (src.AñadirUsuario.HasValue) dest.Rol.AñadirUsuario = src.AñadirUsuario.Value;
+                    if (src.EliminarUsuario.HasValue) dest.Rol.EliminarUsuario = src.EliminarUsuario.Value;
+                    if (src.EliminarResidencia.HasValue) dest.Rol.EliminarResidencia = src.EliminarResidencia.Value;
+                });
+
             // Permiso (Domain) -> PermisoDto
             config.NewConfig<Permiso, PermisoDto>()
                 .Map(dest => dest.Id, src => src.Id)

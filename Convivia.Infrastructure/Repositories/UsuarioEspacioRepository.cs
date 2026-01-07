@@ -75,21 +75,6 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task<IEnumerable<UsuarioEspacio>> GetByPermisoIdAsync(string permisoId, CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(permisoId)) return Array.Empty<UsuarioEspacio>();
-            try
-            {
-                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "PermisoRef", permisoId, ct);
-                return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error GetByPermisoIdAsync {PermisoId}", permisoId);
-                throw;
-            }
-        }
-
         public async Task UpdateAsync(string id, UsuarioEspacio entity, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
