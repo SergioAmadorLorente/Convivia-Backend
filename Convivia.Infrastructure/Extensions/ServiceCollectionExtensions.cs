@@ -4,7 +4,7 @@ using Convivia.Application.Repositories;
 using Convivia.Shared.Services;
 using Convivia.Infrastructure.Repositories;
 using Convivia.Infrastructure.Services;
-
+using Convivia.Domain.Entities;
 
 namespace Convivia.Infrastructure.Extensions
 {
@@ -19,7 +19,6 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<IInvitacionRepository, InvitacionRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IEspacioRepository, EspacioRepository>();
-            services.AddScoped<ISalaRepository, SalaRepository>();
             services.AddScoped<IPeticionRepository, PeticionRepository>();
             services.AddScoped<IPlantillaTareaRepository, PlantillaTareaRepository>();
             services.AddScoped<ITareaRepository, TareaRepository>();

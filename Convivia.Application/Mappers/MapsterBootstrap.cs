@@ -53,8 +53,8 @@ namespace Convivia.Application.Mappers
 
             // Peticion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Peticion, PeticionDto, CreatePeticionDto, UpdatePeticionDto>(config);
-            // Tarea mappings (DTO <-> Domain)
 
+            // Tarea mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Tarea, TareaDto, CreateTareaDto, UpdateTareaDto>(config);
 
             // PlantillaTarea mappings (DTO <-> Domain)
@@ -68,6 +68,14 @@ namespace Convivia.Application.Mappers
             // Factura mappings 
             Config.MapsterConfig.RegisterPair<Factura, FacturaDto, CreateFacturaDto, UpdateFacturaDto>(config);
 
+            // Custom: map CreateTareaDto -> CreatePlantillaTareaDto
+            config.NewConfig<CreateTareaDto, CreatePlantillaTareaDto>()
+                .Map(dest => dest.Nombre, src => src.Nombre)
+                .Map(dest => dest.Descripcion, src => src.Descripcion)
+                .Map(dest => dest.karma, src => src.karma)
+                .Map(dest => dest.DiasRepeticion, src => src.DiasRepeticion)
+                .Map(dest => dest.FechaLimite, src => src.FechaLimite)
+                .Map(dest => dest.UsuariosAsignacion, src => src.UsuariosAsignacion ?? new List<string>());
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try

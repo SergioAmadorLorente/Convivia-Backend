@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,4 +28,3 @@ namespace Convivia.Application.Repositories
         Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
     }
 }
-

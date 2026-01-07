@@ -4,6 +4,7 @@ using Convivia.Infrastructure.Models;
 using Convivia.Shared.Services;
 using Mapster;
 using Microsoft.Extensions.Logging;
+using Google.Cloud.Firestore;
 
 namespace Convivia.Infrastructure.Repositories
 {
@@ -48,7 +49,7 @@ namespace Convivia.Infrastructure.Repositories
             {
                 _logger.LogInformation("GetByEspacioIdAsync llamado para espacioId: {EspacioId}", espacioId);
                 var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
-                _logger.LogInformation("GetByEspacioIdAsync devolvió {Count} documentos para espacioId: {EspacioId}", list?.Count ?? 0, espacioId);
+                _logger.LogInformation("GetByEspacioIdAsync devolviï¿½ {Count} documentos para espacioId: {EspacioId}", list?.Count ?? 0, espacioId);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)
@@ -65,7 +66,7 @@ namespace Convivia.Infrastructure.Repositories
             {
                 _logger.LogInformation("GetByUsuarioIdAsync llamado para usuarioId: {UsuarioId}", usuarioId);
                 var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "UsuarioRef", usuarioId, ct);
-                _logger.LogInformation("GetByUsuarioIdAsync devolvió {Count} documentos para usuarioId: {UsuarioId}", list?.Count ?? 0, usuarioId);
+                _logger.LogInformation("GetByUsuarioIdAsync devolviï¿½ {Count} documentos para usuarioId: {UsuarioId}", list?.Count ?? 0, usuarioId);
                 return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
             }
             catch (Exception ex)
@@ -102,6 +103,38 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await base.DeleteAsync(id, ct);
+        }
+
+        /// <summary>
+        /// Incrementa el karma de un UsuarioEspacio usando Firestore FieldValue.Increment
+        /// </summary>
+        public async Task<int> UpdateKarmaAsync(string usuarioEspacioId, int karmaAmount, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
+                throw new ArgumentNullException(nameof(usuarioEspacioId));
+
+            if (karmaAmount <= 0)
+                throw new ArgumentException("karmaAmount debe ser mayor a 0", nameof(karmaAmount));
+
+            try
+            {
+                var updates = new Dictionary<string, object>
+                {
+                    { "karma", FieldValue.Increment(karmaAmount) }
+                };
+
+                await _firebase.UpdateAsync(Collection, usuarioEspacioId, updates, useSetMerge: true, ct);
+                
+                _logger.LogDebug("Karma {Amount} agregado al UsuarioEspacio {Id}", karmaAmount, usuarioEspacioId);
+                
+                // Retornar el karma agregado
+                return karmaAmount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error incrementando Karma para UsuarioEspacio {Id}", usuarioEspacioId);
+                throw;
+            }
         }
     }
 }

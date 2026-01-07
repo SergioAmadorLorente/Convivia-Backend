@@ -4,14 +4,13 @@ using System.Text.Json.Serialization;
 namespace Convivia.Domain.Entities
 {
 
-
     public class UsuarioEspacio
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         public bool Ausente { get; set; }
 
-        public int Karma { get; set; }
+        public int karma { get; set; }
 
         public string Rol { get; set; }
 
@@ -85,7 +84,7 @@ namespace Convivia.Domain.Entities
             this.Espacio = espacio;
             this.EspacioId = espacio?.Id ?? string.Empty;
             this.Ausente = ausente;
-            this.Karma = karma;
+            this.karma = karma;
             this.Permiso = permiso;
             this.PermisoId = permiso?.Id ?? string.Empty;
         }

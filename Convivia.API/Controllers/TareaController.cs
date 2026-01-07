@@ -7,40 +7,62 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Threading;
 
 namespace Convivia.API.Controllers
 {
     [ApiController]
-    [Route("api/tareas/{espacioid}")]
+    [Route("api/espacios/{espacioid}/tareas")]
     [Produces("application/json")]
     public class TareaController : ControllerBase
     {
         private readonly TareaService _service;
+        private readonly PlantillaTareaService _ptservice;
 
-        public TareaController(TareaService service)
+        public TareaController(TareaService service, PlantillaTareaService ptservice)
         {
             _service = service;
+            _ptservice = ptservice;
         }
 
         [HttpPost]
-        public async Task<ActionResult<string>> CreateTarea(string espacioid, CreateTareaDto dto)
+        public async Task<ActionResult<List<string>>> CreateTarea(string espacioid, [FromBody] CreateTareaDto dto)
         {
-            var TareaDto = await _service.AddAsync(espacioid, dto);
-            return TareaDto;
+            var tareaIds = await _service.AddAsync(espacioid, dto);
+            return CreatedAtAction(nameof(GetTareasByEspacioId), new { espacioid = espacioid }, tareaIds);
         }
 
-        /*[HttpGet]
-        public async Task<ActionResult<List<TareaDto>>> GetAllTareas(string espacioid)
+        [HttpGet("{plantillaId}/{tareaId}")]
+        public async Task<ActionResult<TareaDto>> GetTareaById(string espacioid, string plantillaId, string tareaId)
         {
-            var list = await _service.GetAsync();
-            return Ok(list);
-        }*/
+            var tareaDto = await _service.GetByEspacioAndPlantillaAndTareaAsync(espacioid, plantillaId, tareaId);
+            return tareaDto != null ? Ok(tareaDto) : NotFound();
+        }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<TareaDto>> GetTareaById(string espacioid, string id)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<PlantillaTareaDto>>> GetTareasByEspacioId(string espacioid)
         {
-            var TareaDto = await _service.GetByIdAsync(espacioid, id);
-            return TareaDto != null ? Ok(TareaDto) : NotFound();
+            var list = await _ptservice.GetAllByEspacioAsync(espacioid);
+            return !list.Any() ? NotFound() : Ok(list);
+        }
+
+        [HttpGet("filter")]
+        public async Task<ActionResult<IEnumerable<TareaDto>>> Filter(
+            string espacioid, 
+            [FromQuery] int? diaSemana, 
+            [FromQuery] string? estado,
+            [FromQuery] string? usuarioId)
+        {
+            try
+            {
+                var res = await _service.FilterAsync(espacioid, diaSemana, estado, usuarioId);
+                return (res == null || !res.Any()) ? NotFound() : Ok(res);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
@@ -50,19 +72,25 @@ namespace Convivia.API.Controllers
             return deleted ? NoContent() : NotFound();
         }
 
-        [HttpPatch("{id}")]
-        public async Task<ActionResult<TareaDto>> UpdateTarea(string espacioid, string id, UpdateTareaDto dto)
+        [HttpPut("{plantillaId}/{tareaId}")]
+        public async Task<ActionResult<TareaDto>> PutOverwrite(string espacioid, string plantillaId, string tareaId, [FromBody] UpdateTareaDto dto, CancellationToken ct)
         {
-            var TareaDto = await _service.UpdateAsync(espacioid, id, dto);
-            return TareaDto != null ? Ok(TareaDto) : NotFound();
+            var updated = await _service.UpdateCompleteAsync(espacioid, plantillaId, tareaId, dto, ct);
+            return updated != null ? Ok(updated) : NotFound();
         }
 
-        [HttpGet]
-        public async Task<ActionResult<TareaDto>> GetTareasByEspacioId(string espacioid)
+        [HttpPut("{plantillaId}/{tareaId}/merge")]
+        public async Task<ActionResult<TareaDto>> PutMerge(string espacioid, string plantillaId, string tareaId, [FromBody] UpdateTareaDto dto, CancellationToken ct)
         {
-            var list = await _service.GetAllByEspacioAsync(espacioid);
-            return !list.Any() ? NotFound() : Ok(list);
+            var updated = await _service.UpdateMergeAsync(espacioid, plantillaId, tareaId, dto, ct);
+            return updated != null ? Ok(updated) : NotFound();
         }
 
+        [HttpPatch("{plantillaId}/{tareaId}")]
+        public async Task<ActionResult<TareaDto>> Patch(string espacioid, string plantillaId, string tareaId, [FromBody] UpdateTareaDto dto, CancellationToken ct)
+        {
+            var updated = await _service.UpdatePartialAsync(espacioid, plantillaId, tareaId, dto, ct);
+            return updated != null ? Ok(updated) : NotFound();
+        }
     }
 }
