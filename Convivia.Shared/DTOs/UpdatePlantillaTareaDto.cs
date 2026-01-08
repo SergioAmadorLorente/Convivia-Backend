@@ -25,12 +25,6 @@ namespace Convivia.Shared.DTOs
         public int? karma { get; set; }
 
         /// <summary>
-        /// Período de gracia en minutos antes de marcar overdue.
-        /// Rango: 1-60 minutos (máximo 1 hora).
-        /// </summary>
-        public int? GracePeriodMinutes { get; set; }
-
-        /// <summary>
         /// Fecha de finalización de la plantilla (solo para plantillas repetidas).
         /// Formato: YYYY-MM-DD (e.g., "2025-12-30")
         /// No se puede modificar StartDate (se establece como hoy cuando se crea).

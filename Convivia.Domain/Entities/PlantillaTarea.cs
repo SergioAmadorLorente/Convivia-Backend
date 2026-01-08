@@ -24,8 +24,6 @@ namespace Convivia.Domain.Entities
 
         public List<string> TareasId { get; set; }
 
-        public int? GracePeriodMinutes { get; set; } = 30;
-
         public DateOnly? StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
         public DateOnly? EndDate { get; set; }
 

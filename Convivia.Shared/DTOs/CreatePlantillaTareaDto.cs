@@ -38,7 +38,7 @@ namespace Convivia.Shared.DTOs
         public List<string> TareasId { get; set; } = new();
 
         /// <summary>
-        /// TimeZoneId: rellenado por defecto en PlantillaTareaService.
+        /// TimeZoneId: rellenado por defecto en PlantillaTareaService con "Europe/Madrid".
         /// </summary>
         [JsonIgnore]
         public string? TimeZoneId { get; set; }
@@ -47,11 +47,6 @@ namespace Convivia.Shared.DTOs
         /// ID de factura asociada (opcional).
         /// </summary>
         public string? FacturaId { get; set; }
-
-        /// <summary>
-        /// Período de gracia en minutos antes de marcar overdue (opcional).
-        /// </summary>
-        public int? GracePeriodMinutes { get; set; }
 
         /// <summary>
         /// ¿Asignar usuarios aleatoriamente a las tareas de esta plantilla?

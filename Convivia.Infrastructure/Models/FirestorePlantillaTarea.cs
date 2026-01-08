@@ -33,10 +33,7 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public string TimeZoneId { get; set; } = "Europe/Madrid";
         [FirestoreProperty]
-        public int? GracePeriodMinutes { get; set; }
-        [FirestoreProperty]
         public string? StartDate { get; set; }
-
         [FirestoreProperty]
         public string? FacturaId { get; set; }
 

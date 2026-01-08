@@ -93,7 +93,6 @@ namespace Convivia.Application.Services
             {
                 // Tarea puntual: DiaSemana = -1, requiere FechaLimite
                 var tarea = _mapper.Map<Tarea>(dto);
-                tarea.Id = Guid.NewGuid().ToString("N"); // Formato sin guiones
                 tarea.DiaSemana = -1;
                 tarea.Estado = TareaEstado.Pendiente;
 
@@ -128,7 +127,6 @@ namespace Convivia.Application.Services
                 {
                     var dia = days[i];
                     var tarea = _mapper.Map<Tarea>(dto);
-                    tarea.Id = Guid.NewGuid().ToString("N"); // Formato sin guiones
                     tarea.DiaSemana = dia;
                     tarea.Estado = TareaEstado.Pendiente;
                     // Para tareas repetidas, FechaLimite es opcional (se puede guardar si se proporciona)
@@ -338,9 +336,7 @@ namespace Convivia.Application.Services
             return tareasFiltered;
         }
 
-        public async Task<IEnumerable<TareaDto>> GetByEstadoAsync(
-            string espacioid,
-            TareaEstado estado)
+        public async Task<IEnumerable<TareaDto>> GetByEstadoAsync(string espacioid, TareaEstado estado)
         {
             if (string.IsNullOrWhiteSpace(espacioid))
                 throw new ArgumentNullException(nameof(espacioid));
@@ -916,9 +912,6 @@ namespace Convivia.Application.Services
                                             horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
                 var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
 
-                if (plantilla.GracePeriodMinutes.HasValue)
-                    dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
-
                 return nowUtc >= dueUtc;
             }
 
@@ -952,16 +945,6 @@ namespace Convivia.Application.Services
                 bool isOverdue = nowLocal.Hour > horaLimiteRep.Hour || 
                     (nowLocal.Hour == horaLimiteRep.Hour && nowLocal.Minute >= horaLimiteRep.Minute);
                 
-                // Aplicar período de gracia si existe
-                if (!isOverdue && plantilla.GracePeriodMinutes.HasValue)
-                {
-                    var dueLocal = new DateTime(nowLocal.Year, nowLocal.Month, nowLocal.Day,
-                                                horaLimiteRep.Hour, horaLimiteRep.Minute, 0, DateTimeKind.Unspecified);
-                    var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
-                    dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
-                    isOverdue = nowUtc >= dueUtc;
-                }
-                
                 return isOverdue;
             }
             
@@ -985,9 +968,6 @@ namespace Convivia.Application.Services
                 var dueLocal = new DateTime(fechaLimite.Year, fechaLimite.Month, fechaLimite.Day,
                                             horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
                 var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
-
-                if (plantilla.GracePeriodMinutes.HasValue)
-                    dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
 
                 return dueUtc;
             }
@@ -1024,9 +1004,6 @@ namespace Convivia.Application.Services
             var dueLocalRep = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
                                         horaLimiteRep.Hour, horaLimiteRep.Minute, 0, DateTimeKind.Unspecified);
             var dueUtcRep = new DateTimeOffset(dueLocalRep, tz.GetUtcOffset(dueLocalRep)).UtcDateTime;
-
-            if (plantilla.GracePeriodMinutes.HasValue)
-                dueUtcRep = dueUtcRep.AddMinutes(plantilla.GracePeriodMinutes.Value);
 
             return dueUtcRep;
         }

@@ -50,7 +50,7 @@ namespace Convivia.Application.Services
 
             if (string.IsNullOrWhiteSpace(plantillaTarea.TimeZoneId))
             {
-                plantillaTarea.TimeZoneId = TimeZoneInfo.Local.Id;
+                plantillaTarea.TimeZoneId = "Europe/Madrid";
             }
 
             plantillaTarea.TareasId ??= new List<string>();
@@ -81,9 +81,6 @@ namespace Convivia.Application.Services
 
             if (dto.karma.HasValue && dto.karma < 0)
                 throw new ArgumentException("Karma no puede ser negativo.", nameof(dto.karma));
-
-            if (dto.GracePeriodMinutes.HasValue && (dto.GracePeriodMinutes < 1 || dto.GracePeriodMinutes > 60))
-                throw new ArgumentException("GracePeriodMinutes debe estar entre 1 y 60 minutos (m�ximo 1 hora).", nameof(dto.GracePeriodMinutes));
 
             if (dto.DiasRepeticion != null && dto.DiasRepeticion.Count > 0)
             {
@@ -117,9 +114,6 @@ namespace Convivia.Application.Services
 
             if (dto.karma.HasValue)
                 domPlantilla.karma = dto.karma.Value;
-
-            if (dto.GracePeriodMinutes.HasValue)
-                domPlantilla.GracePeriodMinutes = dto.GracePeriodMinutes.Value;
 
             if (dto.FechaFin.HasValue)
                 domPlantilla.EndDate = dto.FechaFin.Value;
@@ -320,9 +314,6 @@ namespace Convivia.Application.Services
             var dueLocal = new DateTime(occurrenceDate.Year, occurrenceDate.Month, occurrenceDate.Day,
                                         horaLimite.Hour, horaLimite.Minute, 0, DateTimeKind.Unspecified);
             var dueUtc = new DateTimeOffset(dueLocal, tz.GetUtcOffset(dueLocal)).UtcDateTime;
-
-            if (plantilla.GracePeriodMinutes.HasValue)
-                dueUtc = dueUtc.AddMinutes(plantilla.GracePeriodMinutes.Value);
 
             return nowUtc >= dueUtc;
         }
