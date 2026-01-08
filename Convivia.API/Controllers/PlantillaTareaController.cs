@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Convivia.API.Controllers
 {
     [ApiController]
-    [Route("api/plantillas")]
+    [Route("api/espacio/{espacioid}")]
     [Produces("application/json")]
     public class PlantillaTareaController : ControllerBase
     {
@@ -22,38 +22,10 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<string>> CreatePlantilla(CreatePlantillaTareaDto dto)
-        {
-            var plantillaDtoId = await _service.AddAsync(dto);
-            return plantillaDtoId;
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<List<PlantillaTareaDto>>> GetAllPlantillas()
-        {
-            var list = await _service.GetAsync();
-            return Ok(list);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PlantillaTareaDto>> GetPlantillaById(string id)
-        {
-            var plantillaDto = await _service.GetByIdAsync(id);
-            return plantillaDto != null ? Ok(plantillaDto) : NotFound();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePlantilla(string id)
-        {
-            var deleted = await _service.DeleteAsync(id);
-            return deleted ? NoContent() : NotFound();
-        }
-
         [HttpPatch("{id}")]
-        public async Task<ActionResult<PlantillaTareaDto>> UpdatePlantilla(string id, UpdatePlantillaTareaDto dto)
+        public async Task<ActionResult<PlantillaTareaDto>> UpdatePlantilla(string espacioid, string id, UpdatePlantillaTareaDto dto)
         {
-            var plantillaDto = await _service.UpdateAsync(id, dto);
+            var plantillaDto = await _service.UpdateAsync(espacioid, id, dto);
             return plantillaDto != null ? Ok(plantillaDto) : NotFound();
         }
     }

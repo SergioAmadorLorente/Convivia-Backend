@@ -10,7 +10,7 @@ namespace Convivia.Shared.DTOs
     {
         public string? description { get; set; }
 
-        public DateTime startDate { get; set; }
+        public DateTime startDate { get; set; } = DateTime.Now;
 
         public DateTime? endDate { get; set; }
 

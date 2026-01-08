@@ -1,30 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace Convivia.Shared.DTOs
 {
     public class UpdateTareaDto
     {
-        public string? Nombre { get; set; }
+        public DateTime? FechaRealizacion { get; set; }
 
-        public DateTime? HoraLimite { get; set; }
+        public TimeSpan? Prorroga { get; set; }
 
-        public string? Descripcion { get; set; }
+        public string? Estado { get; set; }
 
-        public List<string>? UsuarioEspaciosIds { get; set; }
+        public string? UsuarioEspacioId { get; set; }
 
-        public int? karma { get; set; } = 10;
-
-        public byte[]? Foto { get; set; }
-
-        public DateTime? Prorroga { get; set; }
-
-        public bool? Estado { get; set; }
-
-        public string? FacturaId { get; set; } // Referencia a la factura asociada
-
-        public string? PlantillaId { get; set; }
-
+        public TimeOnly? HoraLimite { get; set; }
     }
 }

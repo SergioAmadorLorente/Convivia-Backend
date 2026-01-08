@@ -10,7 +10,7 @@ namespace Convivia.Infrastructure.Models
     public class FirestoreTarea
     {
         [FirestoreProperty]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [FirestoreProperty]
         public string? UsuarioEspacioId { get; set; }
@@ -19,23 +19,21 @@ namespace Convivia.Infrastructure.Models
         public DateTime? FechaRealizacion { get; set; }
 
         [FirestoreProperty]
-        public DateTime HoraLimite { get; set; }
+        public double? ProrrogaSegundos { get; set; }
 
         [FirestoreProperty]
-        public byte[]? Foto { get; set; } // Para almacenar imagen binaria
+        public string Estado { get; set; }
 
         [FirestoreProperty]
-        public DateTime? Prorroga { get; set; } // Puede ser null
+        public int DiaSemana { get; set; }
 
         [FirestoreProperty]
-        public bool Estado { get; set; }
+        public string PlantillaId { get; set; } = string.Empty;
 
         [FirestoreProperty]
-        public string EspacioId { get; set; }
+        public DateTime? FechaLimite { get; set; }
 
         [FirestoreProperty]
-        public string? FacturaId { get; set; }
-        [FirestoreProperty]
-        public int karma { get; set; }
+        public string? HoraLimite { get; set; }
     }
 }

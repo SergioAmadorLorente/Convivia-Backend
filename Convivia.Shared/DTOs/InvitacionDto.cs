@@ -4,13 +4,13 @@ namespace Convivia.Shared.DTOs
 {
     public class InvitacionDto
     {
-        public string Id { get; set; } = string.Empty;
+        public string Id { get; set; }
 
-        public string UsuarioSolicitanteId { get; set; } = string.Empty;
+        public string UsuarioSolicitanteId { get; set; } 
 
-        public string UsuarioInvitadoId { get; set; } = string.Empty;
+        public string UsuarioInvitadoId { get; set; } 
 
-        public string EspacioId { get; set; } = string.Empty;
+        public string EspacioId { get; set; } 
 
         public string? Mensaje { get; set; }
 

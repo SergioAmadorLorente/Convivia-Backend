@@ -1,6 +1,6 @@
 ﻿using Convivia.Domain.Entities;
 
-namespace Convivia.Domain.Repositories
+namespace Convivia.Application.Repositories
 {
     public interface IReservaRepository : IRepository<Reserva>
     {

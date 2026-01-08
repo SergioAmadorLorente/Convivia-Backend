@@ -1,119 +1,166 @@
+using Convivia.Application.Repositories;
 using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
 using Convivia.Shared.DTOs;
-using Convivia.Shared.Helpers;
 using Mapster;
+using MapsterMapper;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Convivia.Application.Services
 {
     public class UsuarioEspacioService
     {
-        private readonly IUsuarioEspacioRepository _repo;
+        private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
+        private readonly IMapper _mapper;
         private readonly ILogger<UsuarioEspacioService> _logger;
         private readonly IFacturaRepository _facturaRepo;
         private readonly ITareaRepository _tareaRepo;
 
-        public UsuarioEspacioService(IUsuarioEspacioRepository repo, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo, ITareaRepository tareaRepo)
+        public UsuarioEspacioService(IUsuarioEspacioRepository repo,IMapper mapper, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo, ITareaRepository tareaRepo)
         {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _usuarioEspacioRepository = repo ?? throw new ArgumentNullException(nameof(repo));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _facturaRepo = facturaRepo ?? throw new ArgumentNullException(nameof(facturaRepo)); 
             _tareaRepo = tareaRepo ?? throw new ArgumentNullException(nameof(tareaRepo));
         }
 
         // Crear UsuarioEspacio
-        public async Task<UsuarioEspacioDto?> AddAsync(CreateUsuarioEspacioDto dto, CancellationToken ct = default)
+        
+        public async Task<UsuarioEspacioDto?> CrearUsuarioEspacioAsync(CreateUsuarioEspacioDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.UsuarioId)) throw new ArgumentException("UsuarioId requerido");
-            if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId requerido");
 
-            var usuarioEspacioDomain = dto.Adapt<UsuarioEspacio>();
-            var createdUsuarioEspacio = await _repo.AddAsync(usuarioEspacioDomain, ct);
+            if (dto.Ausente == null) throw new ArgumentException("Ausente no puede ser nulo", nameof(dto.Ausente));
 
-            return createdUsuarioEspacio?.Adapt<UsuarioEspacioDto>();
+            if (dto.Karma < 0) throw new ArgumentException("Karma no puede ser negativo", nameof(dto.Karma));
+            if (string.IsNullOrWhiteSpace(dto.Rol)) throw new ArgumentException("Rol no puede estar vacío", nameof(dto.Rol));
+            if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId no puede estar vacío", nameof(dto.EspacioId));
+            if (string.IsNullOrWhiteSpace(dto.UsuarioId)) throw new ArgumentException("UsuarioId no puede estar vacío", nameof(dto.UsuarioId));
+            if (dto.TareasId == null) throw new ArgumentException("TareasId no puede ser nulo", nameof(dto.TareasId));
+            //if (string.IsNullOrWhiteSpace(dto.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacío", nameof(dto.PermisoId));
+
+
+            // DTO -> Domain
+            var UsuarioEspacioDomain = _mapper.Map<UsuarioEspacio>(dto);
+
+            // Persistir y obtener id           
+            var id = await _usuarioEspacioRepository.AddAsync(UsuarioEspacioDomain, ct);
+
+            // Recuperar entidad guardada y devolver DTO consistente
+            var createdDomain = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            if (createdDomain == null)
+            {
+                // devolver DTO mínimo con id para evitar fallos en rutas
+                return new UsuarioEspacioDto { Id = id };
+            }
+
+            var createdDto = _mapper.Map<UsuarioEspacioDto>(createdDomain);
+            if (string.IsNullOrWhiteSpace(createdDto.Id))
+                createdDto.Id = id;
+
+            return createdDto;
         }
 
         // Obtener UsuarioEspacio por Id
-        public async Task<UsuarioEspacioDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
+        public async Task<UsuarioEspacioDto?> ObtenerUsuarioEspacioAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
-
-            var usuarioEspacio = await _repo.GetByIdAsync(id, ct);
-            return usuarioEspacio?.Adapt<UsuarioEspacioDto>();
+            var domain = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            return domain == null ? null : _mapper.Map<UsuarioEspacioDto>(domain);
         }
 
         // Obtener UsuariosEspacios por EspacioId (lista)
         public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerPorEspacioAsync(string espacioId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(espacioId))
-                return Enumerable.Empty<UsuarioEspacioDto>();
-
-            var lista = await _repo.GetByEspacioIdAsync(espacioId, ct);
-            return lista.Adapt<IEnumerable<UsuarioEspacioDto>>();
+            if (string.IsNullOrWhiteSpace(espacioId)) return Enumerable.Empty<UsuarioEspacioDto>();
+            var list = await _usuarioEspacioRepository.GetByEspacioIdAsync(espacioId, ct);
+            return list?.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList() ?? new List<UsuarioEspacioDto>();
         }
 
         // Obtener UsuarioEspacio por UsuarioId (único)
-        public async Task<UsuarioEspacioDto?> ObtenerPorUsuarioAsync(string usuarioId, CancellationToken ct = default)
+        public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerPorUsuarioAsync(string usuarioId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(usuarioId))
-                return null;
-
-            var usuarioEspacio = await _repo.GetByUsuarioIdAsync(usuarioId, ct);
-            return usuarioEspacio?.Adapt<UsuarioEspacioDto>();
+            if (string.IsNullOrWhiteSpace(usuarioId)) return Enumerable.Empty<UsuarioEspacioDto>();
+            var list = await _usuarioEspacioRepository.GetByUsuarioIdAsync(usuarioId, ct);
+            return list?.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList() ?? new List<UsuarioEspacioDto>();
         }
 
         // Obtener todos
-        public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerTodosAsync(CancellationToken ct = default)
+        public async Task<IEnumerable<UsuarioEspacioDto>> ListarTodasAsync(CancellationToken ct = default)
         {
-            _logger.LogInformation("Llamando a GetAllAsync desde UsuarioEspacioService");
-
-            var usuariosEspacios = await _repo.GetAllAsync(ct);
-
-            _logger.LogInformation("GetAllAsync devolvió {Count} elementos", usuariosEspacios?.Count() ?? 0);
-
-            return usuariosEspacios.Adapt<IEnumerable<UsuarioEspacioDto>>();
+            var list = await _usuarioEspacioRepository.GetAllAsync(ct);
+            return list?.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList() ?? new List<UsuarioEspacioDto>();
         }
 
         // Actualizar UsuarioEspacio
-        public async Task<UsuarioEspacioDto> UpdateAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
+        public async Task<UsuarioEspacioDto> ActualizarUsuarioEspacioCompletoAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var usuarioEspacioExistente = await _repo.GetByIdAsync(id, ct);
-            if (usuarioEspacioExistente == null)
-                throw new KeyNotFoundException($"UsuarioEspacio con Id {id} no encontrado");
+            // Mapear DTO -> Domain (nuevo objeto completo)
+            var domain = _mapper.Map<UsuarioEspacio>(dto);
 
-            if (dto.Ausente.HasValue) usuarioEspacioExistente.Ausente = dto.Ausente.Value;
-            if (dto.Karma.HasValue) usuarioEspacioExistente.Karma = dto.Karma.Value;
-            if (!string.IsNullOrWhiteSpace(dto.Rol)) usuarioEspacioExistente.Rol = dto.Rol;
+            // Asegurar que el Id de dominio coincide con el id pasado
+            domain.Id = id;
 
-            var updated = await _repo.UpdateAsync(id, usuarioEspacioExistente, ct);
-            return updated!.Adapt<UsuarioEspacioDto>();
+            // Persistir como overwrite (merge = false)
+            await _usuarioEspacioRepository.UpdateAsync(id, domain, merge: false, ct);
+
+            var updated = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
+        }
+
+        /// <summary>
+        /// Merge: fusiona los campos del objeto con los del documento existente (SetOptions.MergeAll).
+        /// </summary>
+        public async Task<UsuarioEspacioDto?> ActualizarUsuarioEspacioMergeAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var existing = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
+
+            // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
+            _mapper.Map(dto, existing);
+
+            // Persistir con merge para evitar sobrescribir campos no mapeados
+            await _usuarioEspacioRepository.UpdateAsync(id, existing, merge: true, ct);
+
+            var updated = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
         }
 
         // Actualización parcial
-        public async Task<bool> ParcialActualizarAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
+        public async Task<UsuarioEspacioDto?> ActualizarUsuarioEspacioParcialAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
         {
-            try
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var updates = ObtenerActualizacionesDesdeDto(dto);
+            if (updates.Count == 0)
             {
-                await UpdateAsync(id, dto, ct);
-                return true;
+                // Nada que actualizar: devolver la entidad actual
+                var current = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+                return current == null ? null : _mapper.Map<UsuarioEspacioDto>(current);
             }
-            catch (KeyNotFoundException)
-            {
-                return false;
-            }
+
+            // useSetMerge: false -> UpdateAsync estricto (fallará si no existe)
+            await _usuarioEspacioRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
+
+            var updated = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
         }
 
         // Eliminar UsuarioEspacio
-        public async Task EliminarAsync(string id, CancellationToken ct = default)
+        public async Task<bool> EliminarUsuarioEspacioAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("Id requerido", nameof(id));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
 
             if (await _facturaRepo.ExistsByUsuarioEspacioIdAsync(id, ct))
                 throw new InvalidOperationException($"No se puede eliminar el UsuarioEspacio {id}: existen facturas asociadas.");
@@ -125,8 +172,27 @@ namespace Convivia.Application.Services
                 tarea!.UsuarioEspacioId = null;
                 await _tareaRepo.UpdateAsync(tarea.Id, tarea, ct);
             }
+            
 
-            await _repo.DeleteAsync(id, ct);
+            var existing = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return false;
+
+            await _usuarioEspacioRepository.DeleteAsync(id, ct);
+            return true;
+        }
+        private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateUsuarioEspacioDto dto)
+        {
+            var updates = new Dictionary<string, object>();
+
+            if (dto.Ausente != null) updates["Ausente"] = dto.Ausente;
+            if (dto.Karma.HasValue) updates["Karma"] = dto.Karma.Value;
+            if (!string.IsNullOrWhiteSpace(dto.Rol)) updates["Rol"] = dto.Rol;
+            if (!string.IsNullOrWhiteSpace(dto.EspacioId)) updates["EspacioId"] = dto.EspacioId;
+            if (!string.IsNullOrWhiteSpace(dto.UsuarioId)) updates["UsuarioId"] = dto.UsuarioId;
+            if (dto.TareasId != null) updates["TareasId"] = dto.TareasId;
+            if (!string.IsNullOrWhiteSpace(dto.PermisoId)) updates["PermisoId"] = dto.PermisoId;
+            if (dto.FacturasId != null) updates["FacturasId"] = dto.FacturasId;
+            return updates;
         }
     }
 }

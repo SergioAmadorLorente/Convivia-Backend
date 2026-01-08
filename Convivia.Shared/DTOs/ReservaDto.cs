@@ -8,7 +8,7 @@ namespace Convivia.Shared.DTOs
 {
     public class ReservaDto
     {
-        public string idReserva { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
         public string? description { get; set; }
         public DateTime startTime { get; set; } = DateTime.Now;
         public DateTime? endTime { get; set; }

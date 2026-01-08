@@ -17,56 +17,92 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        // POST api/usuarios
+        // POST api/usuario
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUsuarioDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(model.Nombre)) return BadRequest("Nombre es requerido.");
+            if (string.IsNullOrWhiteSpace(model.Email)) return BadRequest("Email es requerido.");
+            if (string.IsNullOrWhiteSpace(model.Password)) return BadRequest("Password es requerido.");
 
-          
-            if (string.IsNullOrWhiteSpace(model.Email) ||
-                string.IsNullOrWhiteSpace(model.Nombre))
-                
-            {
-                return BadRequest("email y nombre son requeridos");
-            }
 
-            var id = await _service.CrearAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+            var created = await _service.CrearUsuarioAsync(model, ct);
+            return Ok(created);
         }
 
-        // GET api/invitaciones/{id}
+        // GET api/usuarios/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var usuario = await _service.ObtenerPorIdAsync(id, ct);
+            var usuario = await _service.ObtenerUsuarioAsync(id, ct);
             if (usuario == null) return NotFound();
             return Ok(usuario);
         }
-
-        // GET api/invitaciones/por-usuario/{usuarioInvitadoId}
-        [HttpGet("por-usuario/{usuarioInvitadoId}")]
-        public async Task<IActionResult> GetByUsuarioInvitado(string usuarioInvitadoId, CancellationToken ct)
+        // GET api/Usuario
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(usuarioInvitadoId)) return BadRequest();
-
-            var list = await _service.GetByFullNameInvitadoAsync(usuarioInvitadoId, ct);
+            var list = await _service.ListarTodasAsync(ct);
             return Ok(list);
         }
 
-       
+        // GET api/usuarios/correo/{correo}
+        [HttpGet("correo/{correo}")]
+        public async Task<IActionResult> GetByEmail(string correo, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(correo)) return BadRequest("El correo es requerido");
 
-        // DELETE api/invitaciones/{id}
+            var usuario = await _service.ObtenerPorEmailAsync(correo, ct);
+            if (usuario == null) return NotFound($"No se encontró usuario con el correo: {correo}");
+            return Ok(usuario);
+        }
+        // PUT api/usuario
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        // PUT api/usuario/{id}/merge
+        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        [HttpPut("{id}/merge")]
+        public async Task<IActionResult> PutMerge(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioMergeAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        // PATCH api/usuario/{id}
+        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+        // DELETE api/Usuario/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var removed = await _service.EliminarAsync(id, ct);
-            if (!removed) return NotFound();
-            return NoContent();
+            var resultat = await _service.EliminarUsuarioAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
+
+
     }
 }

@@ -10,7 +10,7 @@ namespace Convivia.Infrastructure.Models
     public class FireStoreFactura
     {
         [FirestoreProperty("Id")]
-        public string IdFactura { get; set; }
+        public string Id { get; set; }
 
         [FirestoreProperty("Nombre")]
         public string Nombre { get; set; }

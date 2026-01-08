@@ -13,7 +13,7 @@ namespace Convivia.Domain.Entities
         /// Identificador único de la factura.
         /// </summary>
         
-        public string Id_Factura { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         /// <summary>
         /// Nombre o concepto de la factura.

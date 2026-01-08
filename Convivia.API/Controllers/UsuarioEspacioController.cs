@@ -9,30 +9,38 @@ namespace Convivia.Api.Controllers
     public class UsuarioEspacioController : ControllerBase
     {
         private readonly UsuarioEspacioService _service;
-        private readonly ILogger<UsuarioEspacioController> _logger;
 
-        public UsuarioEspacioController(UsuarioEspacioService service, ILogger<UsuarioEspacioController> logger)
+        public UsuarioEspacioController(UsuarioEspacioService service)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // POST: api/usuarioespacio
+        // POST api/usuarioEspacio
         [HttpPost]
-        public async Task<ActionResult<UsuarioEspacioDto>> Crear([FromBody] CreateUsuarioEspacioDto dto, CancellationToken ct)
+        public async Task<IActionResult> Create([FromBody] CreateUsuarioEspacioDto model, CancellationToken ct)
         {
-            var result = await _service.AddAsync(dto, ct);
-            if (result == null) return BadRequest("No se pudo crear el UsuarioEspacio");
-            return CreatedAtAction(nameof(ObtenerPorId), new { id = result.Id_UsuarioEspacio }, result);
+            if (model == null) return BadRequest();
+            if (model.Ausente == null) throw new ArgumentNullException(nameof(model.Ausente));
+            if (model.Karma < 0) throw new ArgumentOutOfRangeException(nameof(model.Karma), "Karma no puede ser negativo");
+            if (string.IsNullOrWhiteSpace(model.Rol)) throw new ArgumentException("Rol no puede estar vacío", nameof(model.Rol));
+            if (string.IsNullOrWhiteSpace(model.EspacioId)) throw new ArgumentException("EspacioId no puede estar vacío", nameof(model.EspacioId));
+            if (string.IsNullOrWhiteSpace(model.UsuarioId)) throw new ArgumentException("UsuarioId no puede estar vacío", nameof(model.UsuarioId));
+            if (model.TareasId == null) throw new ArgumentNullException(nameof(model.TareasId));
+            if (string.IsNullOrWhiteSpace(model.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacío", nameof(model.PermisoId));
+
+            var created = await _service.CrearUsuarioEspacioAsync(model, ct);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // GET: api/usuarioespacio/{id}
+        // GET api/usuarioEspacio/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<UsuarioEspacioDto>> ObtenerPorId(string id, CancellationToken ct)
+        public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
-            var result = await _service.ObtenerPorIdAsync(id, ct);
-            if (result == null) return NotFound();
-            return Ok(result);
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            var usuarioEspacio = await _service.ObtenerUsuarioEspacioAsync(id, ct);
+            if (usuarioEspacio == null) return NotFound();
+            return Ok(usuarioEspacio);
         }
 
         // GET: api/usuarioespacio/espacio/{espacioId}
@@ -51,47 +59,58 @@ namespace Convivia.Api.Controllers
             return Ok(result);
         }
 
-        // GET: api/usuarioespacio
+        // GET api/usuarioEspacio
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UsuarioEspacioDto>>> ObtenerTodos(CancellationToken ct)
+        public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            _logger.LogInformation("Endpoint ObtenerTodos llamado");
-            var result = await _service.ObtenerTodosAsync(ct);
-            _logger.LogInformation("ObtenerTodos devuelve {Count} elementos", result?.Count() ?? 0);
-            return Ok(result);
+            var list = await _service.ListarTodasAsync(ct);
+            return Ok(list);
         }
 
-        // PUT: api/usuarioespacio/{id}
+        // PUT api/usuarioEspacio/{id}
+        // Overwrite completo: reemplaza todo el documento en Firestore.
         [HttpPut("{id}")]
-        public async Task<ActionResult<UsuarioEspacioDto>> Actualizar(string id, [FromBody] UpdateUsuarioEspacioDto dto, CancellationToken ct)
+        public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdateUsuarioEspacioDto model, CancellationToken ct)
         {
-            var result = await _service.UpdateAsync(id, dto, ct);
-            return Ok(result);
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioEspacioCompletoAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
-        // PATCH: api/usuarioespacio/{id}
+        // PUT api/usuarioEspacio/{id}/merge
+        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        [HttpPut("{id}/merge")]
+        public async Task<IActionResult> PutMerge(string id, [FromBody] UpdateUsuarioEspacioDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioEspacioMergeAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        // PATCH api/usuarioEspacio/{id}
+        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
         [HttpPatch("{id}")]
-        public async Task<ActionResult> ActualizacionParcial(string id, [FromBody] UpdateUsuarioEspacioDto dto, CancellationToken ct)
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdateUsuarioEspacioDto model, CancellationToken ct)
         {
-            var result = await _service.ParcialActualizarAsync(id, dto, ct);
-            if (!result) return NotFound();
-            return NoContent();
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarUsuarioEspacioParcialAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
-        // DELETE: api/usuarioespacio/{id}
+        // DELETE api/usuarioespacio/{id}
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Eliminar(string id, CancellationToken ct)
+        public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-            try
-            {
-                await _service.EliminarAsync(id, ct);
-                return NoContent();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
+
+            var resultat = await _service.EliminarUsuarioEspacioAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
     }
 }

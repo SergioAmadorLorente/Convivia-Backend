@@ -1,65 +1,99 @@
 using Convivia.Domain.Entities;
-using Convivia.Domain.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Infrastructure.Models;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Services;
 using Microsoft.Extensions.Logging;
+using Google.Cloud.Firestore;
 using Mapster;
 
-public class UsuarioEspacioRepository : IUsuarioEspacioRepository
+namespace Convivia.Infrastructure.Repositories
 {
-    private readonly IFirebaseService _firebase;
-    private readonly ILogger<UsuarioEspacioRepository> _logger;
-    private const string Collection = "usuarioEspacios";
-
-    public UsuarioEspacioRepository(IFirebaseService firebase, ILogger<UsuarioEspacioRepository> logger)
+    public class UsuarioEspacioRepository : Repository<FireStoreUsuarioEspacio>, IUsuarioEspacioRepository
     {
-        _firebase = firebase ?? throw new ArgumentNullException(nameof(firebase));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+        private readonly ILogger<UsuarioEspacioRepository> _logger;
+        private const string Collection = "usuarioEspacios";
 
-    public async Task<UsuarioEspacio?> AddAsync(UsuarioEspacio entity, CancellationToken ct = default)
-    {
-        if (entity == null) throw new ArgumentNullException(nameof(entity));
-
-        var fireStoreUsuarioEspacio = entity.Adapt<FireStoreUsuarioEspacio>();
-        await _firebase.AddAsync(Collection, entity.Id_UsuarioEspacio, fireStoreUsuarioEspacio, ct);
-
-        return entity;
-    }
-
-    public async Task<UsuarioEspacio?> GetByIdAsync(string id, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(id)) return null;
-
-        try
+        public UsuarioEspacioRepository(
+            IFirebaseService firebase,
+            ILogger<UsuarioEspacioRepository> logger,
+            ILoggerFactory loggerFactory)
+            : base(firebase, loggerFactory.CreateLogger<Repository<FireStoreUsuarioEspacio>>(), Collection)
         {
-            var fUsuarioEspacio = await _firebase.GetAsync<FireStoreUsuarioEspacio>(Collection, id, ct);
-            return fUsuarioEspacio?.Adapt<UsuarioEspacio>();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error GetByIdAsync {Id}", id);
-            throw;
-        }
-    }
 
-    public async Task<IEnumerable<UsuarioEspacio>> GetByEspacioIdAsync(string espacioId, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(espacioId)) return Array.Empty<UsuarioEspacio>();
-
-        try
+        public async Task<string> AddAsync(UsuarioEspacio entity, CancellationToken ct = default)
         {
-            var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
-            return list.Adapt<IEnumerable<UsuarioEspacio>>();
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            var persist = entity.Adapt<FireStoreUsuarioEspacio>();
+            return await base.AddAsync(persist, persist.Id, ct);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error GetByEspacioIdAsync {EspacioId}", espacioId);
-            throw;
-        }
-    }
 
+        public async Task<UsuarioEspacio?> GetByIdAsync(string id, CancellationToken ct = default)
+        {
+            var persist = await base.GetByIdAsync(id, ct);
+            if (persist == null) return null;
+            return persist.Adapt<UsuarioEspacio>();
+        }
+
+        public async Task<IEnumerable<UsuarioEspacio>> GetAllAsync(CancellationToken ct = default)
+        {
+            var list = await base.GetAllAsync(ct);
+            return list == null ? Array.Empty<UsuarioEspacio>() : list.Adapt<List<UsuarioEspacio>>();
+        }
+
+        public async Task<IEnumerable<UsuarioEspacio>> GetByEspacioIdAsync(string espacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return Array.Empty<UsuarioEspacio>();
+            try
+            {
+                _logger.LogInformation("GetByEspacioIdAsync llamado para espacioId: {EspacioId}", espacioId);
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
+                _logger.LogInformation("GetByEspacioIdAsync devolviï¿½ {Count} documentos para espacioId: {EspacioId}", list?.Count ?? 0, espacioId);
+                return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetByEspacioIdAsync {EspacioId}", espacioId);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<UsuarioEspacio>> GetByUsuarioIdAsync(string usuarioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioId)) return Array.Empty<UsuarioEspacio>();
+            try
+            {
+                _logger.LogInformation("GetByUsuarioIdAsync llamado para usuarioId: {UsuarioId}", usuarioId);
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "UsuarioRef", usuarioId, ct);
+                _logger.LogInformation("GetByUsuarioIdAsync devolviï¿½ {Count} documentos para usuarioId: {UsuarioId}", list?.Count ?? 0, usuarioId);
+                return list?.Select(fs => fs.Adapt<UsuarioEspacio>()) ?? new List<UsuarioEspacio>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error GetByUsuarioIdAsync {UsuarioId}", usuarioId);
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(string id, UsuarioEspacio entity, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            var persist = entity.Adapt<FireStoreUsuarioEspacio>();
+            await base.UpdateAsync(id, persist, ct);
+        }
+
+        public async Task UpdateAsync(string id, UsuarioEspacio entity, bool merge, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            var persist = entity.Adapt<FireStoreUsuarioEspacio>();
+            await base.UpdateAsync(id, persist, merge, ct);
+        }
     public async Task<bool> ExistsByEspacioIdAsync(string espacioId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(espacioId)) return false;
@@ -76,62 +110,48 @@ public class UsuarioEspacioRepository : IUsuarioEspacioRepository
         }
     }
 
-    public async Task<UsuarioEspacio?> GetByUsuarioIdAsync(string usuarioId, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(usuarioId))
-            return null;
 
-        try
+        public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
         {
-            var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "UsuarioRef", usuarioId, ct);
-
-            // Si no hay resultados, devolvemos null
-            var first = list?.FirstOrDefault();
-            if (first == null)
-                return null;
-
-            // Adaptamos solo el primer elemento
-            return first.Adapt<UsuarioEspacio>();
+            await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
-        catch (Exception ex)
+
+        public new async Task DeleteAsync(string id, CancellationToken ct = default)
         {
-            _logger.LogError(ex, "Error GetByUsuarioIdAsync {UsuarioId}", usuarioId);
-            throw;
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            await base.DeleteAsync(id, ct);
         }
-    }
 
-    public async Task<UsuarioEspacio?> UpdateAsync(string id, UsuarioEspacio entity, CancellationToken ct = default)
-    {
-        var fUsuarioEspacio = entity.Adapt<FireStoreUsuarioEspacio>();
-        await _firebase.UpdateAsync(Collection, id, fUsuarioEspacio, ct);
-
-        var updated = await _firebase.GetAsync<FireStoreUsuarioEspacio>(Collection, id, ct);
-        return updated?.Adapt<UsuarioEspacio>();
-    }
-
-    public async Task DeleteAsync(string id, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id requerido", nameof(id));
-
-        try
+        /// <summary>
+        /// Incrementa el karma de un UsuarioEspacio usando Firestore FieldValue.Increment
+        /// </summary>
+        public async Task<int> UpdateKarmaAsync(string usuarioEspacioId, int karmaAmount, CancellationToken ct = default)
         {
-            await _firebase.DeleteAsync(Collection, id, ct);
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
+                throw new ArgumentNullException(nameof(usuarioEspacioId));
+
+            if (karmaAmount <= 0)
+                throw new ArgumentException("karmaAmount debe ser mayor a 0", nameof(karmaAmount));
+
+            try
+            {
+                var updates = new Dictionary<string, object>
+                {
+                    { "karma", FieldValue.Increment(karmaAmount) }
+                };
+
+                await _firebase.UpdateAsync(Collection, usuarioEspacioId, updates, useSetMerge: true, ct);
+                
+                _logger.LogDebug("Karma {Amount} agregado al UsuarioEspacio {Id}", karmaAmount, usuarioEspacioId);
+                
+                // Retornar el karma agregado
+                return karmaAmount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error incrementando Karma para UsuarioEspacio {Id}", usuarioEspacioId);
+                throw;
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error DeleteAsync {Id}", id);
-            throw;
-        }
-    }
-
-    public async Task<IEnumerable<UsuarioEspacio>> GetAllAsync(CancellationToken ct = default)
-    {
-        _logger.LogInformation("GetAllAsync llamado para colección: {Collection}", Collection);
-
-        var list = await _firebase.GetAllAsync<FireStoreUsuarioEspacio>(Collection, ct);
-
-        _logger.LogInformation("Firebase devolvió {Count} documentos de {Collection}", list?.Count ?? 0, Collection);
-
-        return list.Adapt<IEnumerable<UsuarioEspacio>>();
     }
 }

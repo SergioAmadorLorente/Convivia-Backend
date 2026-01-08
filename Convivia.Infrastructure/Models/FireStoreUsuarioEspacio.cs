@@ -9,14 +9,14 @@ namespace Convivia.Infrastructure.Models
     [FirestoreData]
     public class FireStoreUsuarioEspacio
     {
-        [FirestoreProperty("Id_UsuarioEspacio")]
-        public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString("N");
+        [FirestoreProperty("Id")]
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         [FirestoreProperty("Ausente")]
         public bool Ausente { get; set; }
 
         [FirestoreProperty("Karma")]
-        public int Karma { get; set; }
+        public int karma { get; set; }
 
         [FirestoreProperty("Rol")]
         public string Rol { get; set; }

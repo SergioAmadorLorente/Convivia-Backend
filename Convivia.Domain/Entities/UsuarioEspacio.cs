@@ -4,10 +4,9 @@ using System.Text.Json.Serialization;
 namespace Convivia.Domain.Entities
 {
 
-
     public class UsuarioEspacio
     {
-        public string Id_UsuarioEspacio { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         public bool Ausente { get; set; }
 
@@ -45,22 +44,33 @@ namespace Convivia.Domain.Entities
         // Constructor que asigna el permiso según el rol proporcionado
         public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, string rol, bool ausente = false, int karma = 0)
         {
-            Id_UsuarioEspacio = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString("N");
             this.Usuario = usuario;
             this.UsuarioId = usuario?.Id ?? string.Empty;
             this.Espacio = espacio;
             this.EspacioId = espacio?.Id ?? string.Empty;
             this.Ausente = ausente;
             this.Karma = karma;
+            this.Rol = rol;
 
-            if (rol == "admin")
+            if (rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
-                this.Permiso = Permiso.Admin;
+                var rolAdmin = new Rol();
+                rolAdmin.SetConfiguracionAdmin();
+                this.Permiso = new Permiso(rolAdmin);
+            }
+            else if (rol.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
+            {
+                var rolModerador = new Rol();
+                rolModerador.SetConfiguracionModerador();
+                this.Permiso = new Permiso(rolModerador);
             }
             else
             {
                 // Por defecto asignar rol Usuario
-                this.Permiso = Permiso.Usuario;
+                var rolUsuario = new Rol();
+                rolUsuario.SetConfiguracionUsuario();
+                this.Permiso = new Permiso(rolUsuario);
             }
             this.PermisoId = this.Permiso?.Id ?? string.Empty;
         }
@@ -68,7 +78,7 @@ namespace Convivia.Domain.Entities
         // Constructor que recibe un objeto Permiso directamente
         public UsuarioEspacio(Usuario usuario, Espacio espacio, Permiso permiso, bool ausente = false, int karma = 0)
         {
-            Id_UsuarioEspacio = Guid.NewGuid().ToString();
+            Id = Guid.NewGuid().ToString("N");
             this.Usuario = usuario;
             this.UsuarioId = usuario?.Id ?? string.Empty;
             this.Espacio = espacio;

@@ -23,24 +23,10 @@ namespace Convivia.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreatePermisoDto model, CancellationToken ct)
         {
             if (model == null) return BadRequest("El modelo no puede ser nulo.");
-            if (string.IsNullOrWhiteSpace(model.Rol))
-            {
-                return BadRequest("Rol es requerido.");
-            }
-
-            // Validar que el rol sea válido
-            if (!Permiso.EsRolValido(model.Rol))
-            {
-                return BadRequest(new
-                {
-                    error = $"Rol '{model.Rol}' no válido.",
-                    rolesPermitidos = Permiso.RolesValidos
-                });
-            }
 
             try
             {
-                var id = await _service.CrearAsync(model, ct);
+                var id = await _service.CrearPermisoAsync(model, ct);
                 return CreatedAtAction(nameof(GetById), new { id }, new { id });
             }
             catch (ArgumentException ex)
@@ -55,7 +41,7 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
 
-            var permiso = await _service.ObtenerPorIdAsync(id, ct);
+            var permiso = await _service.ObtenerPermisoAsync(id, ct);
             if (permiso == null) return NotFound();
             return Ok(permiso);
         }
@@ -64,41 +50,14 @@ namespace Convivia.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-            var list = await _service.ObtenerTodosAsync(ct);
+            var list = await _service.ListarTodasAsync(ct);
             return Ok(list);
         }
 
-        // GET api/permisos/roles-validos
-        [HttpGet("roles-validos")]
-        public IActionResult GetRolesValidos()
+        // GET api/permisos/rol/{rol}
+        [HttpGet("rol/{rol}")]
+        public async Task<IActionResult> GetByRol(TipoRol rol, CancellationToken ct)
         {
-            return Ok(new
-            {
-                roles = Permiso.RolesValidos,
-                descripcion = new
-                {
-                    Usuario = "Puede crear y editar tareas, y asignarse tareas",
-                    Admin = "Tiene todos los permisos disponibles"
-                }
-            });
-        }
-
-        // GET api/permisos/por-rol/{rol}
-        [HttpGet("por-rol/{rol}")]
-        public async Task<IActionResult> GetByRol(string rol, CancellationToken ct)
-        {
-            if (string.IsNullOrWhiteSpace(rol)) return BadRequest("Rol es requerido.");
-
-            // Validar que el rol sea válido
-            if (!Permiso.EsRolValido(rol))
-            {
-                return BadRequest(new
-                {
-                    error = $"Rol '{rol}' no válido.",
-                    rolesPermitidos = Permiso.RolesValidos
-                });
-            }
-
             try
             {
                 var list = await _service.ObtenerPorRolAsync(rol, ct);
@@ -110,48 +69,52 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // PUT api/permisos/{id}
+        // PUT api/permiso/{id}
+        // Overwrite completo: reemplaza todo el documento en Firestore.
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
+        public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
-            if (model == null) return BadRequest("El modelo no puede ser nulo.");
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            // Validar rol si se está actualizando
-            if (model.Rol != null && !Permiso.EsRolValido(model.Rol))
-            {
-                return BadRequest(new
-                {
-                    error = $"Rol '{model.Rol}' no válido.",
-                    rolesPermitidos = Permiso.RolesValidos
-                });
-            }
-
-            try
-            {
-                var updated = await _service.ActualizarAsync(id, model, ct);
-                if (!updated) return NotFound();
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var updated = await _service.ActualizarPermisoCompletaAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
         }
 
-        // DELETE api/permisos/{id}
+        // PUT api/permiso/{id}/merge
+        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        [HttpPut("{id}/merge")]
+        public async Task<IActionResult> PutMerge(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarPermisoMergeAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        // PATCH api/permiso/{id}
+        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
+
+            var updated = await _service.ActualizarPermisoParcialAsync(id, model, ct);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+
+
+        // DELETE api/permiso/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(id)) return BadRequest("ID es requerido.");
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
 
-            var removed = await _service.EliminarAsync(id, ct);
-            if (!removed) return NotFound();
-            return NoContent();
+            var resultat = await _service.EliminarPermisoAsync(id, ct);
+            return resultat ? NoContent() : NotFound();
         }
     }
 }

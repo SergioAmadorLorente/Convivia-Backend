@@ -10,12 +10,15 @@ namespace Convivia.Infrastructure.Models
     public class FireStoreEspacio
     {
         [FirestoreProperty("Id")]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
         [FirestoreProperty("Nombre")]
         public string Nombre { get; set; } = string.Empty;
 
         [FirestoreProperty("Direccion")]
         public string? Direccion { get; set; }
+
+        [FirestoreProperty("UsuarioEspacioIds")]
+        public List<string> UsuarioEspaciosIds { get; set; } = new List<string>();
     }
 }
