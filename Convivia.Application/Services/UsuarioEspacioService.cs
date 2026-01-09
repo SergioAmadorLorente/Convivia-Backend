@@ -4,7 +4,10 @@ using Convivia.Shared.DTOs;
 using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace Convivia.Application.Services
 {
@@ -13,12 +16,16 @@ namespace Convivia.Application.Services
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<UsuarioEspacioService> _logger;
+        private readonly IFacturaRepository _facturaRepo;
+        private readonly ITareaRepository _tareaRepo;
 
-        public UsuarioEspacioService(IUsuarioEspacioRepository repo,IMapper mapper, ILogger<UsuarioEspacioService> logger)
+        public UsuarioEspacioService(IUsuarioEspacioRepository repo,IMapper mapper, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo, ITareaRepository tareaRepo)
         {
             _usuarioEspacioRepository = repo ?? throw new ArgumentNullException(nameof(repo));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _facturaRepo = facturaRepo ?? throw new ArgumentNullException(nameof(facturaRepo)); 
+            _tareaRepo = tareaRepo ?? throw new ArgumentNullException(nameof(tareaRepo));
         }
 
         // Crear UsuarioEspacio
@@ -66,7 +73,7 @@ namespace Convivia.Application.Services
             return domain == null ? null : _mapper.Map<UsuarioEspacioDto>(domain);
         }
 
-        // Obtener UsuariosEspacios por EspacioId
+        // Obtener UsuariosEspacios por EspacioId (lista)
         public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerPorEspacioAsync(string espacioId, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(espacioId)) return Enumerable.Empty<UsuarioEspacioDto>();
@@ -74,7 +81,7 @@ namespace Convivia.Application.Services
             return list?.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList() ?? new List<UsuarioEspacioDto>();
         }
 
-        // Obtener UsuariosEspacios por UsuarioId
+        // Obtener UsuarioEspacio por UsuarioId (único)
         public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerPorUsuarioAsync(string usuarioId, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(usuarioId)) return Enumerable.Empty<UsuarioEspacioDto>();
@@ -154,6 +161,18 @@ namespace Convivia.Application.Services
         public async Task<bool> EliminarUsuarioEspacioAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            if (await _facturaRepo.ExistsByUsuarioEspacioIdAsync(id, ct))
+                throw new InvalidOperationException($"No se puede eliminar el UsuarioEspacio {id}: existen facturas asociadas.");
+
+            var tareas = await _tareaRepo.GetByUsuarioEspacioIdAsync(id, ct);
+
+            foreach (var tarea in tareas)
+            {
+                tarea!.UsuarioEspacioId = null;
+                await _tareaRepo.UpdateAsync(tarea.Id, tarea, ct);
+            }
+            
 
             var existing = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
             if (existing == null) return false;

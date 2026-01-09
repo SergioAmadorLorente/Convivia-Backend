@@ -76,5 +76,22 @@ namespace Convivia.Infrastructure.Repositories
             var list = await _firebase.QueryAsync<FireStoreFactura>(Collection, field, value, ct);
             return list == null ? Array.Empty<Factura>() : list.Adapt<List<Factura>>();
         }
+        // Nueva implementación: consulta eficiente que devuelve si existe al menos una asociación
+        public async Task<bool> ExistsByUsuarioEspacioIdAsync(string usuarioEspacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId)) return false;
+            try
+            {
+                // Usar el nombre real del campo en Firestore: "EspacioRef"
+                var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "FacturaRef", usuarioEspacioId, ct);
+                return list != null && list.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ExistsByUsuarioEspacioId {usuarioEspacioId}", usuarioEspacioId);
+                throw;
+            }
+        }
+
     }
 }

@@ -1,5 +1,11 @@
-﻿using System;
+﻿using Convivia.Application.Mappers;
+using Convivia.Shared.DTOs;
+using Convivia.Shared.Helpers;
+using Mapster;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
@@ -15,12 +21,14 @@ namespace Convivia.Application.Services
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMapper _mapper;
+        private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
         private readonly ILogger<UsuarioService> _logger;
 
-        public UsuarioService(IUsuarioRepository usuarioRepository,IMapper mapper, ILogger<UsuarioService> logger)
+        public UsuarioService(IUsuarioRepository usuarioRepository,IMapper mapper, ILogger<UsuarioService> logger, IUsuarioEspacioRepository usuarioEspacioRepo)
         {
             _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _usuarioEspacioRepo = usuarioEspacioRepo ?? throw new ArgumentNullException(nameof(usuarioEspacioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -149,6 +157,20 @@ namespace Convivia.Application.Services
             var existing = await _usuarioRepository.GetByIdAsync(id, ct);
             if (existing == null) return false;
 
+            var usuariosEspacio = await _usuarioEspacioRepo
+                .GetByUsuarioIdAsync(id, ct)
+                .ConfigureAwait(false);
+
+            if (usuariosEspacio != null && usuariosEspacio.Any())
+            {
+                foreach (var usuarioEspacio in usuariosEspacio)
+                {
+                    await _usuarioEspacioRepo
+                        .DeleteAsync(usuarioEspacio.Id, ct)
+                        .ConfigureAwait(false);
+                }
+            }
+            
             await _usuarioRepository.DeleteAsync(id, ct);
             return true;
         }

@@ -429,5 +429,19 @@ namespace Convivia.Infrastructure.Services
                 _logger.LogError(ex, "Error al loggear contenido del documento {DocumentId}", doc.Id);
             }
         }
+        public async Task<IEnumerable<T>> QueryArrayContainsAsync<T>(
+    string collection,
+    string field,
+    object value)
+        {
+            var query = _db.Collection(collection)
+                                    .WhereArrayContains(field, value);
+
+            var snapshot = await query.GetSnapshotAsync();
+
+            return snapshot.Documents
+                           .Select(doc => doc.ConvertTo<T>())
+                           .ToList();
+        }
     }
 }

@@ -17,6 +17,7 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
+
         // POST api/espacio
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateEspacioDto model, CancellationToken ct)

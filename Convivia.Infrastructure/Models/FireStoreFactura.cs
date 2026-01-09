@@ -21,6 +21,9 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("Reparto")]
         public Dictionary<string, float> Reparto { get; set; } = new Dictionary<string, float>();
 
+        [FirestoreProperty("RepartoKeys")]
+        public List<string> RepartoKeys { get; set; } = new();
+
         [FirestoreProperty("Pagado")]
         public bool Pagado { get; set; }
 
@@ -37,6 +40,10 @@ namespace Convivia.Infrastructure.Models
         {
             // Asegurar explícitamente Kind = Utc en caso de que algún mapper deje un DateTime sin especificar
             FechaCreacion = DateTime.SpecifyKind(FechaCreacion, DateTimeKind.Utc);
+        }
+        public void SyncRepartoKeys()
+        {
+            RepartoKeys = Reparto.Keys.ToList(); //metodo auxiliar para sincronizar reparto y repartokeys
         }
     }
 }

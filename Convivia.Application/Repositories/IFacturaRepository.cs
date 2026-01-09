@@ -9,5 +9,6 @@ namespace Convivia.Application.Repositories
     public interface IFacturaRepository : IRepository<Factura>
     {
         Task<IEnumerable<Factura>> QueryByFieldAsync(string field, object value, CancellationToken ct = default);
+        Task<bool> ExistsByUsuarioEspacioIdAsync(string espacioId, CancellationToken ct = default);
     }
 }
