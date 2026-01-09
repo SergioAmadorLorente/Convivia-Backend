@@ -56,7 +56,6 @@ namespace Convivia.Application.Mappers
 
             // Custom: map CreateTareaDto -> Tarea (para manejar DateOnly?)
             config.NewConfig<CreateTareaDto, Tarea>()
-                .Map(dest => dest.FechaLimite, src => src.FechaLimite)
                 .Map(dest => dest.HoraLimite, src => src.HoraLimite)
                 .Ignore(dest => dest.Id)
                 .Ignore(dest => dest.PlantillaId)

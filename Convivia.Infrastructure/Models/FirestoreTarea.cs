@@ -31,9 +31,6 @@ namespace Convivia.Infrastructure.Models
         public string PlantillaId { get; set; } = string.Empty;
 
         [FirestoreProperty]
-        public string? FechaLimite { get; set; }
-
-        [FirestoreProperty]
         public string? HoraLimite { get; set; }
     }
 }

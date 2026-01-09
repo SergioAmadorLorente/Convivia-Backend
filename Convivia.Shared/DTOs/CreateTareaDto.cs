@@ -32,17 +32,12 @@ namespace Convivia.Shared.DTOs
         /// OBLIGATORIA: Si DiasRepeticion está vacío (tarea puntual)
         /// OPCIONAL: Si DiasRepeticion tiene valores (tarea repetida)
         /// 
-        /// - Tarea puntual: DiasRepeticion=[], FechaLimite=requerida
-        /// - Tarea repetida: DiasRepeticion=[0,1,2], FechaLimite=opcional
-        /// - Tarea repetida con fecha límite: DiasRepeticion=[0,1,2], FechaLimite=2025-12-30
+        /// Comportamiento:
+        /// - Tarea puntual (sin DiasRepeticion): Se ejecuta una sola vez en FechaLimite a HoraLimite
+        /// - Tarea repetida con FechaLimite: Se repite en los DiasRepeticion hasta la FechaLimite
+        /// - Tarea repetida sin FechaLimite: Se repite indefinidamente en los DiasRepeticion
         /// </summary>
         public DateOnly? FechaLimite { get; set; }
-
-        /// <summary>
-        /// Fecha de finalización de la plantilla (solo para tareas repetidas).
-        /// Formato: YYYY-MM-DD (e.g., "2025-12-30")
-        /// </summary>
-        public DateOnly? FechaFin { get; set; }
 
         public List<string>? UsuariosAsignacion { get; set; }
     }

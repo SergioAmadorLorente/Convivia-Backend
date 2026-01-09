@@ -33,9 +33,18 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty]
         public string TimeZoneId { get; set; } = "Europe/Madrid";
         [FirestoreProperty]
-        public string? StartDate { get; set; }
-        [FirestoreProperty]
         public string? FacturaId { get; set; }
 
+        /// <summary>
+        /// Fecha límite (se almacena como string en formato YYYY-MM-dd).
+        /// </summary>
+        [FirestoreProperty]
+        public string? FechaLimite { get; set; }
+
+        /// <summary>
+        /// Indica si es una tarea puntual (true) o repetida (false).
+        /// </summary>
+        [FirestoreProperty]
+        public bool EsPuntual { get; set; }
     }
 }
