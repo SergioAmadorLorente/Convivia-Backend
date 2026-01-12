@@ -37,7 +37,7 @@ var app = builder.Build();
 
 // Middlewares: orden recomendado
 app.UseCorrelationId(); // 1. CorrelationId
-app.UseMiddleware<ExceptionHandslingMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // 2. Exception handling middleware (implementar y registrar)
 // app.UseMiddleware<ExceptionHandlingMiddleware>();
