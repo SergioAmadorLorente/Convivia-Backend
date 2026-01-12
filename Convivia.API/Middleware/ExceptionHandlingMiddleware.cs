@@ -1,9 +1,10 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
+﻿using Convivia.Shared.Contracts; 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Convivia.Shared.Contracts; 
+using Convivia.Infrastructure.Queues;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace Convivia.API.Middleware
 {
@@ -53,6 +54,41 @@ namespace Convivia.API.Middleware
                 await context.Response.WriteAsync(json);
 
                 // Opcional: encolar o enviar a Firestore de forma asíncrona (no bloqueante)
+
+                _logger.LogDebug("Enqueuing error for CorrelationId {CorrelationId}", correlationId);
+
+                // Construir ErrorRecord para persistencia asíncrona
+                var record = new ErrorRecord
+                {
+                    CorrelationId = correlationId,
+                    TraceId = traceId,
+                    Status = StatusCodes.Status500InternalServerError,
+                    Message = ex.Message,
+                    Route = context.Request.Path,
+                    TimestampUtc = DateTime.UtcNow,
+                    Stack = _env.IsDevelopment() ? ex.ToString() : null,
+                };
+
+                // Obtener la cola desde DI y encolar sin bloquear
+                try
+                {
+                    var queue = context.RequestServices.GetService(typeof(IErrorQueue)) as IErrorQueue;
+                    if (queue != null)
+                    {
+                        queue.Enqueue(record);
+                        _logger.LogDebug("Error enqueued for CorrelationId {CorrelationId}", correlationId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("IErrorQueue not registered; error not enqueued. CorrelationId {CorrelationId}", correlationId);
+                    }
+                }
+                catch (Exception qex)
+                {
+                    // No queremos que la encolación rompa la respuesta al cliente
+                    _logger.LogWarning(qex, "Failed to enqueue error for CorrelationId {CorrelationId}", correlationId);
+                }
+
             }
         }
     }
