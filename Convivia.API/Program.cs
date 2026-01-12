@@ -2,6 +2,8 @@ using Convivia.API.Middleware;
 using Convivia.Application.Extensions;
 using Convivia.Infrastructure.Extensions;
 using Convivia.Infrastructure.Infraestructure;
+using Convivia.Infrastructure.Queues;
+using Convivia.Infrastructure.HostedServices;
 using Convivia.Shared.Contracts;
 using Google.Cloud.Firestore;
 using Mapster;
@@ -26,6 +28,8 @@ builder.Services.AddMapster();
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddScoped<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>();
 builder.Services.AddApplicationServices();
+builder.Services.AddSingleton<IErrorQueue>(sp => new InMemoryErrorQueue(capacity: 1000));
+builder.Services.AddHostedService<TestErrorConsumer>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers()
