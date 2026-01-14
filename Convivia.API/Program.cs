@@ -58,3 +58,5 @@ app.MapControllers();
 // app.MapInvitacionEndpoints(); // descomenta cuando esté listo
 
 app.Run();
+
+public partial class Program { }

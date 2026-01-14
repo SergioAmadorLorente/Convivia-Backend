@@ -16,10 +16,19 @@ namespace Convivia.Infrastructure.Infraestructure
         /// </summary>
         public static void InitializeFirebase()
         {
-            if (FirebaseApp.DefaultInstance != null)
+            // Protección inicial: si ya hay una instancia por defecto, salir
+            try
             {
-                Console.WriteLine("[FirebaseConfig] FirebaseApp ya está inicializado. Omitiendo.");
-                return;
+                if (FirebaseApp.DefaultInstance != null)
+                {
+                    Console.WriteLine("[FirebaseConfig] FirebaseApp ya está inicializado. Omitiendo.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                // En algunos escenarios la consulta a DefaultInstance puede lanzar; lo registramos y seguimos intentando
+                Console.WriteLine($"[FirebaseConfig] Advertencia al comprobar DefaultInstance: {ex}");
             }
 
             try
@@ -121,11 +130,22 @@ namespace Convivia.Infrastructure.Infraestructure
                 }
 
                 // 6. Crear instancia de FirebaseApp usando las credenciales resueltas
-                FirebaseApp.Create(new AppOptions
+                try
                 {
-                    Credential = credential
-                });
-                Console.WriteLine("[FirebaseConfig] FirebaseApp inicializado correctamente.");
+                    FirebaseApp.Create(new AppOptions
+                    {
+                        Credential = credential
+                    });
+
+                    Console.WriteLine("[FirebaseConfig] FirebaseApp inicializado correctamente.");
+                }
+                catch (ArgumentException ae)
+                {
+                    // FirebaseAdmin lanza ArgumentException si ya existe la app por defecto.
+                    // En lugar de re-lanzar, registramos y retornamos para tolerar múltiples inicializaciones durante tests.
+                    Console.WriteLine($"[FirebaseConfig] ArgumentException al crear FirebaseApp (probablemente ya existe): {ae.Message}");
+                    return;
+                }
             }
             catch (Exception ex)
             {

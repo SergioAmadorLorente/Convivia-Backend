@@ -98,7 +98,7 @@ namespace Convivia.Application.Services
 
             var plantilla = await GetByEspacioAndIdAsync(espacioid, id);
             if (plantilla == null)
-                throw new ArgumentException($"La plantilla con id '{id}' no existe en el espacio '{espacioid}'.", nameof(id));
+                return null;
 
             ValidateUpdateDto(dto);
 
