@@ -1,6 +1,7 @@
 ﻿using Mapster;
 using Convivia.Infrastructure.Models; 
-using Convivia.Domain.Entities;        
+using Convivia.Domain.Entities;
+using Convivia.Shared.Contracts;
 
 namespace Convivia.Infrastructure.Mappers
 {
@@ -44,11 +45,18 @@ namespace Convivia.Infrastructure.Mappers
             config.NewConfig<FireStoreUsuarioEspacio, UsuarioEspacio>();
             config.NewConfig<UsuarioEspacio, FireStoreUsuarioEspacio>();
 
+
             // Factura
             config.NewConfig<FireStoreFactura, Factura>()
                 .Map(dest => dest.Id, src => src.Id);
             config.NewConfig<Factura, FireStoreFactura>()
-                .Map(dest => dest.Id, src => src.Id); 
+                .Map(dest => dest.Id, src => src.Id);
+
+            // ErrorRecord persistence mapping (DTO <-> Firestore model)
+            config.NewConfig<FireStoreErrorRecord, ErrorRecordDto>();
+            config.NewConfig<ErrorRecordDto, FireStoreErrorRecord>() 
+                .Map(dest => dest.CorrelationId, src => src.CorrelationId ?? string.Empty) 
+                .Map(dest => dest.TimestampUtc, src => src.TimestampUtc == default ? DateTime.UtcNow : src.TimestampUtc);
         }
 
     }
