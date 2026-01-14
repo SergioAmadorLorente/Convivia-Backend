@@ -17,6 +17,7 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
+
         // POST api/espacio
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateEspacioDto model, CancellationToken ct)
@@ -89,9 +90,16 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            var updated = await _service.ActualizarEspacioCompletoAsync(id, model, ct);
-            if (updated == null) return NotFound();
-            return Ok(updated);
+            try
+            {
+                var result = await _service.EliminarEspacioAsync(id, ct);
+                return result ? NoContent() : NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // RESTRICT violation -> 409 Conflict
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         // DELETE api/espacio/{id}

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="8.8.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+  </ItemGroup>
+
+    <ItemGroup>
+		<ProjectReference Include="..\Convivia.Application\Convivia.Application.csproj" />
+		<ProjectReference Include="..\Convivia.Domain\Convivia.Domain.csproj" />
+		<ProjectReference Include="..\Convivia.Shared\Convivia.Shared.csproj" />
+		<ProjectReference Include="..\Convivia.Infrastructure\Convivia.Infrastructure.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<Folder Include="Repositories\" />
+	</ItemGroup>
+
+</Project>

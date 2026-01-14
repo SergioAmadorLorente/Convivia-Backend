@@ -11,6 +11,18 @@ namespace Convivia.Application.Mappers
     {
         public static void Configure(TypeAdapterConfig config)
         {
+            // IMPORTANTE: Escanear primero Infrastructure para cargar RolTypeConverter
+            // antes de configurar los mapeos que lo necesitan
+            try
+            {
+                var infraAssembly = Assembly.Load("Convivia.Infrastructure");
+                config.Scan(infraAssembly);
+            }
+            catch
+            {
+                // ignore if assembly not available during design-time operations
+            }
+
             // Register application-level mappings (DTO <-> Domain)
             
             // Espacio mappings (DTO <-> Domain)
@@ -22,8 +34,20 @@ namespace Convivia.Application.Mappers
             // Usuario mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Usuario, UsuarioDto, CreateUsuarioDto, UpdateUsuarioDto>(config);
 
-            // Permiso mappings (DTO <-> Domain)
-            Config.MapsterConfig.RegisterPair<Permiso, PermisoDto, CreatePermisoDto, UpdatePermisoDto>(config);
+            // Rol mappings (DTO <-> Domain)
+            Config.MapsterConfig.RegisterPair<Rol, RolDto, CreateRolDto, UpdateRolDto>(config);
+
+            // Configuración personalizada para Permiso: CreatePermisoDto -> Permiso
+            // Mapster convierte TipoRol -> Rol automáticamente usando RolTypeConverter
+            config.NewConfig<CreatePermisoDto, Permiso>()
+                .Map(dest => dest.Rol, src => src.Rol); // RolTypeConverter maneja TipoRol -> Rol automáticamente
+
+            // Configuración personalizada: Permiso -> PermisoDto
+            // Expandir las propiedades del Rol en el DTO para facilitar consumo en API
+            config.NewConfig<Permiso, PermisoDto>()
+                .Map(dest => dest.Id, src => src.Id)
+                .Map(dest => dest.Rol, src => MapRolToTipoRol(src.Rol))
+                .Map(dest => dest, src => src.Rol); // Mapster copia automáticamente propiedades coincidentes
 
             // Invitacion mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Invitacion, InvitacionDto, CreateInvitacionDto, UpdateInvitacionDto>(config);
@@ -75,6 +99,23 @@ namespace Convivia.Application.Mappers
             {
                 // ignore if assembly not available during design-time operations
             }
+        }
+
+        /// <summary>
+        /// Mapea un objeto Rol a TipoRol enum
+        /// </summary>
+        private static TipoRol MapRolToTipoRol(Rol? rol)
+        {
+            if (rol == null || string.IsNullOrWhiteSpace(rol.Nombre))
+                return TipoRol.Usuario;
+
+            if (rol.Nombre.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Admin;
+            
+            if (rol.Nombre.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Moderador;
+            
+            return TipoRol.Usuario;
         }
     }
 }

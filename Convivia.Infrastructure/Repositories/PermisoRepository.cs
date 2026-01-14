@@ -1,14 +1,15 @@
+using Convivia.Application.Repositories;
+using Convivia.Domain.Entities;
+using Convivia.Infrastructure.Models;
+using Convivia.Shared.DTOs;
+using Convivia.Shared.Services;
+using Mapster;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Application.Repositories;
-using Convivia.Shared.Services;
-using Convivia.Infrastructure.Models;
-using Convivia.Domain.Entities;
-using Microsoft.Extensions.Logging;
-using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
@@ -43,12 +44,15 @@ namespace Convivia.Infrastructure.Repositories
             return list == null ? Array.Empty<Permiso>() : list.Adapt<List<Permiso>>();
         }
 
-        public async Task<IEnumerable<Permiso>> GetByRolAsync(string rol, CancellationToken ct = default)
+        public async Task<IEnumerable<Permiso>> GetByRolAsync(TipoRol rol, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(rol)) return Array.Empty<Permiso>();
             try
             {
-                var list = await _firebase.QueryAsync<FireStorePermiso>(Collection, nameof(FireStorePermiso.Rol), rol, ct);
+                // Convertir enum a string para consultar en Firestore
+                var rolStr = rol.ToString();
+                
+                // Consultar FireStorePermiso desde Firestore
+                var list = await _firebase.QueryAsync<FireStorePermiso>(Collection, nameof(FireStorePermiso.Rol), rolStr, ct);
                 if (list == null || !list.Any()) return new List<Permiso>();
                 
                 return list.Select(pp => pp.Adapt<Permiso>()).ToList();
@@ -60,21 +64,21 @@ namespace Convivia.Infrastructure.Repositories
             }
         }
 
-        public async Task UpdateAsync(string id, Permiso entity, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Permiso permiso, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            if (permiso == null) throw new ArgumentNullException(nameof(permiso));
 
-            var persist = entity.Adapt<FireStorePermiso>();
+            var persist = permiso.Adapt<FireStorePermiso>();
             await base.UpdateAsync(id, persist, ct);
         }
 
-        public async Task UpdateAsync(string id, Permiso entity, bool merge, CancellationToken ct = default)
+        public async Task UpdateAsync(string id, Permiso permiso, bool merge, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            if (permiso == null) throw new ArgumentNullException(nameof(permiso));
 
-            var persist = entity.Adapt<FireStorePermiso>();
+            var persist = permiso.Adapt<FireStorePermiso>();
             await base.UpdateAsync(id, persist, merge, ct);
         }
 
@@ -83,7 +87,7 @@ namespace Convivia.Infrastructure.Repositories
             await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
-        public async Task DeleteAsync(string id, CancellationToken ct = default)
+        public new async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await base.DeleteAsync(id, ct);

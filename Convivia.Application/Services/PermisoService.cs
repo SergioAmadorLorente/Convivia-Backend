@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using Convivia.Application.Repositories;
-using Mapster;
 using Convivia.Domain.Entities;
 using MapsterMapper;
 
@@ -24,70 +24,50 @@ namespace Convivia.Application.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<string> CrearAsync(CreatePermisoDto dto, CancellationToken ct = default)
+        /// <summary>
+        /// Crea un permiso y devuelve el permiso persistido (con Id y metadatos).
+        /// </summary>
+        public async Task<PermisoDto> CrearPermisoAsync(CreatePermisoDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Rol)) throw new ArgumentException("Rol requerido");
 
-            // Validar que el rol sea válido
-            if (!Permiso.EsRolValido(dto.Rol))
-            {
-                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", Permiso.RolesValidos)}");
-            }
+            // DTO -> Domain
+            var permisoDomain = _mapper.Map<Permiso>(dto);
 
-            // Usar los permisos predefinidos según el rol
-            Permiso permisoDomain;
-            if (dto.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            // Persistir y obtener id           
+            var id = await _permisoRepository.AddAsync(permisoDomain, ct);
+
+            // Recuperar entidad guardada y devolver DTO consistente
+            var createdDomain = await _permisoRepository.GetByIdAsync(id, ct);
+            if (createdDomain == null)
             {
-                permisoDomain = new Permiso();
-                permisoDomain.SetConfigurarcionAdmin();
-            }
-            else // Usuario por defecto
-            {
-                permisoDomain = new Permiso();
-                permisoDomain.SetConfigurarcionUsuario();
+                // devolver DTO mínimo con id para evitar fallos en rutas
+                return new PermisoDto { Id = id };
             }
 
-            try
-            {
-                return await _permisoRepository.AddAsync(permisoDomain, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creando permiso");
-                throw;
-            }
+            var createdDto = _mapper.Map<PermisoDto>(createdDomain);
+            if (string.IsNullOrWhiteSpace(createdDto.Id))
+                createdDto.Id = id;
+
+            return createdDto;
         }
 
-        public async Task<PermisoDto?> ObtenerPorIdAsync(string id, CancellationToken ct = default)
+        /// <summary>
+        /// Obtiene un permiso por id.
+        /// </summary>
+        public async Task<PermisoDto?> ObtenerPermisoAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-            try
-            {
-                var permiso = await _permisoRepository.GetByIdAsync(id, ct);
-                return permiso?.Adapt<PermisoDto>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerPorId {Id}", id);
-                throw;
-            }
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            var domain = await _permisoRepository.GetByIdAsync(id, ct);
+            return domain == null ? null : _mapper.Map<PermisoDto>(domain);
         }
 
-        public async Task<IEnumerable<PermisoDto>> ObtenerPorRolAsync(string rol, CancellationToken ct = default)
+        public async Task<IEnumerable<PermisoDto>> ObtenerPorRolAsync(TipoRol rol, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(rol)) return Array.Empty<PermisoDto>();
-            
-            // Validar que el rol sea válido
-            if (!Permiso.EsRolValido(rol))
-            {
-                throw new ArgumentException($"Rol '{rol}' no válido. Los roles permitidos son: {string.Join(", ", Permiso.RolesValidos)}");
-            }
-
             try
             {
                 var permisos = await _permisoRepository.GetByRolAsync(rol, ct);
-                return permisos.Select(p => p.Adapt<PermisoDto>());
+                return permisos.Select(p => _mapper.Map<PermisoDto>(p)).ToList();
             }
             catch (Exception ex)
             {
@@ -96,93 +76,142 @@ namespace Convivia.Application.Services
             }
         }
 
-        public async Task<IEnumerable<PermisoDto>> ObtenerTodosAsync(CancellationToken ct = default)
+        /// <summary>
+        /// Lista todos los permisos.
+        /// </summary>
+        public async Task<List<PermisoDto>> ListarTodasAsync(CancellationToken ct = default)
         {
-            try
-            {
-                var permisos = await _permisoRepository.GetAllAsync(ct);
-                return permisos.Select(p => p.Adapt<PermisoDto>());
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ObtenerTodos");
-                throw;
-            }
+            var list = await _permisoRepository.GetAllAsync(ct);
+            return list?.Select(f => _mapper.Map<PermisoDto>(f)).ToList() ?? new List<PermisoDto>();
         }
 
-        public async Task<bool> ActualizarAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
+        /// <summary>
+        /// Overwrite completo: reemplaza todo el documento en Firestore.
+        /// Si solo envías Rol, los demás permisos se resetean a los valores por defecto del rol.
+        /// </summary>
+        public async Task<PermisoDto?> ActualizarPermisoCompletaAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException(nameof(id));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            // Verificar que existe
+            var existing = await _permisoRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
+
+            // Mapear DTO -> Domain (nuevo objeto completo)
+            var domain = _mapper.Map<Permiso>(dto);
+
+            // Asegurar que el Id de dominio coincide con el id pasado
+            domain.Id = id;
+
+            // Persistir como overwrite (merge = false)
+            await _permisoRepository.UpdateAsync(id, domain, merge: false, ct);
+
+            var updated = await _permisoRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<PermisoDto>(updated);
+        }
+
+        /// <summary>
+        /// Merge: fusiona los campos del objeto con los del documento existente.
+        /// Solo modifica los campos que envías, preservando los demás.
+        /// </summary>
+        public async Task<PermisoDto?> ActualizarPermisoMergeAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             var existing = await _permisoRepository.GetByIdAsync(id, ct);
-            if (existing == null) throw new KeyNotFoundException("Permiso no encontrado");
+            if (existing == null) return null;
 
-            // Validar rol si se está actualizando
-            if (dto.Rol != null && !Permiso.EsRolValido(dto.Rol))
-            {
-                throw new ArgumentException($"Rol '{dto.Rol}' no válido. Los roles permitidos son: {string.Join(", ", Permiso.RolesValidos)}");
-            }
+            // Aplicar cambios manualmente para preservar valores existentes
+            if (existing.Rol == null)
+                existing.Rol = new Rol();
 
-            // Si se está cambiando el rol, aplicar la configuración predefinida
-            if (dto.Rol != null && dto.Rol != existing.Rol)
+            // Si se especifica un nuevo TipoRol, aplicar la configuración base del rol
+            if (dto.Rol.HasValue)
             {
-                var permisoDomain = new Permiso();
-                if (dto.Rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                switch (dto.Rol.Value)
                 {
-                    permisoDomain.SetConfigurarcionAdmin();
+                    case TipoRol.Admin:
+                        existing.Rol.SetConfiguracionAdmin();
+                        break;
+                    case TipoRol.Moderador:
+                        existing.Rol.SetConfiguracionModerador();
+                        break;
+                    default:
+                        existing.Rol.SetConfiguracionUsuario();
+                        break;
                 }
-                else
-                {
-                    permisoDomain.SetConfigurarcionUsuario();
-                }
-                
-                existing.Rol = permisoDomain.Rol;
-                existing.CrearTarea = permisoDomain.CrearTarea;
-                existing.EliminarTarea = permisoDomain.EliminarTarea;
-                existing.EditarTarea = permisoDomain.EditarTarea;
-                existing.AñadirUsuario = permisoDomain.AñadirUsuario;
-                existing.EliminarUsuario = permisoDomain.EliminarUsuario;
-                existing.AsignarTarea = permisoDomain.AsignarTarea;
-                existing.AsignarseTarea = permisoDomain.AsignarseTarea;
-            }
-            else
-            {
-                // Actualizar solo campos no nulos si no se está cambiando el rol
-                if (dto.CrearTarea.HasValue) existing.CrearTarea = dto.CrearTarea.Value;
-                if (dto.EliminarTarea.HasValue) existing.EliminarTarea = dto.EliminarTarea.Value;
-                if (dto.EditarTarea.HasValue) existing.EditarTarea = dto.EditarTarea.Value;
-                if (dto.AñadirUsuario.HasValue) existing.AñadirUsuario = dto.AñadirUsuario.Value;
-                if (dto.EliminarUsuario.HasValue) existing.EliminarUsuario = dto.EliminarUsuario.Value;
-                if (dto.AsignarTarea.HasValue) existing.AsignarTarea = dto.AsignarTarea.Value;
-                if (dto.AsignarseTarea.HasValue) existing.AsignarseTarea = dto.AsignarseTarea.Value;
             }
 
-            try
-            {
-                await _permisoRepository.UpdateAsync(id, existing, ct);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error Actualizar {Id}", id);
-                throw;
-            }
+            // Sobrescribir permisos individuales si se especifican
+            if (dto.CrearTarea.HasValue) existing.Rol.CrearTarea = dto.CrearTarea.Value;
+            if (dto.EliminarTarea.HasValue) existing.Rol.EliminarTarea = dto.EliminarTarea.Value;
+            if (dto.EditarTarea.HasValue) existing.Rol.EditarTarea = dto.EditarTarea.Value;
+            if (dto.AsignarTarea.HasValue) existing.Rol.AsignarTarea = dto.AsignarTarea.Value;
+            if (dto.AsignarseTarea.HasValue) existing.Rol.AsignarseTarea = dto.AsignarseTarea.Value;
+            if (dto.AñadirUsuario.HasValue) existing.Rol.AñadirUsuario = dto.AñadirUsuario.Value;
+            if (dto.EliminarUsuario.HasValue) existing.Rol.EliminarUsuario = dto.EliminarUsuario.Value;
+            if (dto.EliminarResidencia.HasValue) existing.Rol.EliminarResidencia = dto.EliminarResidencia.Value;
+
+            // Persistir con merge
+            await _permisoRepository.UpdateAsync(id, existing, merge: true, ct);
+
+            var updated = await _permisoRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<PermisoDto>(updated);
         }
 
-        public async Task<bool> EliminarAsync(string id, CancellationToken ct = default)
+        /// <summary>
+        /// Parcial / PATCH: construye un diccionario con solo las propiedades no nulas del DTO
+        /// y llama a la sobrecarga del repositorio que acepta IDictionary (update parcial).
+        /// </summary>
+        public async Task<PermisoDto?> ActualizarPermisoParcialAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) return false;
-            try
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var updates = ObtenerActualizacionesDesdeDto(dto);
+            if (updates.Count == 0)
             {
-                await _permisoRepository.DeleteAsync(id, ct);
-                return true;
+                // Nada que actualizar: devolver la entidad actual
+                var current = await _permisoRepository.GetByIdAsync(id, ct);
+                return current == null ? null : _mapper.Map<PermisoDto>(current);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error EliminarPermiso {Id}", id);
-                throw;
-            }
+
+            // useSetMerge: false -> UpdateAsync estricto (fallará si no existe)
+            await _permisoRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
+
+            var updated = await _permisoRepository.GetByIdAsync(id, ct);
+            return updated == null ? null : _mapper.Map<PermisoDto>(updated);
+        }
+
+        private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdatePermisoDto dto)
+        {
+            var updates = new Dictionary<string, object>();
+            if (dto.Rol.HasValue) updates["Rol"] = dto.Rol.Value.ToString();
+            if (dto.CrearTarea.HasValue) updates["CrearTarea"] = dto.CrearTarea.Value;
+            if (dto.EliminarTarea.HasValue) updates["EliminarTarea"] = dto.EliminarTarea.Value;
+            if (dto.EditarTarea.HasValue) updates["EditarTarea"] = dto.EditarTarea.Value;
+            if (dto.AsignarTarea.HasValue) updates["AsignarTarea"] = dto.AsignarTarea.Value;
+            if (dto.AsignarseTarea.HasValue) updates["AsignarseTarea"] = dto.AsignarseTarea.Value;
+            if (dto.AñadirUsuario.HasValue) updates["AñadirUsuario"] = dto.AñadirUsuario.Value;
+            if (dto.EliminarUsuario.HasValue) updates["EliminarUsuario"] = dto.EliminarUsuario.Value;
+            if (dto.EliminarResidencia.HasValue) updates["EliminarResidencia"] = dto.EliminarResidencia.Value;
+            return updates;
+        }
+
+        /// <summary>
+        /// Elimina un permiso.
+        /// </summary>
+        public async Task<bool> EliminarPermisoAsync(string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            var existing = await _permisoRepository.GetByIdAsync(id, ct);
+            if (existing == null) return false;
+
+            await _permisoRepository.DeleteAsync(id, ct);
+            return true;
         }
     }
 }

@@ -203,5 +203,31 @@ namespace Convivia.Infrastructure.Repositories
 
             return null;
         }
+
+        public async Task<List<Tarea>> GetByUsuarioEspacioIdAsync(string usuarioEspacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
+                throw new ArgumentNullException(nameof(usuarioEspacioId));
+
+            // Consulta Firestore por UsuarioEspacioId
+            var tareasUsuarioEspacio = await _firebase
+                .QueryAsync<FirestoreTarea>(_collection, nameof(FirestoreTarea.UsuarioEspacioId), usuarioEspacioId)
+                .ConfigureAwait(false);
+
+            // Si no hay tareas, devolver lista vacía
+            if (!tareasUsuarioEspacio.Any())
+                return new List<Tarea>();
+
+            // Mapear FirestoreTarea → Tarea
+            var lista = new List<Tarea>();
+            foreach (var pte in tareasUsuarioEspacio)
+            {
+                var tareaMapped = pte.Adapt<Tarea>()!;
+                lista.Add(tareaMapped);
+            }
+
+            return lista;
+        }
+
     }
 }

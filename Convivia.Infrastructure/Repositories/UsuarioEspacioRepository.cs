@@ -1,10 +1,11 @@
 using Convivia.Domain.Entities;
 using Convivia.Application.Repositories;
 using Convivia.Infrastructure.Models;
+using Convivia.Shared.DTOs;
 using Convivia.Shared.Services;
-using Mapster;
 using Microsoft.Extensions.Logging;
 using Google.Cloud.Firestore;
+using Mapster;
 
 namespace Convivia.Infrastructure.Repositories
 {
@@ -93,13 +94,29 @@ namespace Convivia.Infrastructure.Repositories
             var persist = entity.Adapt<FireStoreUsuarioEspacio>();
             await base.UpdateAsync(id, persist, merge, ct);
         }
+    public async Task<bool> ExistsByEspacioIdAsync(string espacioId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(espacioId)) return false;
+
+        try
+        {
+            var list = await _firebase.QueryAsync<FireStoreUsuarioEspacio>(Collection, "EspacioRef", espacioId, ct);
+            return list != null && list.Count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ExistsByEspacioIdAsync {EspacioId}", espacioId);
+            throw;
+        }
+    }
+
 
         public async Task UpdateAsync(string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default)
         {
             await base.UpdateAsync(id, updates, useSetMerge, ct);
         }
 
-        public async Task DeleteAsync(string id, CancellationToken ct = default)
+        public new async Task DeleteAsync(string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             await base.DeleteAsync(id, ct);

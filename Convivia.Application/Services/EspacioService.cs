@@ -9,8 +9,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+// Application/Services/EspacioService.cs
+using Convivia.Shared.Helpers;
 using Mapster;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace Convivia.Application.Services
@@ -19,15 +26,28 @@ namespace Convivia.Application.Services
     {
         private readonly IEspacioRepository _espacioRepository;
         private readonly IMapper _mapper;
+        private readonly IPlantillaTareaRepository _plantillaTareaRepo;
+        private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
         private readonly ILogger<EspacioService> _logger;
         private readonly IMemoryCache _cache;
         private readonly UsuarioEspacioService _usuarioEspacioService;
         private readonly IUsuarioRepository _usuarioRepo;
-        public EspacioService(IEspacioRepository espacioRepository, IMapper mapper, ILogger<EspacioService> logger, IUsuarioRepository usuarioRepo,IMemoryCache cache, UsuarioEspacioService usuarioEspacioService)
+
+        public EspacioService(
+            IPlantillaTareaRepository plantillaTareaRepo,
+            IUsuarioEspacioRepository usuarioEspacioRepo,
+            ILogger<EspacioService> logger,
+            IEspacioRepository espacioRepository, 
+            IMapper mapper,
+            IUsuarioRepository usuarioRepo,IMemoryCache cache, 
+            UsuarioEspacioService usuarioEspacioService
+        )
         {
             _espacioRepository = espacioRepository ?? throw new ArgumentNullException(nameof(espacioRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _usuarioRepo = usuarioRepo ?? throw new ArgumentNullException(nameof(usuarioRepo));
+            _plantillaTareaRepo = plantillaTareaRepo ?? throw new ArgumentNullException(nameof(plantillaTareaRepo));
+            _usuarioEspacioRepo = usuarioEspacioRepo ?? throw new ArgumentNullException(nameof(usuarioEspacioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _usuarioEspacioService = usuarioEspacioService ?? throw new ArgumentNullException(nameof(usuarioEspacioService));
@@ -158,16 +178,74 @@ namespace Convivia.Application.Services
         /// </summary>
         public async Task<bool> EliminarEspacioAsync(string id, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido");
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido", nameof(id));
 
-            var existing = await _espacioRepository.GetByIdAsync(id, ct);
-            if (existing == null) return false;
+            // 1) RESTRICT: evita materializar colecciones grandes
+            if (await _usuarioEspacioRepo.ExistsByEspacioIdAsync(id, ct).ConfigureAwait(false))
+                throw new InvalidOperationException($"No se puede eliminar el espacio {id}: existen usuarios asociados.");
+
+            // 2) Obtener espacio y plantillas (idempotente si no existe)
+            var espacio = await _espacioRepository.GetByIdAsync(id, ct).ConfigureAwait(false);
+            if (espacio == null) return false;
+
+            var plantillas = await _plantillaTareaRepo.GetByUsuarioEspacioIdAsync(espacio.Id, ct).ConfigureAwait(false);
+
+            // 3) Borrar plantillas en batches (BatchHelper maneja reintentos)
+            await BatchHelper.ProcessInBatchesAsync(
+                plantillas,
+                async (batch, token) =>
+                {
+                    var deletes = batch.Select(p => _plantillaTareaRepo.DeleteAsync(p.Id, token));
+                    await Task.WhenAll(deletes).ConfigureAwait(false);
+                },
+                batchSize: 200,
+                maxRetries: 3,
+                initialRetryDelay: TimeSpan.FromSeconds(1),
+                logger: _logger,
+                ct: ct
+            ).ConfigureAwait(false);
+
+            // 4) Borrar espacio al final
 
             await _espacioRepository.DeleteAsync(id, ct);
             return true;
         }
 
+        public async Task ChangeEspacioIdCascadeAsync(string oldId, string newId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(oldId)) throw new ArgumentException("oldId requerido");
+            if (string.IsNullOrWhiteSpace(newId)) throw new ArgumentException("newId requerido");
+            if (oldId == newId) return;
 
+            var espacio = await _espacioRepository.GetByIdAsync(oldId, ct);
+            if (espacio == null) throw new KeyNotFoundException($"Espacio {oldId} no encontrado");
+
+            // 1) Crear nuevo documento con newId
+            espacio.Id = newId;
+            await _espacioRepository.AddAsync(espacio, ct);
+
+            // 2) Obtener todos los UsuarioEspacio que referencian oldId
+            var usuarios = (await _usuarioEspacioRepo.GetByEspacioIdAsync(oldId, ct)).ToList();
+
+            // 3) Actualizar en batches usando BatchHelper para no saturar
+            await BatchHelper.ProcessInBatchesAsync<UsuarioEspacio>(
+                usuarios,
+                async (batch, token) =>
+                {
+                    foreach (var ue in batch)
+                    {
+                        ue.EspacioId = newId;
+                        await _usuarioEspacioRepo.UpdateAsync(ue.Id, ue, token);
+                    }
+                },
+                batchSize: 500,
+                maxRetries: 3,
+                ct: ct
+            );
+
+            // 4) Borrar documento antiguo
+            await _espacioRepository.DeleteAsync(oldId, ct);
+        }
 
 
         /// <summary>

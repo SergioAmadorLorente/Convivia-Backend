@@ -1,5 +1,4 @@
-﻿
-using Convivia.Domain.Entities;
+﻿using Convivia.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,18 +7,14 @@ using System.Text.Json.Serialization;
 namespace Convivia.Domain.Entities
 {
     /// <summary>
-    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticionese invitaciones.
+    /// Representa un espacio que puede contener salas, UsuariosEspacios, peticiones e invitaciones.
     /// </summary>
     public class Espacio
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N"); // <- ahora con setter
-
-
         public string Nombre { get; set; }
 
-
         public string? Direccion { get; set; }
-
 
         public List<Sala> Salas { get; set; } = new List<Sala>();
 
@@ -29,6 +24,7 @@ namespace Convivia.Domain.Entities
 
         public List<Invitacion> InvitacionesEnviadas { get; set; } = new List<Invitacion>();
 
+        public List<PlantillaTarea> Tareas { get; set; } = new List<PlantillaTarea>(); 
         public Espacio() { }
 
         public Espacio(string name, string? direccion = null)
@@ -38,50 +34,6 @@ namespace Convivia.Domain.Entities
 
             Nombre = name;
             Direccion = direccion;
-        }
-        /*
-        public Sala CrearSala(string nombre, string? descripcion = null)
-        {
-            if (string.IsNullOrWhiteSpace(nombre))
-                throw new ArgumentException("El nombre de la sala no puede estar vacío.");
-
-            if (Salas.Any(s => s.Nombre == nombre))
-                throw new InvalidOperationException("Ya existe una sala con ese nombre.");
-
-            // Crear la sala usando inicializador de objeto para evitar dependencias de constructor
-            var nuevaSala = new Sala
-            {
-                Nombre = nombre,
-                Descripcion = descripcion,
-                Id = Guid.NewGuid().ToString(),
-                Id_Espacio = this.Id_Espacio,
-                Espacio = this
-            };
-
-            Salas.Add(nuevaSala);
-            return nuevaSala;
-        }
-        */
-        public bool EliminarSala(string nomsala)
-        {
-            if (string.IsNullOrWhiteSpace(nomsala))
-                throw new ArgumentException("El nombre de la sala no puede estar vacío.");
-
-            Sala sala = Salas.Find(s => s.Nombre == nomsala);
-            if (sala != null)
-            {
-                Salas.Remove(sala);
-                return true;
-            }
-            return false;
-        }
-
-        public Sala BuscarSalaNombre(string nomsala)
-        {
-            if (string.IsNullOrWhiteSpace(nomsala))
-                throw new ArgumentException("El nombre de la sala no puede estar vacío.");
-
-            return Salas.Find(s => s.Nombre == nomsala);
         }
 
         public bool AdmitirUsuario(Usuario usuario)
@@ -95,43 +47,22 @@ namespace Convivia.Domain.Entities
             if (!Peticiones.Any(p => p.IdSolicitante == usuario.Id))
                 throw new InvalidOperationException("No existe una petición para este usuario.");
 
+            var rolUsuario = new Rol();
+            rolUsuario.SetConfiguracionUsuario();
+            var permisoUsuario = new Permiso(rolUsuario);
+
             UsuarioEspacio usuarioEspacio = new UsuarioEspacio
             {
                 Usuario = usuario,
                 Espacio = this,
-                Permiso = Permiso.Usuario,
+                Permiso = permisoUsuario,
                 Ausente = false,
-                karma = 0
+                Karma = 0
             };
 
             UsuarioEspacios.Add(usuarioEspacio);
             Peticiones.RemoveAll(p => p.IdSolicitante == usuario.Id);
             return true;
-        }
-
-        public void InvitarUsuario(Usuario usuario)
-        {
-            if (usuario == null)
-                throw new ArgumentNullException(nameof(usuario));
-
-            Invitacion nuevaInvitacion = new Invitacion
-            {
-                Espacio = this,
-                UsuarioInvitado = usuario,
-                Fecha = DateTime.UtcNow
-            };
-            InvitacionesEnviadas.Add(nuevaInvitacion);
-            usuario.Invitaciones.Add(nuevaInvitacion);
-        }
-
-        public bool EliminarUsuario(UsuarioEspacio usuariodelespacio)
-        {
-            if (usuariodelespacio != null)
-            {
-                UsuarioEspacios.Remove(usuariodelespacio);
-                return true;
-            }
-            return false;
         }
     }
 }

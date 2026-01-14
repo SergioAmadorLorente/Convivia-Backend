@@ -103,14 +103,20 @@ namespace Convivia.Api.Controllers
             return Ok(updated);
         }
 
-        // DELETE api/factura/{id}
+        // DELETE api/usuarioespacio/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();
-
-            var resultat = await _service.EliminarUsuarioEspacioAsync(id, ct);
-            return resultat ? NoContent() : NotFound();
+            try
+            {
+                var resultat = await _service.EliminarUsuarioEspacioAsync(id, ct);
+                return resultat ? NoContent() : NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
     }
 }
