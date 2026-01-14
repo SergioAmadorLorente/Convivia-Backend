@@ -1,11 +1,13 @@
-﻿using Google.Cloud.Firestore;
+﻿using Convivia.Shared.Services;
+using Google.Cloud.Firestore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Shared.Services;
-using Microsoft.Extensions.Logging;
 
 namespace Convivia.Infrastructure.Services
 {
@@ -44,6 +46,7 @@ namespace Convivia.Infrastructure.Services
             await _db.Collection(collection).Document(id).SetAsync(entity, cancellationToken: cancellationToken);
         }
 
+        /*
         public async Task<string> AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
@@ -96,7 +99,97 @@ namespace Convivia.Infrastructure.Services
             var newDoc = await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
             SetIdIfPossible(entity, newDoc.Id);
             return newDoc.Id;
+        }*/
+        public async Task<string> AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            // Try read existing Id property from entity
+            string? existingId = null;
+            try
+            {
+                var prop = typeof(T).GetProperty("Id");
+                if (prop != null && prop.CanRead)
+                {
+                    var val = prop.GetValue(entity) as string;
+                    if (!string.IsNullOrWhiteSpace(val)) existingId = val;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Could not read Id property from entity of type {TypeName}", typeof(T).FullName);
+            }
+
+            // Helper local that performs the actual write using the provided object (entity or dict)
+            async Task<string> WriteObjectAsync(object obj)
+            {
+                if (collection.Contains("/"))
+                {
+                    var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 3)
+                    {
+                        var parentCollection = parts[0];
+                        var parentId = parts[1];
+                        var subcollection = parts[2];
+
+                        if (!string.IsNullOrWhiteSpace(existingId))
+                        {
+                            await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(existingId)
+                                     .SetAsync(obj, cancellationToken: cancellationToken);
+                            return existingId;
+                        }
+
+                        var docRef = await _db.Collection(parentCollection).Document(parentId).Collection(subcollection)
+                                              .AddAsync(obj, cancellationToken: cancellationToken);
+                        SetIdIfPossible(entity, docRef.Id);
+                        return docRef.Id;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(existingId))
+                {
+                    await _db.Collection(collection).Document(existingId).SetAsync(obj, cancellationToken: cancellationToken);
+                    return existingId;
+                }
+
+                var newDoc = await _db.Collection(collection).AddAsync(obj, cancellationToken: cancellationToken);
+                SetIdIfPossible(entity, newDoc.Id);
+                return newDoc.Id;
+            }
+
+            // Intento normal primero; si falla por converter, hago fallback a Dictionary
+            try
+            {
+                return await WriteObjectAsync(entity);
+            }
+            catch (ArgumentException ex) when (ex.Message.Contains("Unable to create converter"))
+            {
+                _logger.LogWarning(ex, "Firestore converter missing for {Type}. Falling back to Dictionary serialization.", typeof(T).FullName);
+
+                // Serializar a JSON y deserializar a Dictionary para evitar problemas de converter
+                var json = JsonSerializer.Serialize(entity, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                });
+
+                var dict = JsonSerializer.Deserialize<Dictionary<string, object?>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new Dictionary<string, object?>();
+
+                // Ajuste: si timestampUtc viene como string, convertir a DateTime para que Firestore lo trate como Timestamp
+                if (dict.TryGetValue("timestampUtc", out var tsObj) && tsObj is string tsStr && DateTime.TryParse(tsStr, out var dt))
+                {
+                    dict["timestampUtc"] = dt;
+                }
+
+                // Reintentar la escritura con el diccionario
+                return await WriteObjectAsync(dict);
+            }
         }
+
 
         // Método que exige la interfaz original
         public async Task UpdateAsync<T>(string collection, string id, T entity, CancellationToken cancellationToken = default)
