@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Convivia.Application.Repositories;
-using Convivia.Shared.Services;
+﻿using Convivia.Application.Repositories;
+using Convivia.Domain.Entities;
+using Convivia.Infrastructure.HostedServices;
+using Convivia.Infrastructure.Queues;
 using Convivia.Infrastructure.Repositories;
 using Convivia.Infrastructure.Services;
-using Convivia.Domain.Entities;
+using Convivia.Shared.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Convivia.Infrastructure.Extensions
 {
@@ -14,6 +16,9 @@ namespace Convivia.Infrastructure.Extensions
         {
             // Servicios de infraestructura
             services.AddScoped<IFirebaseService, FirebaseService>();
+            services.AddSingleton<IErrorQueue>(sp => new InMemoryErrorQueue(capacity: 1000));
+            services.AddScoped<FirestoreErrorRepository>(); 
+            services.AddHostedService<ErrorWriterBackgroundService>();
 
             // Repositorios concretos
             services.AddScoped<IInvitacionRepository, InvitacionRepository>();

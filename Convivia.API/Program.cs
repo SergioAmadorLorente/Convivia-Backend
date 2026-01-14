@@ -1,20 +1,20 @@
-using Convivia.API.Controllers;
+using Convivia.API.Middleware;
 using Convivia.Application.Extensions;
-using Convivia.Application.Mappers;
 using Convivia.Infrastructure.Extensions;
+using Convivia.Infrastructure.HostedServices;
 using Convivia.Infrastructure.Infraestructure;
-using Convivia.Infrastructure.Repositories;
-using Convivia.Shared.DTOs;
+using Convivia.Infrastructure.Queues;
+using Convivia.Shared.Contracts;
+using Google.Api;
 using Google.Cloud.Firestore;
 using Mapster;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// logging, Firebase init y FirestoreDb singleton (tu código actual)
+// servicios, logging, Firebase, Firestore singleton...
 builder.Logging.ClearProviders().AddConsole().AddDebug();
 FirebaseConfig.InitializeFirebase();
-
 builder.Services.AddSingleton(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
@@ -23,38 +23,38 @@ builder.Services.AddSingleton(provider =>
     return FirestoreDb.Create(projectId);
 });
 
-// Registrar MemoryCache
+// otros servicios...
 builder.Services.AddMemoryCache();
-
-// Registrar Mapster antes de los servicios que lo usan
 builder.Services.AddMapster();
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddScoped<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>();
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructure(builder.Configuration);
 
-// Registrar capas (antes de Build)
-builder.Services.AddApplicationServices();               // registra InvitacionService, mappers, etc.
-builder.Services.AddInfrastructure(builder.Configuration); // registra IInvitacionRepository, IFirebaseService, FirebaseService, etc.
-
-// Controllers y Swagger - Configurar JSON para serializar enums como strings
 builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Middleware y mapeo de endpoints
-if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
-// app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
+// Middlewares: orden recomendado
+app.UseCorrelationId(); // 1. CorrelationId
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-//app.MapEspacioEndpoints();
+// 2. Exception handling middleware (implementar y registrar)
+// app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-//app.MapSalaEndpoints();
-// app.MapInvitacionEndpoints(); // descomenta cuando esté listo
+app.UseRouting();       // 3. Routing
+app.UseAuthentication();// 4. Auth
+app.UseAuthorization(); // 5. Authorization
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.MapControllers();   // 6. Endpoints
 
 app.Run();
