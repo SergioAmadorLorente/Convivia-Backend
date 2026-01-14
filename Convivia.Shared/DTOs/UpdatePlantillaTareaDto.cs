@@ -25,19 +25,14 @@ namespace Convivia.Shared.DTOs
         public int? karma { get; set; }
 
         /// <summary>
-        /// Período de gracia en minutos antes de marcar overdue.
-        /// Rango: 1-60 minutos (máximo 1 hora).
+        /// Fecha límite para tareas puntuales o límite de repetición para tareas repetidas.
+        /// Formato: YYYY-MM-DD
         /// </summary>
-        public int? GracePeriodMinutes { get; set; }
+        public DateOnly? FechaLimite { get; set; }
 
         /// <summary>
-        /// Fecha de finalización de la plantilla (solo para plantillas repetidas).
-        /// No se puede modificar StartDate (se establece como hoy cuando se crea).
-        /// </summary>
-        public DateTime? FechaFin { get; set; }
-
-        /// <summary>
-        /// Días de repetición semanal (0=Domingo, 6=Sábado) a actualizar.
+        /// Días de repetición semanal a actualizar.
+        /// Formato del cliente: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
         /// Si se proporciona y es diferente a los días actuales:
         /// - Se crearán nuevas tareas para los días añadidos
         /// - Se eliminarán tareas para los días removidos
@@ -49,8 +44,10 @@ namespace Convivia.Shared.DTOs
         /// <summary>
         /// Usuarios a asignar a las tareas cuando se añaden nuevos días de repetición.
         /// Requerido si DiasRepeticion contiene días nuevos.
-        /// Si se proporciona 1 usuario: se asigna a todos los días nuevos.
-        /// Si se proporcionan múltiples: el número debe coincidir con los días nuevos.
+        /// Asignación lineal posición a posición: usuario[i] → día[i].
+        /// Si hay menos usuarios que días nuevos: días sin usuario asignado quedan en null.
+        /// NO puede haber más usuarios que días nuevos.
+        /// Ejemplo: 4 días + 2 usuarios → día[0]=usuario[0], día[1]=usuario[1], día[2]=null, día[3]=null
         /// </summary>
         public List<string>? UsuariosAsignacion { get; set; }
     }

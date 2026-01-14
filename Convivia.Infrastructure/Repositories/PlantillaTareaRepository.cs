@@ -26,6 +26,11 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
+            // Convert FechaLimite to string format for persistence
+            if (plantilla.FechaLimite.HasValue)
+                firestoreEntity.FechaLimite = plantilla.FechaLimite.Value.ToString("yyyy-MM-dd");
+            else
+                firestoreEntity.FechaLimite = null;
             return await base.AddAsync(firestoreEntity, ct);
         }
 
@@ -39,13 +44,33 @@ namespace Convivia.Infrastructure.Repositories
                 return null;
             }
             var entity = firestoreEntity.Adapt<PlantillaTarea>();
+            // Convert FechaLimite string back to DateOnly
+            if (!string.IsNullOrWhiteSpace(firestoreEntity.FechaLimite))
+            {
+                if (DateOnly.TryParse(firestoreEntity.FechaLimite, out var fechaOnly))
+                    entity.FechaLimite = fechaOnly;
+            }
             return entity;
         }
 
         public async Task<IEnumerable<PlantillaTarea>> GetAllAsync(CancellationToken ct = default)
         {
             var firestoreEntities = await base.GetAllAsync(ct);
-            return firestoreEntities == null ? new List<PlantillaTarea>() : firestoreEntities.Select(e => e.Adapt<PlantillaTarea>()).ToList();
+            if (firestoreEntities == null) return new List<PlantillaTarea>();
+            
+            var result = new List<PlantillaTarea>();
+            foreach (var e in firestoreEntities)
+            {
+                var entity = e.Adapt<PlantillaTarea>();
+                // Convert FechaLimite string back to DateOnly
+                if (!string.IsNullOrWhiteSpace(e.FechaLimite))
+                {
+                    if (DateOnly.TryParse(e.FechaLimite, out var fechaOnly))
+                        entity.FechaLimite = fechaOnly;
+                }
+                result.Add(entity);
+            }
+            return result;
         }
 
         public async Task UpdateAsync(string id, PlantillaTarea plantilla, CancellationToken ct = default)
@@ -54,7 +79,11 @@ namespace Convivia.Infrastructure.Repositories
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
-            firestoreEntity.StartDate = plantilla.StartDate?.ToString();
+            // Convert FechaLimite to string format for persistence
+            if (plantilla.FechaLimite.HasValue)
+                firestoreEntity.FechaLimite = plantilla.FechaLimite.Value.ToString("yyyy-MM-dd");
+            else
+                firestoreEntity.FechaLimite = null;
             await _firebase.UpdateAsync(COLLECTION, firestoreEntity.Id, firestoreEntity);
         }
 
@@ -64,6 +93,11 @@ namespace Convivia.Infrastructure.Repositories
             if (plantilla == null) throw new ArgumentNullException(nameof(plantilla));
 
             var firestoreEntity = plantilla.Adapt<FirestorePlantillaTarea>();
+            // Convert FechaLimite to string format for persistence
+            if (plantilla.FechaLimite.HasValue)
+                firestoreEntity.FechaLimite = plantilla.FechaLimite.Value.ToString("yyyy-MM-dd");
+            else
+                firestoreEntity.FechaLimite = null;
             await base.UpdateAsync(id, firestoreEntity, merge, ct);
         }
 
@@ -87,16 +121,21 @@ namespace Convivia.Infrastructure.Repositories
             var direct = await _firebase.GetAsync<FirestorePlantillaTarea>(COLLECTION, id, ct);
             if (direct != null)
             {
-                
                 if (string.Equals(direct.EspacioId, espacioid, StringComparison.OrdinalIgnoreCase))
                 {
-                    return direct.Adapt<PlantillaTarea>();
+                    var entity = direct.Adapt<PlantillaTarea>();
+                    // Convert FechaLimite string back to DateOnly
+                    if (!string.IsNullOrWhiteSpace(direct.FechaLimite))
+                    {
+                        if (DateOnly.TryParse(direct.FechaLimite, out var fechaOnly))
+                            entity.FechaLimite = fechaOnly;
+                    }
+                    return entity;
                 }
                 else
                 {
                     _logger.LogInformation("GetByEspacioAndIdAsync: direct document EspacioId does not match requested EspacioId. direct={DirectEspacio}, requested={Requested}", direct.EspacioId, espacioid);
                     Console.WriteLine($"[DEBUG] GetByEspacioAndIdAsync: direct document EspacioId={direct.EspacioId} does not match requested EspacioId={espacioid}");
-                    // continue to query by fields in case the plantillaid passed is not document id but a field
                 }
             }
 
@@ -116,7 +155,15 @@ namespace Convivia.Infrastructure.Repositories
 
             if (first == null) return null;
 
-            return first.Adapt<PlantillaTarea>();
+            var resultEntity = first.Adapt<PlantillaTarea>();
+            // Convert FechaLimite string back to DateOnly
+            if (!string.IsNullOrWhiteSpace(first.FechaLimite))
+            {
+                if (DateOnly.TryParse(first.FechaLimite, out var fechaOnly))
+                    resultEntity.FechaLimite = fechaOnly;
+            }
+
+            return resultEntity;
         }
 
         public async Task<IEnumerable<Tarea>> GetByUsuarioEspacioIdAsync(string usuarioEspacioid, CancellationToken ct = default)

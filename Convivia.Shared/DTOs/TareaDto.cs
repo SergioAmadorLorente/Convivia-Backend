@@ -29,8 +29,6 @@ namespace Convivia.Shared.DTOs
 
         public string? UsuarioEspacioId { get; set; }
 
-        public DateTime? FechaLimite { get; set; }
-
         public bool EsPuntual { get; set; }
     }
 }

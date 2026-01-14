@@ -24,9 +24,18 @@ namespace Convivia.Shared.DTOs
 
         public string? FacturaId { get; set; }
 
-        public DateOnly? StartDate { get; set; }
+        /// <summary>
+        /// Fecha límite para tareas puntuales o límite de repetición para tareas repetidas.
+        /// Si está seteada, las tareas repetidas se ejecutan hasta esa fecha.
+        /// Si no está seteada, las tareas repetidas se ejecutan indefinidamente.
+        /// </summary>
+        public DateOnly? FechaLimite { get; set; }
 
-        public DateOnly? EndDate { get; set; }
-
+        /// <summary>
+        /// Indica si la tarea es puntual (sin repetición) o repetida.
+        /// true = tarea puntual (DiasRepeticion vacío)
+        /// false = tarea repetida (DiasRepeticion con valores)
+        /// </summary>
+        public bool EsPuntual { get; set; }
     }
 }

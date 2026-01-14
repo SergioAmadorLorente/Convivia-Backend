@@ -28,8 +28,6 @@ namespace Convivia.Domain.Entities
 
         public int DiaSemana { get; set; }
 
-        public DateTime? FechaLimite { get; set; }
-
         public TimeOnly? HoraLimite { get; set; }
 
         public Tarea()
@@ -46,5 +44,4 @@ namespace Convivia.Domain.Entities
         }
 
     }
-
 }
