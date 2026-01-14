@@ -2,6 +2,7 @@ using Mapster;
 using System.Reflection;
 using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
+using Convivia.Shared.Contracts;
 using System;
 
 namespace Convivia.Application.Mappers
@@ -67,6 +68,20 @@ namespace Convivia.Application.Mappers
 
             // Factura mappings 
             Config.MapsterConfig.RegisterPair<Factura, FacturaDto, CreateFacturaDto, UpdateFacturaDto>(config);
+
+            // Error mappings (Contract <-> ContractDto)
+            config.NewConfig<ErrorRecord, ErrorRecordDto>()
+                .Map(dest => dest.CorrelationId, src => src.CorrelationId ?? string.Empty)
+                .Map(dest => dest.TraceId, src => src.TraceId)
+                .Map(dest => dest.Status, src => src.Status)
+                .Map(dest => dest.Message, src => src.Message)
+                .Map(dest => dest.Route, src => src.Route)
+                .Map(dest => dest.TimestampUtc, src => src.TimestampUtc == default ? DateTime.UtcNow : src.TimestampUtc)
+                .Map(dest => dest.Stack, src => src.Stack);
+
+
+            // Reverse mapping error
+            config.NewConfig<Convivia.Shared.Contracts.ErrorRecordDto, Convivia.Shared.Contracts.ErrorRecord>();
 
             // Custom: map CreateTareaDto -> CreatePlantillaTareaDto
             config.NewConfig<CreateTareaDto, CreatePlantillaTareaDto>()
