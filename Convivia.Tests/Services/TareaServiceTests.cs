@@ -68,7 +68,7 @@ namespace Convivia.Application.Tests.Services
                 Descripcion = "Desc",
                 karma = karma,
                 HoraLimite = new TimeOnly(10, 0),
-                FechaLimite = DateTime.UtcNow.Date.AddDays(1),
+                FechaLimite = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1),
                 UsuariosAsignacion = userId != null
                     ? new List<string> { userId }
                     : null
@@ -105,7 +105,6 @@ namespace Convivia.Application.Tests.Services
                 Descripcion = "Desc",
                 karma = 10,
                 TimeZoneId = tzId ?? TimeZoneInfo.Local.Id,
-                GracePeriodMinutes = graceMinutes,
                 TareasId = tareasId ?? new List<string>(),
                 DiasRepeticion = diasRep ?? new List<int>()
             };
@@ -129,7 +128,6 @@ namespace Convivia.Application.Tests.Services
                 Estado = estado,
                 FechaRealizacion = fechaRealizacion,
                 HoraLimite = horaLimite,
-                FechaLimite = fechaLimite,
                 UsuarioEspacioId = usuarioEspacioId
             };
         }
@@ -275,7 +273,6 @@ namespace Convivia.Application.Tests.Services
             var t1 = tareasGuardadas![0];
             Assert.Equal(-1, t1.DiaSemana);
             Assert.Equal(TareaEstado.Pendiente, t1.Estado);
-            Assert.Equal(dto.FechaLimite, t1.FechaLimite);
             Assert.Equal(dto.HoraLimite, t1.HoraLimite);
             Assert.Equal("user1", t1.UsuarioEspacioId);
             Assert.False(string.IsNullOrWhiteSpace(t1.Id));
@@ -330,7 +327,6 @@ namespace Convivia.Application.Tests.Services
             Assert.All(tareasGuardadas, t => Assert.Equal(TareaEstado.Pendiente, t.Estado));
             Assert.All(tareasGuardadas, t => Assert.Null(t.UsuarioEspacioId));
             Assert.All(tareasGuardadas, t => Assert.Equal("plantilla-123", t.PlantillaId));
-            Assert.All(tareasGuardadas, t => Assert.Null(t.FechaLimite));
         }
 
         [Fact]

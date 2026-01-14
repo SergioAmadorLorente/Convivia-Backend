@@ -100,6 +100,11 @@ namespace Convivia.Application.Tests.Services
                 .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(all);
 
+            _mapperMock
+                .Setup(m => m.Map<IEnumerable<PlantillaTareaDto>>(It.IsAny<IEnumerable<PlantillaTarea>>()))
+                .Returns((IEnumerable<PlantillaTarea> src) =>
+                    src.Select(p => new PlantillaTareaDto { Id = p.Id, Nombre = p.Nombre }).ToList());
+
             var result = await _sut.GetAllByEspacioAsync("esp1");
 
             Assert.Single(result);
@@ -204,15 +209,14 @@ namespace Convivia.Application.Tests.Services
         }
 
         [Fact]
-        public async Task UpdateAsync_ShouldReturnNull_WhenPlantillaNotFound()
+        public async Task UpdateAsync_ShouldThrow_WhenPlantillaNotFound()
         {
             _repoMock
                 .Setup(r => r.GetByEspacioAndIdAsync("esp1", "p1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync((PlantillaTarea?)null);
 
-            var result = await _sut.UpdateAsync("esp1", "p1", new UpdatePlantillaTareaDto());
-
-            Assert.Null(result);
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _sut.UpdateAsync("esp1", "p1", new UpdatePlantillaTareaDto()));
         }
 
         [Fact]
@@ -229,12 +233,13 @@ namespace Convivia.Application.Tests.Services
                 .Setup(m => m.Map(dto, entity))
                 .Returns(entity);
 
+            // ✔ ESTA ES LA FIRMA REAL Y ACEPTA CUALQUIER INSTANCIA
             _repoMock
-                .Setup(r => r.UpdateAsync("p1", entity, false, It.IsAny<CancellationToken>()))
+                .Setup(r => r.UpdateAsync("p1", It.IsAny<PlantillaTarea>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             _mapperMock
-                .Setup(m => m.Map<PlantillaTareaDto>(entity))
+                .Setup(m => m.Map<PlantillaTareaDto>(It.IsAny<PlantillaTarea>()))
                 .Returns(new PlantillaTareaDto { Id = "p1", Nombre = "Nuevo" });
 
             var result = await _sut.UpdateAsync("esp1", "p1", dto);
