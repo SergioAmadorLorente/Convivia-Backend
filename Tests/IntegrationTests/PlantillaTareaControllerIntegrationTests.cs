@@ -150,7 +150,7 @@ namespace Convivia.Tests.IntegrationTests
             {
                 Nombre = "Updated Name",
                 Descripcion = "Updated Description",
-                karma = 100,
+                karma = 50,
                 DiasRepeticion = new List<int> { 1, 2, 3 }
             };
 

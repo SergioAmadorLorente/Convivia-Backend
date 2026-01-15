@@ -22,10 +22,10 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        [HttpPatch("{id}")]
-        public async Task<ActionResult<PlantillaTareaDto>> UpdatePlantilla(string espacioid, string id, UpdatePlantillaTareaDto dto)
+        [HttpPatch("{plantillaId}")]
+        public async Task<ActionResult<PlantillaTareaDto>> UpdatePlantilla(string espacioid, string plantillaId, UpdatePlantillaTareaDto dto)
         {
-            var plantillaDto = await _service.UpdateAsync(espacioid, id, dto);
+            var plantillaDto = await _service.UpdateAsync(espacioid, plantillaId, dto);
             return plantillaDto != null ? Ok(plantillaDto) : NotFound();
         }
     }
