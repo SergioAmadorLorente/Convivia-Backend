@@ -54,15 +54,8 @@ namespace Convivia.API.Controllers
             [FromQuery] string? estado,
             [FromQuery] string? usuarioId)
         {
-            try
-            {
-                var res = await _service.FilterAsync(espacioid, diaSemana, estado, usuarioId);
-                return (res == null || !res.Any()) ? NotFound() : Ok(res);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var res = await _service.FilterAsync(espacioid, diaSemana, estado, usuarioId);
+            return (res == null || !res.Any()) ? NotFound() : Ok(res);
         }
 
         [HttpDelete("{id}")]
