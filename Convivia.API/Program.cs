@@ -1,5 +1,4 @@
 using Convivia.API.Controllers;
-using Convivia.API.Middleware;
 using Convivia.Application.Extensions;
 using Convivia.Application.Mappers;
 using Convivia.Infrastructure.Extensions;
@@ -46,9 +45,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-// Middleware global de manejo de excepciones (DEBE estar antes de los demás middlewares)
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Middleware y mapeo de endpoints
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
