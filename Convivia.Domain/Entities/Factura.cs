@@ -1,6 +1,5 @@
-﻿using Convivia.Domain.Entities;
-using Google.Cloud.Firestore;
-using System.Text.Json.Serialization;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Convivia.Domain.Entities
 {
@@ -26,10 +25,14 @@ namespace Convivia.Domain.Entities
         public float Precio { get; set; }
 
         /// <summary>
-        /// Mapa de reparto: cada usuario y la cantidad que debe pagar. Solo lectura desde fuera.
-        /// </summary>        
-        private Dictionary<UsuarioEspacio, float> _repartoMap = new Dictionary<UsuarioEspacio, float>();
-        public IReadOnlyDictionary<UsuarioEspacio, float> RepartoMap => _repartoMap;
+        /// Importe de reparto por persona (cuando se aplica reparto equitativo).
+        /// </summary>
+        public float PagoMediano { get; set; }
+
+        /// <summary>
+        /// Reparto representado por usuario (UsuarioEspacioId) -> pagado (true/false).
+        /// </summary>
+        public Dictionary<string, bool> Deudores { get; set; } = new Dictionary<string, bool>();
 
         /// <summary>
         /// Indica si la factura está pagada completamente.
@@ -39,12 +42,13 @@ namespace Convivia.Domain.Entities
         /// <summary>
         /// Documento o imagen asociada a la factura (opcional).
         /// </summary>
-        public byte[]? Documento { get; set; }
+        public string? DocumentoUrl { get; set; }
 
         /// <summary>
-        /// Tarea asociada a la factura (opcional).
+        /// Fecha creacion de la factura
         /// </summary>
-        public Tarea? Tarea { get; set; }
+
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Constructor por defecto para deserialización o pruebas.

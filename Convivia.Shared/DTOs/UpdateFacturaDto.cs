@@ -11,9 +11,9 @@ namespace Convivia.Shared.DTOs
     {
         public string? Nombre { get; set; }
         public decimal? Precio { get; set; }
-        public Dictionary<string, float>? Reparto { get; set; } = new Dictionary<string, float>();
+        public float? PagoMediano { get; set; }
+        public Dictionary<string, bool>? Deudores { get; set; } = new Dictionary<string, bool>();
         public bool? Pagado { get; set; }
-        public byte[]? DocumentoUrl { get; set; }
-        public string? TareaId { get; set; }
+        public string? DocumentoUrl { get; set; }
     }
 }

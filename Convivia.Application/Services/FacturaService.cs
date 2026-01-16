@@ -186,10 +186,10 @@ namespace Convivia.Application.Services
 
             if (dto.Nombre != null) updates["Nombre"] = dto.Nombre;
             if (dto.Precio.HasValue) updates["Precio"] = dto.Precio.Value;
-            if (dto.Reparto != null && dto.Reparto.Count > 0) updates["Reparto"] = dto.Reparto;
+            if (dto.PagoMediano.HasValue) updates["PagoMediano"] = dto.PagoMediano.Value;
+            if (dto.Deudores != null && dto.Deudores.Count > 0) updates["Deudores"] = dto.Deudores;
             if (dto.Pagado.HasValue) updates["Pagado"] = dto.Pagado.Value;
             if (dto.DocumentoUrl != null) updates["DocumentoUrl"] = dto.DocumentoUrl;
-            if (!string.IsNullOrWhiteSpace(dto.TareaId)) updates["TareaId"] = dto.TareaId;
 
             return updates;
         }
