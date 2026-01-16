@@ -6,9 +6,16 @@ using System.Threading.Tasks;
 
 namespace Convivia.Application.Repositories
 {
-    public interface IFacturaRepository : IRepository<Factura>
+    public interface IFacturaRepository
     {
-        Task<IEnumerable<Factura>> QueryByFieldAsync(string field, object value, CancellationToken ct = default);
-        Task<bool> ExistsByUsuarioEspacioIdAsync(string espacioId, CancellationToken ct = default);
+        Task<string> AddAsync(string espacioId, Factura factura, CancellationToken ct = default);
+        Task<Factura?> GetByIdAsync(string espacioId, string id, CancellationToken ct = default);
+        Task<IEnumerable<Factura>> GetAllAsync(string espacioId, CancellationToken ct = default);
+        Task UpdateAsync(string espacioId, string id, Factura factura, CancellationToken ct = default);
+        Task UpdateAsync(string espacioId, string id, Factura factura, bool merge, CancellationToken ct = default);
+        Task UpdateAsync(string espacioId, string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default);
+        Task DeleteAsync(string espacioId, string id, CancellationToken ct = default);
+        Task<IEnumerable<Factura>> QueryByFieldAsync(string espacioId, string field, object value, CancellationToken ct = default);
+        Task<bool> ExistsByUsuarioEspacioIdAsync(string usuarioEspacioId, CancellationToken ct = default);
     }
 }
