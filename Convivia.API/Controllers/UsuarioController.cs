@@ -103,6 +103,5 @@ namespace Convivia.API.Controllers
             return resultat ? NoContent() : NotFound();
         }
 
-
     }
 }
