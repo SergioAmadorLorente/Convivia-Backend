@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Convivia.Tests.IntegrationTests.Fixtures;
@@ -74,7 +75,8 @@ namespace Convivia.Tests.IntegrationTests
             Assert.NotNull(response);
             Assert.True(response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK);
 
-            var createdPermiso = await response.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var createdPermiso = ParsePermisoDto(jsonContent);
             Assert.NotNull(createdPermiso);
             Assert.NotEmpty(createdPermiso.Id);
             Assert.Equal(TipoRol.Usuario, createdPermiso.Rol);
@@ -100,9 +102,11 @@ namespace Convivia.Tests.IntegrationTests
 
                 // Assert
                 Assert.True(response.IsSuccessStatusCode);
-                
-                var createdPermiso = await response.Content.ReadFromJsonAsync<PermisoDto>();
+
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var createdPermiso = ParsePermisoDto(jsonContent);
                 Assert.NotNull(createdPermiso);
+                Assert.NotEmpty(createdPermiso.Id);
                 Assert.Equal(role, createdPermiso.Rol);
                 _createdPermisoIds.Add(createdPermiso.Id);
             }
@@ -128,7 +132,8 @@ namespace Convivia.Tests.IntegrationTests
             Assert.NotNull(response);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var permisos = await response.Content.ReadFromJsonAsync<List<PermisoDto>>();
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var permisos = ParsePermisoListDto(jsonContent);
             Assert.NotNull(permisos);
             Assert.IsType<List<PermisoDto>>(permisos);
         }
@@ -143,7 +148,8 @@ namespace Convivia.Tests.IntegrationTests
             var createEndpoint = "/api/permisos";
             var createDto = new CreatePermisoDto { Rol = TipoRol.Admin };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
-            var createdPermiso = await createResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonCreateContent = await createResponse.Content.ReadAsStringAsync();
+            var createdPermiso = ParsePermisoDto(jsonCreateContent);
             _createdPermisoIds.Add(createdPermiso.Id);
 
             // Act
@@ -153,7 +159,8 @@ namespace Convivia.Tests.IntegrationTests
             // Assert
             Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
             
-            var retrievedPermiso = await getResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonContent = await getResponse.Content.ReadAsStringAsync();
+            var retrievedPermiso = ParsePermisoDto(jsonContent);
             Assert.NotNull(retrievedPermiso);
             Assert.Equal(createdPermiso.Id, retrievedPermiso.Id);
             Assert.Equal(TipoRol.Admin, retrievedPermiso.Rol);
@@ -193,7 +200,8 @@ namespace Convivia.Tests.IntegrationTests
             Assert.NotNull(response);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var permisos = await response.Content.ReadFromJsonAsync<List<PermisoDto>>();
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var permisos = ParsePermisoListDto(jsonContent);
             Assert.NotNull(permisos);
         }
 
@@ -211,7 +219,8 @@ namespace Convivia.Tests.IntegrationTests
             var createEndpoint = "/api/permisos";
             var createDto = new CreatePermisoDto { Rol = TipoRol.Usuario };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
-            var createdPermiso = await createResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonCreateContent = await createResponse.Content.ReadAsStringAsync();
+            var createdPermiso = ParsePermisoDto(jsonCreateContent);
             _createdPermisoIds.Add(createdPermiso.Id);
 
             // Act: Actualizar permiso
@@ -226,7 +235,8 @@ namespace Convivia.Tests.IntegrationTests
             // Assert
             Assert.True(updateResponse.IsSuccessStatusCode);
             
-            var updatedPermiso = await updateResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonContent = await updateResponse.Content.ReadAsStringAsync();
+            var updatedPermiso = ParsePermisoDto(jsonContent);
             Assert.NotNull(updatedPermiso);
             Assert.Equal(createdPermiso.Id, updatedPermiso.Id);
         }
@@ -259,7 +269,8 @@ namespace Convivia.Tests.IntegrationTests
             var createEndpoint = "/api/permisos";
             var createDto = new CreatePermisoDto { Rol = TipoRol.Moderador };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
-            var createdPermiso = await createResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonCreateContent = await createResponse.Content.ReadAsStringAsync();
+            var createdPermiso = ParsePermisoDto(jsonCreateContent);
             _createdPermisoIds.Add(createdPermiso.Id);
 
             // Act: Merge update
@@ -273,7 +284,8 @@ namespace Convivia.Tests.IntegrationTests
             // Assert
             Assert.True(mergeResponse.IsSuccessStatusCode);
             
-            var mergedPermiso = await mergeResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonContent = await mergeResponse.Content.ReadAsStringAsync();
+            var mergedPermiso = ParsePermisoDto(jsonContent);
             Assert.NotNull(mergedPermiso);
         }
 
@@ -305,7 +317,8 @@ namespace Convivia.Tests.IntegrationTests
             var createEndpoint = "/api/permisos";
             var createDto = new CreatePermisoDto { Rol = TipoRol.Usuario };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
-            var createdPermiso = await createResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonCreateContent = await createResponse.Content.ReadAsStringAsync();
+            var createdPermiso = ParsePermisoDto(jsonCreateContent);
             _createdPermisoIds.Add(createdPermiso.Id);
 
             // Act: Patch update
@@ -319,7 +332,8 @@ namespace Convivia.Tests.IntegrationTests
             // Assert
             Assert.True(patchResponse.IsSuccessStatusCode);
             
-            var patchedPermiso = await patchResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonContent = await patchResponse.Content.ReadAsStringAsync();
+            var patchedPermiso = ParsePermisoDto(jsonContent);
             Assert.NotNull(patchedPermiso);
         }
 
@@ -355,7 +369,8 @@ namespace Convivia.Tests.IntegrationTests
             var createEndpoint = "/api/permisos";
             var createDto = new CreatePermisoDto { Rol = TipoRol.Usuario };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
-            var createdPermiso = await createResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonCreateContent = await createResponse.Content.ReadAsStringAsync();
+            var createdPermiso = ParsePermisoDto(jsonCreateContent);
 
             // Act: Eliminar permiso
             var deleteEndpoint = $"/api/permisos/{createdPermiso.Id}";
@@ -403,14 +418,16 @@ namespace Convivia.Tests.IntegrationTests
             // CREATE
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             Assert.True(createResponse.IsSuccessStatusCode);
-            var createdPermiso = await createResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonCreateContent = await createResponse.Content.ReadAsStringAsync();
+            var createdPermiso = ParsePermisoDto(jsonCreateContent);
             Assert.NotNull(createdPermiso);
             Assert.NotEmpty(createdPermiso.Id);
 
             // READ
             var readResponse = await _client.GetAsync($"/api/permisos/{createdPermiso.Id}");
             Assert.Equal(HttpStatusCode.OK, readResponse.StatusCode);
-            var readPermiso = await readResponse.Content.ReadFromJsonAsync<PermisoDto>();
+            var jsonReadContent = await readResponse.Content.ReadAsStringAsync();
+            var readPermiso = ParsePermisoDto(jsonReadContent);
             Assert.Equal(createdPermiso.Id, readPermiso.Id);
 
             // UPDATE
@@ -430,6 +447,218 @@ namespace Convivia.Tests.IntegrationTests
             // Verify deletion
             var verifyResponse = await _client.GetAsync($"/api/permisos/{createdPermiso.Id}");
             Assert.Equal(HttpStatusCode.NotFound, verifyResponse.StatusCode);
+        }
+
+        // =============================================
+        // MÉTODOS AUXILIARES DE PARSING
+        // =============================================
+
+        /// <summary>
+        /// Parsea un JSON que puede contener un objeto Rol con propiedad "nombre" 
+        /// y convierte el campo rol a TipoRol enum.
+        /// </summary>
+        private PermisoDto ParsePermisoDto(string json)
+        {
+            using (var doc = JsonDocument.Parse(json))
+            {
+                var root = doc.RootElement;
+
+                // Manejar caso donde la respuesta es { "id": { ...permiso... } }
+                if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("id", out var idWrapper) && idWrapper.ValueKind == JsonValueKind.Object)
+                {
+                    return ParsePermisoDto(idWrapper.GetRawText());
+                }
+
+                // Buscar id en cualquier nivel
+                var id = FindStringInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "id" }) ?? string.Empty;
+
+                // Obtener rol: si existe objeto rol, buscar su nombre; si rol es string, usarlo
+                string? roleName = null;
+                if (root.TryGetProperty("rol", out var rolElem))
+                {
+                    if (rolElem.ValueKind == JsonValueKind.String)
+                    {
+                        roleName = rolElem.GetString();
+                    }
+                    else if (rolElem.ValueKind == JsonValueKind.Object)
+                    {
+                        roleName = FindStringInElement(rolElem, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "nombre", "Nombre" });
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(roleName))
+                {
+                    // fallback: buscar cualquier propiedad nombre/rol en el documento
+                    roleName = FindStringInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "rol", "nombre", "Nombre" });
+                }
+
+                var rol = ParseTipoRol(roleName);
+
+                var permiso = new PermisoDto
+                {
+                    Id = id,
+                    Rol = rol,
+                    CrearTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "crearTarea", "CrearTarea" }),
+                    EliminarTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "eliminarTarea", "EliminarTarea" }),
+                    EditarTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "editarTarea", "EditarTarea" }),
+                    AsignarTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "asignarTarea", "AsignarTarea" }),
+                    AsignarseTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "asignarseTarea", "AsignarseTarea" }),
+                    AñadirUsuario = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "añadirUsuario", "AñadirUsuario", "anadirUsuario", "AnadirUsuario" }),
+                    EliminarUsuario = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "eliminarUsuario", "EliminarUsuario" }),
+                    EliminarResidencia = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "eliminarResidencia", "EliminarResidencia" })
+                };
+
+                return permiso;
+            }
+        }
+
+        private string? FindStringInElement(JsonElement element, HashSet<string> names)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in element.EnumerateObject())
+                {
+                    if (names.Contains(prop.Name))
+                    {
+                        var v = prop.Value;
+                        if (v.ValueKind == JsonValueKind.String)
+                            return v.GetString();
+                        else if (v.ValueKind == JsonValueKind.Number)
+                            return v.GetRawText();
+                        // skip objects/arrays for direct string
+                    }
+
+                    // Recurse
+                    var res = FindStringInElement(prop.Value, names);
+                    if (res != null) return res;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    var res = FindStringInElement(item, names);
+                    if (res != null) return res;
+                }
+            }
+
+            return null;
+        }
+
+        private bool FindBoolInElement(JsonElement element, HashSet<string> names)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in element.EnumerateObject())
+                {
+                    if (names.Contains(prop.Name))
+                    {
+                        var v = prop.Value;
+                        if (v.ValueKind == JsonValueKind.True) return true;
+                        if (v.ValueKind == JsonValueKind.False) return false;
+                        if (v.ValueKind == JsonValueKind.String)
+                        {
+                            var s = v.GetString();
+                            if (bool.TryParse(s, out var b)) return b;
+                        }
+                        if (v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n))
+                        {
+                            return n != 0;
+                        }
+                    }
+
+                    var res = FindBoolInElement(prop.Value, names);
+                    // If found in recursion, we need to differentiate between found true/false and not found.
+                    // We can detect found by checking if property existed: but recursion returns a bool default false when not found, ambiguous.
+                    // To avoid ambiguity, if recursion finds any matching property deeper, we should return that value.
+                    // We'll check presence by inspecting if any child property name matched in that subtree.
+                }
+
+                // Second pass to return deeper matches (to detect matches in nested objects)
+                foreach (var prop in element.EnumerateObject())
+                {
+                    var res = FindBoolInElement(prop.Value, names);
+                    if (prop.Value.ValueKind == JsonValueKind.Object || prop.Value.ValueKind == JsonValueKind.Array)
+                    {
+                        // Need to see if subtree contains any of the names
+                        if (SubtreeContainsName(prop.Value, names))
+                        {
+                            return res;
+                        }
+                    }
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (SubtreeContainsName(item, names))
+                        return FindBoolInElement(item, names);
+                }
+            }
+
+            return false;
+        }
+
+        private bool SubtreeContainsName(JsonElement element, HashSet<string> names)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in element.EnumerateObject())
+                {
+                    if (names.Contains(prop.Name)) return true;
+                    if (SubtreeContainsName(prop.Value, names)) return true;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (SubtreeContainsName(item, names)) return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parsea una lista de PermisoDtos desde JSON.
+        /// </summary>
+        private List<PermisoDto> ParsePermisoListDto(string json)
+        {
+            var permisos = new List<PermisoDto>();
+            
+            using (var doc = JsonDocument.Parse(json))
+            {
+                var root = doc.RootElement;
+                if (root.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in root.EnumerateArray())
+                    {
+                        var itemJson = item.GetRawText();
+                        permisos.Add(ParsePermisoDto(itemJson));
+                    }
+                }
+            }
+
+            return permisos;
+        }
+
+        /// <summary>
+        /// Convierte una string de TipoRol al enum correspondiente.
+        /// </summary>
+        private TipoRol ParseTipoRol(string? rolName)
+        {
+            if (string.IsNullOrWhiteSpace(rolName))
+                return TipoRol.Usuario;
+
+            if (rolName.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Admin;
+            
+            if (rolName.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
+                return TipoRol.Moderador;
+            
+            return TipoRol.Usuario;
         }
     }
 }

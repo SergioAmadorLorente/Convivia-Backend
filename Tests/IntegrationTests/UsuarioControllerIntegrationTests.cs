@@ -41,6 +41,7 @@ namespace Convivia.Tests.IntegrationTests
             {
                 try
                 {
+                    if (string.IsNullOrWhiteSpace(userId)) continue; // avoid calling delete with empty id
                     var endpoint = $"/api/usuario/{userId}";
                     await _client.DeleteAsync(endpoint);
                 }
@@ -224,6 +225,8 @@ namespace Convivia.Tests.IntegrationTests
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdUser = await createResponse.Content.ReadFromJsonAsync<UsuarioDto>();
+            Assert.NotNull(createdUser);
+            Assert.NotEmpty(createdUser.Id);
             _createdUserIds.Add(createdUser.Id);
 
             // Act
@@ -274,10 +277,12 @@ namespace Convivia.Tests.IntegrationTests
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdUser = await createResponse.Content.ReadFromJsonAsync<UsuarioDto>();
+            Assert.NotNull(createdUser);
+            Assert.NotEmpty(createdUser.Id);
             _createdUserIds.Add(createdUser.Id);
 
             // Act
-            var getEndpoint = $"/api/usuario/correo/{email}";
+            var getEndpoint = $"/api/usuario/correo/{Uri.EscapeDataString(email)}";
             var getResponse = await _client.GetAsync(getEndpoint);
 
             // Assert
@@ -296,7 +301,7 @@ namespace Convivia.Tests.IntegrationTests
         {
             // Arrange
             var invalidEmail = $"nonexistent-{Guid.NewGuid()}@example.com";
-            var endpoint = $"/api/usuario/correo/{invalidEmail}";
+            var endpoint = $"/api/usuario/correo/{Uri.EscapeDataString(invalidEmail)}";
 
             // Act
             var response = await _client.GetAsync(endpoint);
@@ -312,7 +317,7 @@ namespace Convivia.Tests.IntegrationTests
         public async Task GetByEmail_WithEmptyEmail_ReturnsBadRequest()
         {
             // Arrange
-            var endpoint = $"/api/usuario/correo/";
+            var endpoint = $"/api/usuario/correo/{Uri.EscapeDataString(" ")}";
 
             // Act
             var response = await _client.GetAsync(endpoint);
@@ -341,6 +346,8 @@ namespace Convivia.Tests.IntegrationTests
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdUser = await createResponse.Content.ReadFromJsonAsync<UsuarioDto>();
+            Assert.NotNull(createdUser);
+            Assert.NotEmpty(createdUser.Id);
             _createdUserIds.Add(createdUser.Id);
 
             // Act: Actualizar usuario
@@ -397,6 +404,8 @@ namespace Convivia.Tests.IntegrationTests
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdUser = await createResponse.Content.ReadFromJsonAsync<UsuarioDto>();
+            Assert.NotNull(createdUser);
+            Assert.NotEmpty(createdUser.Id);
             _createdUserIds.Add(createdUser.Id);
 
             // Act: Merge update
@@ -453,6 +462,8 @@ namespace Convivia.Tests.IntegrationTests
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdUser = await createResponse.Content.ReadFromJsonAsync<UsuarioDto>();
+            Assert.NotNull(createdUser);
+            Assert.NotEmpty(createdUser.Id);
             _createdUserIds.Add(createdUser.Id);
 
             // Act: Patch update (solo nombre)
@@ -513,6 +524,8 @@ namespace Convivia.Tests.IntegrationTests
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdUser = await createResponse.Content.ReadFromJsonAsync<UsuarioDto>();
+            Assert.NotNull(createdUser);
+            Assert.NotEmpty(createdUser.Id);
 
             // Act: Eliminar usuario
             var deleteEndpoint = $"/api/usuario/{createdUser.Id}";
@@ -577,7 +590,7 @@ namespace Convivia.Tests.IntegrationTests
             Assert.Equal(createdUser.Id, readByIdUser.Id);
 
             // READ by Email
-            var readByEmailResponse = await _client.GetAsync($"/api/usuario/correo/{email}");
+            var readByEmailResponse = await _client.GetAsync($"/api/usuario/correo/{Uri.EscapeDataString(email)}");
             Assert.Equal(HttpStatusCode.OK, readByEmailResponse.StatusCode);
             var readByEmailUser = await readByEmailResponse.Content.ReadFromJsonAsync<UsuarioDto>();
             Assert.Equal(email, readByEmailUser.Email);
