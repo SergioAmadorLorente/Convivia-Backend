@@ -21,7 +21,7 @@ namespace Convivia.Application.Tests.Services
     {
         private readonly Mock<ITareaRepository> _tareaRepositoryMock;
         private readonly Mock<IUsuarioEspacioRepository> _usuarioEspacioRepositoryMock;
-        private readonly Mock<PlantillaTareaRepository> _plantillaTareaRepositoryMock;
+        private readonly Mock<IPlantillaTareaRepository> _plantillaTareaRepositoryMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<ILogger<PlantillaTareaService>> _plantillaLoggerMock;
         private readonly Mock<ILogger<TareaService>> _tareaLoggerMock;
@@ -34,7 +34,7 @@ namespace Convivia.Application.Tests.Services
         {
             _tareaRepositoryMock = new Mock<ITareaRepository>(MockBehavior.Strict);
             _usuarioEspacioRepositoryMock = new Mock<IUsuarioEspacioRepository>(MockBehavior.Strict);
-            _plantillaTareaRepositoryMock = new Mock<PlantillaTareaRepository>(MockBehavior.Strict);
+            _plantillaTareaRepositoryMock = new Mock<IPlantillaTareaRepository>(MockBehavior.Strict);
             _mapperMock = new Mock<IMapper>(MockBehavior.Strict);
             _plantillaLoggerMock = new Mock<ILogger<PlantillaTareaService>>();
             _tareaLoggerMock = new Mock<ILogger<TareaService>>();
@@ -68,7 +68,7 @@ namespace Convivia.Application.Tests.Services
                 Descripcion = "Desc",
                 karma = karma,
                 HoraLimite = new TimeOnly(10, 0),
-                FechaLimite = DateTime.UtcNow.Date.AddDays(1),
+                FechaLimite = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1),
                 UsuariosAsignacion = userId != null
                     ? new List<string> { userId }
                     : null
@@ -105,7 +105,6 @@ namespace Convivia.Application.Tests.Services
                 Descripcion = "Desc",
                 karma = 10,
                 TimeZoneId = tzId ?? TimeZoneInfo.Local.Id,
-                GracePeriodMinutes = graceMinutes,
                 TareasId = tareasId ?? new List<string>(),
                 DiasRepeticion = diasRep ?? new List<int>()
             };
@@ -129,7 +128,6 @@ namespace Convivia.Application.Tests.Services
                 Estado = estado,
                 FechaRealizacion = fechaRealizacion,
                 HoraLimite = horaLimite,
-                FechaLimite = fechaLimite,
                 UsuarioEspacioId = usuarioEspacioId
             };
         }
@@ -250,7 +248,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(new Tarea());
 
             _plantillaTareaRepositoryMock
-                .Setup(r => r.AddAsync(It.IsAny<FirestorePlantillaTarea>(), "espacio1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsync(It.IsAny<PlantillaTarea>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("plantilla-123")
                 .Callback<PlantillaTarea, string, CancellationToken>((p, e, ct) =>
                 {
@@ -275,7 +273,6 @@ namespace Convivia.Application.Tests.Services
             var t1 = tareasGuardadas![0];
             Assert.Equal(-1, t1.DiaSemana);
             Assert.Equal(TareaEstado.Pendiente, t1.Estado);
-            Assert.Equal(dto.FechaLimite, t1.FechaLimite);
             Assert.Equal(dto.HoraLimite, t1.HoraLimite);
             Assert.Equal("user1", t1.UsuarioEspacioId);
             Assert.False(string.IsNullOrWhiteSpace(t1.Id));
@@ -308,7 +305,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(new Tarea());
 
             _plantillaTareaRepositoryMock
-                .Setup(r => r.AddAsync(It.IsAny<FirestorePlantillaTarea>(), "espacio1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsync(It.IsAny<PlantillaTarea>(),It.IsAny<CancellationToken>()))
                 .ReturnsAsync("plantilla-123");
 
             List<Tarea>? tareasGuardadas = null;
@@ -330,7 +327,6 @@ namespace Convivia.Application.Tests.Services
             Assert.All(tareasGuardadas, t => Assert.Equal(TareaEstado.Pendiente, t.Estado));
             Assert.All(tareasGuardadas, t => Assert.Null(t.UsuarioEspacioId));
             Assert.All(tareasGuardadas, t => Assert.Equal("plantilla-123", t.PlantillaId));
-            Assert.All(tareasGuardadas, t => Assert.Null(t.FechaLimite));
         }
 
         [Fact]
@@ -356,7 +352,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(new Tarea());
 
             _plantillaTareaRepositoryMock
-                .Setup(r => r.AddAsync(It.IsAny<FirestorePlantillaTarea>(), "espacio1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsync(It.IsAny<PlantillaTarea>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("plantilla-123");
 
             List<Tarea>? tareasGuardadas = null;
@@ -406,7 +402,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(new Tarea());
 
             _plantillaTareaRepositoryMock
-                .Setup(r => r.AddAsync(It.IsAny<FirestorePlantillaTarea>(), "espacio1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsync(It.IsAny<PlantillaTarea>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("plantilla-123");
 
             List<Tarea>? tareasGuardadas = null;
@@ -850,7 +846,11 @@ namespace Convivia.Application.Tests.Services
                 .ReturnsAsync(existing);
 
             _mapperMock
-                .Setup(m => m.Map<TareaDto>(existing))
+                .Setup(m => m.Map<PlantillaTareaDto>(It.IsAny<PlantillaTarea>()))
+                .Returns(new PlantillaTareaDto { Id = "p1" });
+
+            _mapperMock
+                .Setup(m => m.Map<TareaDto>(It.IsAny<Tarea>()))
                 .Returns(new TareaDto { Nombre = "X" });
 
             var result = await _sut.UpdatePartialAsync("esp", "p1", "t1", dto);

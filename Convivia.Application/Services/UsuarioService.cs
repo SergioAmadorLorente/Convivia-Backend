@@ -35,6 +35,7 @@ namespace Convivia.Application.Services
         public async Task<UsuarioDto> CrearUsuarioAsync(CreateUsuarioDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            if (string.IsNullOrWhiteSpace(dto.Id)) dto.Id = Guid.NewGuid().ToString("N");
             if (string.IsNullOrEmpty(dto.Nombre)) throw new ArgumentNullException("Nombre no puede estar vacio", nameof(dto.Nombre));
             if (string.IsNullOrWhiteSpace(dto.Email)) throw new ArgumentNullException("Correo no puede estar vacio", nameof(dto.Email));
             if (string.IsNullOrWhiteSpace(dto.Password)) throw new ArgumentNullException("Contrasenya no puede estar vacio", nameof(dto.Password));
