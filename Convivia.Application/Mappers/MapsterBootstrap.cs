@@ -25,7 +25,7 @@ namespace Convivia.Application.Mappers
             }
 
             // Register application-level mappings (DTO <-> Domain)
-            
+
             // Espacio mappings (DTO <-> Domain)
             Config.MapsterConfig.RegisterPair<Espacio, EspacioDto, CreateEspacioDto, UpdateEspacioDto>(config);
 
@@ -78,11 +78,24 @@ namespace Convivia.Application.Mappers
                 .Map(dest => dest.Message, src => src.Message)
                 .Map(dest => dest.Route, src => src.Route)
                 .Map(dest => dest.TimestampUtc, src => src.TimestampUtc == default ? DateTime.UtcNow : src.TimestampUtc)
-                .Map(dest => dest.Stack, src => src.Stack);
+                .Map(dest => dest.Stack, src => src.Stack)
+                .Map(dest => dest.ValidationErrors, src => src.ValidationErrors)
+                .Map(dest => dest.Entity, src => src.Entity)
+                .Map(dest => dest.Key, src => src.Key);
 
+            // Reverse mapping (DTO -> Contract)
+            config.NewConfig<ErrorRecordDto, ErrorRecord>()
+                .Map(dest => dest.CorrelationId, src => src.CorrelationId ?? string.Empty)
+                .Map(dest => dest.TraceId, src => src.TraceId)
+                .Map(dest => dest.Status, src => src.Status)
+                .Map(dest => dest.Message, src => src.Message)
+                .Map(dest => dest.Route, src => src.Route)
+                .Map(dest => dest.TimestampUtc, src => src.TimestampUtc == default ? DateTime.UtcNow : src.TimestampUtc)
+                .Map(dest => dest.Stack, src => src.Stack)
+                .Map(dest => dest.ValidationErrors, src => src.ValidationErrors)
+                .Map(dest => dest.Entity, src => src.Entity)
+                .Map(dest => dest.Key, src => src.Key);
 
-            // Reverse mapping error
-            config.NewConfig<Convivia.Shared.Contracts.ErrorRecordDto, Convivia.Shared.Contracts.ErrorRecord>();
 
             // Custom: map CreateTareaDto -> CreatePlantillaTareaDto
             config.NewConfig<CreateTareaDto, CreatePlantillaTareaDto>()
@@ -126,10 +139,10 @@ namespace Convivia.Application.Mappers
 
             if (rol.Nombre.Equals("Admin", StringComparison.OrdinalIgnoreCase))
                 return TipoRol.Admin;
-            
+
             if (rol.Nombre.Equals("Moderador", StringComparison.OrdinalIgnoreCase))
                 return TipoRol.Moderador;
-            
+
             return TipoRol.Usuario;
         }
     }

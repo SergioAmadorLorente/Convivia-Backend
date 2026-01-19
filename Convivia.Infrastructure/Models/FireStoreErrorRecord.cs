@@ -26,7 +26,13 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("stack")]
         public string? Stack { get; set; }
 
-        [FirestoreProperty("userId")]
-        public string? UserId { get; set; }
+        [FirestoreProperty("validationErrors")]
+        public Dictionary<string, string[]>? ValidationErrors { get; set; }
+
+        [FirestoreProperty("entity")]
+        public string? Entity { get; set; }
+
+        [FirestoreProperty("key")]
+        public string? Key { get; set; }
     }
 }
