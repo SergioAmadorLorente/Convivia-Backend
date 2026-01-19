@@ -469,7 +469,7 @@ namespace Convivia.Application.Services
             }
         }
 
-        private void ProcessEstadoUpdate(Tarea tarea, PlantillaTarea plantilla, UpdateTareaDto dto, CancellationToken ct)
+        private async void ProcessEstadoUpdate(Tarea tarea, PlantillaTarea plantilla, UpdateTareaDto dto, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(dto.Estado)) return;
 
@@ -488,7 +488,7 @@ namespace Convivia.Application.Services
 
             if (esCompletar && tarea.Estado != TareaEstado.Completada && tarea.Estado != TareaEstado.CompletadaFueradePlazo && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                _ = AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
+                await AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
             }
         }
 
