@@ -6,21 +6,16 @@ using Convivia.Shared.Contracts;
 
 namespace Convivia.Infrastructure.Queues
 {
-    /// <summary>
-    /// Cola en memoria basada en Channel&lt;T&gt; con capacidad limitada.
-    /// Provee TryEnqueue (no bloqueante) y EnqueueAsync (awaitable).
-    /// Expuesta como IErrorQueue.
-    /// </summary>
-    public class InMemoryErrorQueue : IErrorQueue
+    public class ErrorQueue : IErrorQueue
     {
         private readonly Channel<ErrorRecord> _channel;
 
-        public InMemoryErrorQueue(int capacity = 1000)
+        public ErrorQueue(int capacity = 1000)
         {
             if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
             var options = new BoundedChannelOptions(capacity)
             {
-                FullMode = BoundedChannelFullMode.DropOldest, // o DropWrite / Wait, según política
+                FullMode = BoundedChannelFullMode.DropOldest,
                 SingleReader = true,
                 SingleWriter = false
             };
@@ -39,16 +34,18 @@ namespace Convivia.Infrastructure.Queues
         }
 
         /// <summary>
-        /// Encola de forma asíncrona. Respeta el cancellationToken.
+        /// Encola de forma asíncrona y devuelve un Task que completa cuando se escribe.
+        /// Respeta el cancellationToken.
         /// </summary>
-        public async Task EnqueueAsync(ErrorRecord record, CancellationToken cancellationToken = default)
+        public Task EnqueueAsync(ErrorRecord record, CancellationToken cancellationToken = default)
         {
             if (record == null) throw new ArgumentNullException(nameof(record));
-            await _channel.Writer.WriteAsync(record, cancellationToken).ConfigureAwait(false);
+            // WriteAsync devuelve ValueTask; lo convertimos a Task para cumplir la interfaz
+            return _channel.Writer.WriteAsync(record, cancellationToken).AsTask();
         }
 
         /// <summary>
-        /// Cierra la cola para nuevos escritores.
+        /// Marca la cola como completada para nuevos escritores.
         /// </summary>
         public void Complete() => _channel.Writer.Complete();
     }
