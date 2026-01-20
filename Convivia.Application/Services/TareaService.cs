@@ -235,7 +235,7 @@ namespace Convivia.Application.Services
             // Actualizar a overdue si es necesario antes de procesar cambios de estado
             await UpdateToOverdueIfNeededAsync(existing, domPlantilla);
             
-            ProcessEstadoUpdate(existing, domPlantilla, dto, ct);
+            await ProcessEstadoUpdate(existing, domPlantilla, dto, ct);
 
             var domain = _mapper.Map<Tarea>(dto);
             domain.Id = tareaid;
@@ -469,7 +469,7 @@ namespace Convivia.Application.Services
             }
         }
 
-        private async void ProcessEstadoUpdate(Tarea tarea, PlantillaTarea plantilla, UpdateTareaDto dto, CancellationToken ct)
+        private async Task ProcessEstadoUpdate(Tarea tarea, PlantillaTarea plantilla, UpdateTareaDto dto, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(dto.Estado)) return;
 

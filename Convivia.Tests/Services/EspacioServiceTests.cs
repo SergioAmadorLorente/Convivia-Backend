@@ -23,7 +23,6 @@ namespace Convivia.Tests.Services
         private readonly Mock<IUsuarioRepository> _usuarioRepo;
         private readonly Mock<IMapper> _mapper;
         private readonly Mock<ILogger<EspacioService>> _logger;
-        private readonly Mock<UsuarioEspacioService> _usuarioEspacioService;
         private readonly IMemoryCache _cache;
 
         private readonly EspacioService _service;
@@ -39,9 +38,12 @@ namespace Convivia.Tests.Services
 
             _cache = new MemoryCache(new MemoryCacheOptions());
 
-            // UsuarioEspacioService es un servicio real, pero lo mockeamos completamente
-            _usuarioEspacioService = new Mock<UsuarioEspacioService>(
-                null, null, null, null, null
+            var usuarioEspacioServiceReal = new UsuarioEspacioService(
+                _usuarioEspacioRepo.Object,
+                _mapper.Object,
+                new Mock<ILogger<UsuarioEspacioService>>().Object,
+                new Mock<IFacturaRepository>().Object,
+                new Mock<ITareaRepository>().Object
             );
 
             _service = new EspacioService(
@@ -52,8 +54,9 @@ namespace Convivia.Tests.Services
                 _mapper.Object,
                 _usuarioRepo.Object,
                 _cache,
-                _usuarioEspacioService.Object
+                usuarioEspacioServiceReal
             );
+
         }
 
         // -------------------------------------------------------------
@@ -383,15 +386,16 @@ namespace Convivia.Tests.Services
             _espacioRepo.Setup(r => r.GetByIdAsync("1", It.IsAny<CancellationToken>()))
                         .ReturnsAsync(new Espacio("Casa") { Id = "1" });
 
-            _usuarioEspacioService.Setup(s => s.ObtenerPorEspacioAsync("1", It.IsAny<CancellationToken>()))
-                                  .ReturnsAsync(new List<UsuarioEspacioDto>
-                                  {
-                                      new UsuarioEspacioDto { UsuarioId = "u1" }
-                                  });
+            _usuarioEspacioRepo.Setup(r => r.ObtenerPorEspacioAsync("1", It.IsAny<CancellationToken>()))
+                               .ReturnsAsync(new List<UsuarioEspacioDto>
+                               {
+                           new UsuarioEspacioDto { UsuarioId = "u1" }
+                               });
 
             var result = await _service.UnirUsuarioPorCodigoAsync("123456", "u1");
 
             Assert.Null(result);
         }
+
     }
 }
