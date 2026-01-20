@@ -23,6 +23,7 @@ namespace Convivia.Tests.Services
         private readonly Mock<IUsuarioRepository> _usuarioRepo;
         private readonly Mock<IMapper> _mapper;
         private readonly Mock<ILogger<EspacioService>> _logger;
+        private readonly Mock<IUsuarioEspacioService> _usuarioEspacioService;
         private readonly IMemoryCache _cache;
 
         private readonly EspacioService _service;
@@ -35,16 +36,9 @@ namespace Convivia.Tests.Services
             _usuarioRepo = new Mock<IUsuarioRepository>();
             _mapper = new Mock<IMapper>();
             _logger = new Mock<ILogger<EspacioService>>();
+            _usuarioEspacioService = new Mock<IUsuarioEspacioService>();
 
             _cache = new MemoryCache(new MemoryCacheOptions());
-
-            var usuarioEspacioServiceReal = new UsuarioEspacioService(
-                _usuarioEspacioRepo.Object,
-                _mapper.Object,
-                new Mock<ILogger<UsuarioEspacioService>>().Object,
-                new Mock<IFacturaRepository>().Object,
-                new Mock<ITareaRepository>().Object
-            );
 
             _service = new EspacioService(
                 _plantillaRepo.Object,
@@ -54,9 +48,8 @@ namespace Convivia.Tests.Services
                 _mapper.Object,
                 _usuarioRepo.Object,
                 _cache,
-                usuarioEspacioServiceReal
+                _usuarioEspacioService.Object
             );
-
         }
 
         // -------------------------------------------------------------
@@ -354,8 +347,9 @@ namespace Convivia.Tests.Services
         [Fact]
         public async Task UnirUsuarioPorCodigoAsync_ReturnsNull_WhenCodigoInvalid()
         {
-            var result = await _service.UnirUsuarioPorCodigoAsync("", "u1");
-            Assert.Null(result);
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+            _service.UnirUsuarioPorCodigoAsync("", "u1")
+            );
         }
 
         [Fact]
@@ -378,24 +372,26 @@ namespace Convivia.Tests.Services
             Assert.Null(result);
         }
 
-        [Fact]
-        public async Task UnirUsuarioPorCodigoAsync_ReturnsNull_WhenUserAlreadyInEspacio()
+[Fact]
+public async Task UnirUsuarioPorCodigoAsync_ReturnsNull_WhenUserAlreadyInEspacio()
+{
+    _cache.Set("InvitacionCode_123456", "1");
+
+    _espacioRepo.Setup(r => r.GetByIdAsync("1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Espacio("Casa") { Id = "1" });
+
+    _usuarioEspacioService
+        .Setup(s => s.ObtenerPorEspacioAsync("1", It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new List<UsuarioEspacioDto>
         {
-            _cache.Set("InvitacionCode_123456", "1");
+            new UsuarioEspacioDto { UsuarioId = "u1" }
+        });
 
-            _espacioRepo.Setup(r => r.GetByIdAsync("1", It.IsAny<CancellationToken>()))
-                        .ReturnsAsync(new Espacio("Casa") { Id = "1" });
+    var result = await _service.UnirUsuarioPorCodigoAsync("123456", "u1");
 
-            _usuarioEspacioRepo.Setup(r => r.ObtenerPorEspacioAsync("1", It.IsAny<CancellationToken>()))
-                               .ReturnsAsync(new List<UsuarioEspacioDto>
-                               {
-                           new UsuarioEspacioDto { UsuarioId = "u1" }
-                               });
+    Assert.Null(result);
+}
 
-            var result = await _service.UnirUsuarioPorCodigoAsync("123456", "u1");
-
-            Assert.Null(result);
-        }
 
     }
 }
