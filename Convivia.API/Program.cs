@@ -1,11 +1,8 @@
 using Convivia.API.Middleware;
 using Convivia.Application.Extensions;
 using Convivia.Infrastructure.Extensions;
-using Convivia.Infrastructure.HostedServices;
 using Convivia.Infrastructure.Infraestructure;
-using Convivia.Infrastructure.Queues;
-using Convivia.Shared.Contracts;
-using Google.Api;
+using Convivia.Infrastructure.Correlation;
 using Google.Cloud.Firestore;
 using Mapster;
 using System.Text.Json.Serialization;
@@ -38,6 +35,7 @@ builder.Services.AddSwaggerGen();
 
 // Necesario para acceder a HttpContext desde servicios (CorrelationProvider, etc.)
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICorrelationProvider, CorrelationProvider>();
 
 var app = builder.Build();
 
