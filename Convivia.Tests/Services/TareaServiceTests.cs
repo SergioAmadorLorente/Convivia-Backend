@@ -13,7 +13,7 @@ using MapsterMapper;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Convivia.Infrastructure.Models; // o el namespace donde está FirestorePlantillaTarea
+using Convivia.Infrastructure.Models;
 
 namespace Convivia.Application.Tests.Services
 {
@@ -205,9 +205,37 @@ namespace Convivia.Application.Tests.Services
         [Fact]
         public async Task AddAsync_ShouldThrow_WhenPuntualConMasDeUnUsuario()
         {
+            // Arrange
             var dto = CreateValidPuntualDto();
             dto.UsuariosAsignacion = new List<string> { "user1", "user2" };
 
+            _mapperMock.Setup(m => m.Map<CreatePlantillaTareaDto>(It.IsAny<CreateTareaDto>()))
+                       .Returns(new CreatePlantillaTareaDto());
+
+            _mapperMock.Setup(m => m.Map<Tarea>(It.IsAny<CreateTareaDto>()))
+                       .Returns(new Tarea(
+                            usuarioEspacioId: "user1",
+                            plantillaId: "plantilla1"
+                       ));
+
+            _mapperMock.Setup(m => m.Map<PlantillaTarea>(It.IsAny<CreatePlantillaTareaDto>()))
+                       .Returns(new PlantillaTarea(
+                            id_PlantillaTarea: "plantilla1",
+                            nombre: "titulo",
+                            fechaCreacion: DateTime.UtcNow,
+                            karma: 0,
+                            repeticion: 0
+                       ));
+
+            _plantillaTareaRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<PlantillaTarea>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync("plantilla1");
+
+            _tareaRepositoryMock
+                .Setup(r => r.AddAsyncList(It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<string>());
+
+            // Act + Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _sut.AddAsync("espacio1", dto));
         }
