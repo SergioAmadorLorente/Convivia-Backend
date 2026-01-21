@@ -50,6 +50,9 @@ namespace Convivia.Application.Services
             if (esPuntual && !dto.FechaLimite.HasValue)
                 throw new ArgumentException("FechaLimite es obligatoria para tareas puntuales.", nameof(dto.FechaLimite));
 
+            if (esPuntual && dto.UsuariosAsignacion != null && dto.UsuariosAsignacion.Count > 1)
+                throw new ArgumentException("Una tarea puntual no puede tener más de un usuario asignado.", nameof(dto.UsuariosAsignacion));
+
             var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
             createPlantilla.DiasRepeticion = dto.DiasRepeticion ?? new List<int>();
             createPlantilla.UsuariosAsignacion = dto.UsuariosAsignacion ?? new List<string>();
