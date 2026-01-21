@@ -17,5 +17,9 @@ namespace Convivia.Application.Repositories
         Task DeleteAsync(string espacioId, string id, CancellationToken ct = default);
         Task<IEnumerable<Factura>> QueryByFieldAsync(string espacioId, string field, object value, CancellationToken ct = default);
         Task<bool> ExistsByUsuarioEspacioIdAsync(string usuarioEspacioId, CancellationToken ct = default);
+        
+        Task<byte[]?> GetImagenAsync(string espacioId, string id, CancellationToken ct = default);
+        Task UpdateImagenAsync(string espacioId, string id, byte[] imagen, CancellationToken ct = default);
+        Task DeleteImagenAsync(string espacioId, string id, CancellationToken ct = default);
     }
 }

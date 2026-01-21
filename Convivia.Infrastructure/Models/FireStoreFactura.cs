@@ -27,8 +27,8 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("Pagado")]
         public bool Pagado { get; set; }
 
-        [FirestoreProperty("DocumentoUrl")]
-        public string? DocumentoUrl { get; set; }
+        [FirestoreProperty("DocumentoImagen")]
+        public byte[]? DocumentoImagen { get; set; }
 
         [FirestoreProperty("FechaCreacion")]
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;

@@ -13,6 +13,11 @@ namespace Convivia.Infrastructure.Repositories
 {
     public class FacturaRepository : IFacturaRepository
     {
+        /// <summary>
+        /// He usado los metodos directos de IFirebaseService para simplificar el codigo, 
+        /// Si ubiera puesto una capa adicional de abstraccion, estaria repitiendo codigo innecesariamente.
+        /// Debido a que la ruta de una subcoleccion depende de un id de la coleccion padre, siendo  
+        /// </summary>
         private readonly IFirebaseService _firebase;
         private readonly ILogger<FacturaRepository> _logger;
         private const string ParentCollection = "espacios";
@@ -110,6 +115,40 @@ namespace Convivia.Infrastructure.Repositories
                 _logger.LogError(ex, "Error ExistsByUsuarioEspacioId {usuarioEspacioId}", usuarioEspacioId);
                 throw;
             }
+        }
+
+        public async Task<byte[]?> GetImagenAsync(string espacioId, string id, CancellationToken ct = default)
+        {
+            var collectionPath = GetCollectionPath(espacioId);
+            var persist = await _firebase.GetAsync<FireStoreFactura>(collectionPath, id, ct);
+            return persist?.DocumentoImagen;
+        }
+
+        public async Task UpdateImagenAsync(string espacioId, string id, byte[] imagen, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (imagen == null) throw new ArgumentNullException(nameof(imagen));
+
+            var updates = new Dictionary<string, object>
+            {
+                ["DocumentoImagen"] = imagen
+            };
+
+            var collectionPath = GetCollectionPath(espacioId);
+            await _firebase.UpdateAsync(collectionPath, id, updates, useSetMerge: true, ct);
+        }
+
+        public async Task DeleteImagenAsync(string espacioId, string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            var updates = new Dictionary<string, object>
+            {
+                ["DocumentoImagen"] = null
+            };
+
+            var collectionPath = GetCollectionPath(espacioId);
+            await _firebase.UpdateAsync(collectionPath, id, updates, useSetMerge: true, ct);
         }
     }
 }

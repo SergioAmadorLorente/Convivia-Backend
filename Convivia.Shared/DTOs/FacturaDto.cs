@@ -23,7 +23,7 @@ namespace Convivia.Shared.DTOs
 
         public bool Pagado { get; set; }
 
-        public string? DocumentoUrl { get; set; }
+        public bool TieneImagen { get; set; }
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     }

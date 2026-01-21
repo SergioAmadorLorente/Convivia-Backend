@@ -91,7 +91,6 @@ namespace Convivia.API.Controllers
             return Ok(updated);
         }
 
-
         // DELETE api/espacio/{espacioId}/factura/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string espacioId, string id, CancellationToken ct)
@@ -101,6 +100,93 @@ namespace Convivia.API.Controllers
 
             var resultat = await _service.EliminarFacturaAsync(espacioId, id, ct);
             return resultat ? NoContent() : NotFound();
+        }
+
+        // === ENDPOINTS DE GESTIÓN DE IMÁGENES ===
+
+        // GET api/espacio/{espacioId}/factura/{id}/imagen
+        [HttpGet("{id}/imagen")]
+        [Produces("image/jpeg", "image/png", "image/gif")]
+        public async Task<IActionResult> GetImagen(string espacioId, string id, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return BadRequest("EspacioId es requerido.");
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            var imagen = await _service.ObtenerImagenAsync(espacioId, id, ct);
+            if (imagen == null || imagen.Length == 0)
+                return NotFound("La factura no tiene imagen.");
+
+            return File(imagen, "image/jpeg");
+        }
+
+        // POST api/espacio/{espacioId}/factura/{id}/imagen
+        [HttpPost("{id}/imagen")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadImagen(string espacioId, string id, IFormFile imagen, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return BadRequest("EspacioId es requerido.");
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest("Id es requerido.");
+            if (imagen == null || imagen.Length == 0)
+                return BadRequest("No se envió ninguna imagen.");
+
+            if (!imagen.ContentType.StartsWith("image/"))
+                return BadRequest("El archivo debe ser una imagen.");
+
+            const long maxSizeBytes = 524288; // 0.5 MiB
+            if (imagen.Length > maxSizeBytes)
+                return BadRequest($"La imagen excede el tamaño máximo permitido de 0.5 MiB ({maxSizeBytes} bytes). Tamaño actual: {imagen.Length} bytes.");
+
+            byte[] bytes;
+            using (var ms = new MemoryStream())
+            {
+                await imagen.CopyToAsync(ms, ct);
+                bytes = ms.ToArray();
+            }
+
+            var result = await _service.ActualizarImagenAsync(espacioId, id, bytes, ct);
+            if (!result) return NotFound("Factura no encontrada.");
+
+            return Ok(new { success = true, message = "Imagen subida correctamente." });
+        }
+
+        // PUT api/espacio/{espacioId}/factura/{id}/imagen
+        [HttpPut("{id}/imagen")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateImagen(string espacioId, string id, IFormFile imagen, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return BadRequest("EspacioId es requerido.");
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest("Id es requerido.");
+            if (imagen == null || imagen.Length == 0)
+                return BadRequest("No se envió ninguna imagen.");
+
+            if (!imagen.ContentType.StartsWith("image/"))
+                return BadRequest("El archivo debe ser una imagen.");
+            const long maxSizeBytes = 524288; // 0.5 MiB
+            if (imagen.Length > maxSizeBytes)
+                return BadRequest($"La imagen excede el tamaño máximo permitido de {maxSizeBytes} bytes. Tamaño actual: {imagen.Length} bytes.");
+
+            byte[] bytes;
+            using (var ms = new MemoryStream())
+            {
+                await imagen.CopyToAsync(ms, ct);
+                bytes = ms.ToArray();
+            }
+
+            var result = await _service.ActualizarImagenAsync(espacioId, id, bytes, ct);
+            if (!result) return NotFound("Factura no encontrada.");
+
+            return Ok(new { success = true, message = "Imagen actualizada correctamente." });
+        }
+
+        // DELETE api/espacio/{espacioId}/factura/{id}/imagen
+        [HttpDelete("{id}/imagen")]
+        public async Task<IActionResult> DeleteImagen(string espacioId, string id, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return BadRequest("EspacioId es requerido.");
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            var result = await _service.EliminarImagenAsync(espacioId, id, ct);
+            return result ? NoContent() : NotFound();
         }
     }
 }

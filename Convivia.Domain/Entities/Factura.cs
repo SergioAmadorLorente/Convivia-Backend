@@ -40,9 +40,9 @@ namespace Convivia.Domain.Entities
         public bool Pagado { get; set; }
 
         /// <summary>
-        /// Documento o imagen asociada a la factura (opcional).
+        /// Imagen de la factura comprimida (720x1280px) almacenada como bytes (opcional).
         /// </summary>
-        public string? DocumentoUrl { get; set; }
+        public byte[]? DocumentoImagen { get; set; }
 
         /// <summary>
         /// Fecha creacion de la factura

@@ -13,7 +13,5 @@ namespace Convivia.Shared.DTOs
         public float PagoMediano { get; set; }
         public Dictionary<string, bool> Deudores { get; set; } = new Dictionary<string, bool>();
         public bool Pagado { get; set; }
-        public string? DocumentoUrl { get; set; }
-
     }
 }
