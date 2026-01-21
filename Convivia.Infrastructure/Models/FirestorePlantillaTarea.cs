@@ -32,8 +32,6 @@ namespace Convivia.Infrastructure.Models
         public int IntervalWeeks { get; set; }
         [FirestoreProperty]
         public string TimeZoneId { get; set; } = "Europe/Madrid";
-        [FirestoreProperty]
-        public string? FacturaId { get; set; }
 
         /// <summary>
         /// Fecha límite (se almacena como string en formato YYYY-MM-dd).

@@ -22,8 +22,6 @@ namespace Convivia.Shared.DTOs
 
         public string Descripcion { get; set; }
 
-        public string? FacturaId { get; set; }
-
         /// <summary>
         /// Fecha límite para tareas puntuales o límite de repetición para tareas repetidas.
         /// Si está seteada, las tareas repetidas se ejecutan hasta esa fecha.

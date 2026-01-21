@@ -21,8 +21,6 @@ namespace Convivia.Domain.Entities
 
         public string EspacioId { get; set; }
 
-        public string? FacturaId { get; set; }
-
         public List<string> TareasId { get; set; }
 
         /// <summary>
