@@ -52,11 +52,12 @@ namespace Convivia.API.Controllers
             string espacioid, 
             [FromQuery] int? diaSemana, 
             [FromQuery] string? estado,
-            [FromQuery] string? usuarioId)
+            [FromQuery] string? usuarioId,
+            [FromQuery] string? plantillaId)
         {
             try
             {
-                var res = await _service.FilterAsync(espacioid, diaSemana, estado, usuarioId);
+                var res = await _service.FilterAsync(espacioid, diaSemana, estado, usuarioId, plantillaId);
                 return (res == null || !res.Any()) ? NotFound() : Ok(res);
             }
             catch (ArgumentException ex)

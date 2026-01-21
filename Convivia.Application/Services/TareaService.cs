@@ -103,17 +103,17 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
             if (diaSemana < 0 || diaSemana > 6) throw new ArgumentException("Día debe estar entre 0 y 6.", nameof(diaSemana));
 
-            return await FilterByMultipleCriteriaAsync(espacioid, diaSemana, estado, null);
+            return await FilterByMultipleCriteriaAsync(espacioid, diaSemana, estado, null, null);
         }
 
         public async Task<IEnumerable<TareaDto>> GetByEstadoAsync(string espacioid, TareaEstado estado)
         {
             if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
 
-            return await FilterByMultipleCriteriaAsync(espacioid, null, estado, null);
+            return await FilterByMultipleCriteriaAsync(espacioid, null, estado, null, null);
         }
 
-        public async Task<IEnumerable<TareaDto>> FilterAsync(string espacioid, int? diaSemana = null, string? estado = null, string? usuarioId = null)
+        public async Task<IEnumerable<TareaDto>> FilterAsync(string espacioid, int? diaSemana = null, string? estado = null, string? usuarioId = null, string? plantillaId = null)
         {
             if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
             if (diaSemana.HasValue && (diaSemana < -1 || diaSemana > 6)) throw new ArgumentException("diaSemana debe estar entre -1 y 6.");
@@ -126,7 +126,7 @@ namespace Convivia.Application.Services
                 parsedEstado = p;
             }
 
-            return await FilterByMultipleCriteriaAsync(espacioid, diaSemana, parsedEstado, usuarioId);
+            return await FilterByMultipleCriteriaAsync(espacioid, diaSemana, parsedEstado, usuarioId, plantillaId);
         }
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
@@ -357,13 +357,17 @@ namespace Convivia.Application.Services
             string espacioid,
             int? diaSemana,
             TareaEstado? estado,
-            string? usuarioId)
+            string? usuarioId,
+            string? plantillaId)
         {
             var pttareas = await _ptservice.GetAllByEspacioAsync(espacioid);
             var tareas = new List<TareaDto>();
 
             foreach (var plantilla in pttareas)
             {
+                // If a specific plantillaId filter was provided, skip other plantillas
+                if (!string.IsNullOrWhiteSpace(plantillaId) && !string.Equals(plantilla.Id, plantillaId, StringComparison.OrdinalIgnoreCase))
+                    continue;
                 bool plantillaActiva = IsPlantillaActive(plantilla);
                 bool esRepetida = plantilla.DiasRepeticion != null && plantilla.DiasRepeticion.Count > 0;
 
