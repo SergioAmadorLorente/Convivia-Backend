@@ -27,6 +27,9 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("Pagado")]
         public bool Pagado { get; set; }
 
+        [FirestoreProperty("CreadorFactura")]
+        public string CreadorFactura { get; set; }
+
         [FirestoreProperty("DocumentoImagen")]
         public byte[]? DocumentoImagen { get; set; }
 

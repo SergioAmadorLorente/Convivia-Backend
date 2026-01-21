@@ -150,5 +150,33 @@ namespace Convivia.Infrastructure.Repositories
             var collectionPath = GetCollectionPath(espacioId);
             await _firebase.UpdateAsync(collectionPath, id, updates, useSetMerge: true, ct);
         }
+
+        public async Task<IEnumerable<Factura>> GetByCreadorAsync(string espacioId, string creadorId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(creadorId)) throw new ArgumentNullException(nameof(creadorId));
+
+            var collectionPath = GetCollectionPath(espacioId);
+            var list = await _firebase.QueryAsync<FireStoreFactura>(collectionPath, "CreadorFactura", creadorId, ct);
+            return list == null ? Array.Empty<Factura>() : list.Adapt<List<Factura>>();
+        }
+
+        public async Task<IEnumerable<Factura>> GetByDeudorAsync(string espacioId, string deudorId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(deudorId)) throw new ArgumentNullException(nameof(deudorId));
+
+            // Firestore no soporta queries directas en claves de Map, por lo que obtenemos todas y filtramos
+            var collectionPath = GetCollectionPath(espacioId);
+            var allFacturas = await _firebase.GetAllAsync<FireStoreFactura>(collectionPath, ct);
+            
+            if (allFacturas == null) return Array.Empty<Factura>();
+
+            var facturasDeudor = allFacturas
+                .Where(f => f.Deudores != null && f.Deudores.ContainsKey(deudorId))
+                .ToList();
+
+            return facturasDeudor.Adapt<List<Factura>>();
+        }
     }
 }

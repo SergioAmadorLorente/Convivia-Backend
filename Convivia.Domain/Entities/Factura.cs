@@ -40,6 +40,11 @@ namespace Convivia.Domain.Entities
         public bool Pagado { get; set; }
 
         /// <summary>
+        /// ID del usuario (UsuarioEspacioId) que creó la factura.
+        /// </summary>
+        public string CreadorFactura { get; set; }
+
+        /// <summary>
         /// Imagen de la factura comprimida (720x1280px) almacenada como bytes (opcional).
         /// </summary>
         public byte[]? DocumentoImagen { get; set; }

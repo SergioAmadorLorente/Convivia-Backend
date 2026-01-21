@@ -21,5 +21,8 @@ namespace Convivia.Application.Repositories
         Task<byte[]?> GetImagenAsync(string espacioId, string id, CancellationToken ct = default);
         Task UpdateImagenAsync(string espacioId, string id, byte[] imagen, CancellationToken ct = default);
         Task DeleteImagenAsync(string espacioId, string id, CancellationToken ct = default);
+        
+        Task<IEnumerable<Factura>> GetByCreadorAsync(string espacioId, string creadorId, CancellationToken ct = default);
+        Task<IEnumerable<Factura>> GetByDeudorAsync(string espacioId, string deudorId, CancellationToken ct = default);
     }
 }

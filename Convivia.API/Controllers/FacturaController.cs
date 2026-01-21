@@ -71,6 +71,38 @@ namespace Convivia.API.Controllers
         }
 
         /// <summary>
+        /// Obtiene todas las facturas de un espacio creadas por un usuario específico.
+        /// </summary>
+        /// <param name="espacioId">ID del espacio</param>
+        /// <param name="creadorId">ID del usuario creador (UsuarioEspacioId)</param>
+        [HttpGet("creador/{creadorId}")]
+        public async Task<IActionResult> GetByCreador(string espacioId, string creadorId, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return BadRequest("EspacioId es requerido.");
+            if (string.IsNullOrWhiteSpace(creadorId)) return BadRequest("CreadorId es requerido.");
+
+            var list = await _service.ListarPorCreadorAsync(espacioId, creadorId, ct);
+            return Ok(list);
+        }
+
+        /// <summary>
+        /// Obtiene todas las facturas de un espacio donde un usuario es deudor.
+        /// </summary>
+        /// <param name="espacioId">ID del espacio</param>
+        /// <param name="deudorId">ID del usuario deudor (UsuarioEspacioId)</param>
+        [HttpGet("deudor/{deudorId}")]
+        [ProducesResponseType(typeof(List<FacturaDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetByDeudor(string espacioId, string deudorId, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) return BadRequest("EspacioId es requerido.");
+            if (string.IsNullOrWhiteSpace(deudorId)) return BadRequest("DeudorId es requerido.");
+
+            var list = await _service.ListarPorDeudorAsync(espacioId, deudorId, ct);
+            return Ok(list);
+        }
+
+        /// <summary>
         ///     Actualiza completamente una factura (overwrite). Reemplaza todos los campos.
         /// </summary>
         /// <param name="espacioId">ID del espacio</param>

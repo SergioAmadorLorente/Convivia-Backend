@@ -31,7 +31,9 @@ namespace Convivia.Application.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre no puede estar vacío", nameof(dto.Nombre));
             if (dto.Precio < 0) throw new ArgumentException("Precio no puede ser negativo", nameof(dto.Precio));
-
+            if (dto.Deudores == null || dto.Deudores.Count == 0)
+                throw new ArgumentException("Debe haber al menos un deudor en la factura", nameof(dto.Deudores));
+            if (dto.PagoMediano == null) dto.PagoMediano = (float) dto.Precio / dto.Deudores.Count;
             var facturaDomain = _mapper.Map<Factura>(dto);
             var id = await _facturaRepository.AddAsync(espacioId, facturaDomain, ct);
 
@@ -80,6 +82,44 @@ namespace Convivia.Application.Services
                 return dto;
             }).ToList() ?? new List<FacturaDto>();
             
+            return dtos;
+        }
+
+        /// <summary>
+        /// Lista todas las facturas de un espacio creadas por un usuario específico.
+        /// </summary>
+        public async Task<List<FacturaDto>> ListarPorCreadorAsync(string espacioId, string creadorId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(creadorId)) throw new ArgumentNullException(nameof(creadorId));
+
+            var list = await _facturaRepository.GetByCreadorAsync(espacioId, creadorId, ct);
+            var dtos = list?.Select(f =>
+            {
+                var dto = _mapper.Map<FacturaDto>(f);
+                dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
+                return dto;
+            }).ToList() ?? new List<FacturaDto>();
+
+            return dtos;
+        }
+
+        /// <summary>
+        /// Lista todas las facturas de un espacio donde un usuario es deudor.
+        /// </summary>
+        public async Task<List<FacturaDto>> ListarPorDeudorAsync(string espacioId, string deudorId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(deudorId)) throw new ArgumentNullException(nameof(deudorId));
+
+            var facturasDeudor = await _facturaRepository.GetByDeudorAsync(espacioId, deudorId, ct);
+            var dtos = facturasDeudor?.Select(f =>
+            {
+                var dto = _mapper.Map<FacturaDto>(f);
+                dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
+                return dto;
+            }).ToList() ?? new List<FacturaDto>();
+
             return dtos;
         }
 
@@ -239,6 +279,7 @@ namespace Convivia.Application.Services
             if (dto.PagoMediano.HasValue) updates["PagoMediano"] = dto.PagoMediano.Value;
             if (dto.Deudores != null && dto.Deudores.Count > 0) updates["Deudores"] = dto.Deudores;
             if (dto.Pagado.HasValue) updates["Pagado"] = dto.Pagado.Value;
+            if (dto.CreadorFactura != null) updates["CreadorFactura"] = dto.CreadorFactura;
 
             return updates;
         }
