@@ -35,12 +35,8 @@ builder.Services.AddScoped<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>()
 builder.Services.AddApplicationServices();               // registra InvitacionService, mappers, etc.
 builder.Services.AddInfrastructure(builder.Configuration); // registra IInvitacionRepository, IFirebaseService, FirebaseService, etc.
 
-// Controllers y Swagger - Configurar JSON para serializar enums como strings
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+// Controllers y Swagger - DO NOT add JsonStringEnumConverter here so enums are serialized as numbers (defaults)
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

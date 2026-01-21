@@ -35,20 +35,20 @@ namespace Convivia.Application.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             // Crear rol con la configuración apropiada
-            Rol rolDomain = new Rol();
-            
+            Rol rolDomain;
             switch (dto.Nombre)
             {
                 case TipoRol.Admin:
-                    rolDomain.SetConfiguracionAdmin();
+                    rolDomain = Rol.Admin;
                     break;
                 case TipoRol.Moderador:
-                    rolDomain.SetConfiguracionModerador();
+                    rolDomain = Rol.Moderador;
                     break;
                 case TipoRol.Usuario:
-                default:
-                    rolDomain.SetConfiguracionUsuario();
+                    rolDomain = Rol.Usuario;
                     break;
+                default:
+                    throw new ArgumentException($"Nombre de rol inválido: {dto.Nombre}");
             }
 
             // Persistir y obtener id
@@ -58,10 +58,12 @@ namespace Convivia.Application.Services
             var createdDomain = await _rolRepository.GetByIdAsync(id, ct);
             if (createdDomain == null)
             {
-                return new RolDto { Id = id };
+                return new RolDto { Id = id, Nombre = dto.Nombre };
             }
 
             var createdDto = _mapper.Map<RolDto>(createdDomain);
+            // Asegurar que el enum Nombre se llene correctamente a partir del string guardado
+            createdDto.Nombre = ParseTipoRol(createdDomain.Nombre);
             if (string.IsNullOrWhiteSpace(createdDto.Id))
                 createdDto.Id = id;
 
@@ -75,7 +77,10 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             var domain = await _rolRepository.GetByIdAsync(id, ct);
-            return domain == null ? null : _mapper.Map<RolDto>(domain);
+            if (domain == null) return null;
+            var dto = _mapper.Map<RolDto>(domain);
+            dto.Nombre = ParseTipoRol(domain.Nombre);
+            return dto;
         }
 
         /// <summary>
@@ -84,7 +89,12 @@ namespace Convivia.Application.Services
         public async Task<List<RolDto>> ListarTodasAsync(CancellationToken ct = default)
         {
             var list = await _rolRepository.GetAllAsync(ct);
-            return list?.Select(f => _mapper.Map<RolDto>(f)).ToList() ?? new List<RolDto>();
+            var dtos = list?.Select(f => {
+                var d = _mapper.Map<RolDto>(f);
+                d.Nombre = ParseTipoRol(f.Nombre);
+                return d;
+            }).ToList() ?? new List<RolDto>();
+            return dtos;
         }
 
         /// <summary>
@@ -95,7 +105,10 @@ namespace Convivia.Application.Services
             try
             {
                 var domain = await _rolRepository.GetByNombreAsync(nombre, ct);
-                return domain == null ? null : _mapper.Map<RolDto>(domain);
+                if (domain == null) return null;
+                var dto = _mapper.Map<RolDto>(domain);
+                dto.Nombre = ParseTipoRol(domain.Nombre);
+                return dto;
             }
             catch (Exception ex)
             {
@@ -112,17 +125,23 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // Mapear DTO -> Domain (nuevo objeto completo)
-            var domain = _mapper.Map<Rol>(dto);
+            var existing = await _rolRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
 
-            // Asegurar que el Id de dominio coincide con el id pasado
-            domain.Id = id;
+            // Si se envió Permisos, aplicar sobre existente para evitar perder campos
+            if (dto.Permisos != null)
+            {
+                ApplyPermisosToRol(existing, dto.Permisos);
+            }
 
             // Persistir como overwrite (merge = false)
-            await _rolRepository.UpdateAsync(id, domain, merge: false, ct);
+            await _rolRepository.UpdateAsync(id, existing, merge: false, ct);
 
             var updated = await _rolRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<RolDto>(updated);
+            if (updated == null) return null;
+            var res = _mapper.Map<RolDto>(updated);
+            res.Nombre = ParseTipoRol(updated.Nombre);
+            return res;
         }
 
         /// <summary>
@@ -136,14 +155,20 @@ namespace Convivia.Application.Services
             var existing = await _rolRepository.GetByIdAsync(id, ct);
             if (existing == null) return null;
 
-            // Mapear DTO sobre la entidad existente
-            _mapper.Map(dto, existing);
+            // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
+            // Pero UpdateRolDto contains nested Permisos which Mapster may not map; handle explicitly
+            if (dto.Permisos != null)
+            {
+                ApplyPermisosToRol(existing, dto.Permisos);
+            }
 
-            // Persistir con merge
             await _rolRepository.UpdateAsync(id, existing, merge: true, ct);
 
             var updated = await _rolRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<RolDto>(updated);
+            if (updated == null) return null;
+            var res = _mapper.Map<RolDto>(updated);
+            res.Nombre = ParseTipoRol(updated.Nombre);
+            return res;
         }
 
         /// <summary>
@@ -178,6 +203,23 @@ namespace Convivia.Application.Services
                 "Moderador" => TipoRol.Moderador,
                 _ => TipoRol.Usuario
             };
+        }
+
+        private static void ApplyPermisosToRol(Rol rol, PermisosRolDto permisos)
+        {
+            if (permisos == null || rol == null) return;
+
+            if (permisos.CrearTarea.HasValue) rol.CrearTarea = permisos.CrearTarea.Value;
+            if (permisos.EliminarTarea.HasValue) rol.EliminarTarea = permisos.EliminarTarea.Value;
+            if (permisos.EditarTarea.HasValue) rol.EditarTarea = permisos.EditarTarea.Value;
+            if (permisos.AsignarTarea.HasValue) rol.AsignarTarea = permisos.AsignarTarea.Value;
+            if (permisos.AsignarseTarea.HasValue) rol.AsignarseTarea = permisos.AsignarseTarea.Value;
+
+            // Permisos de usuarios: DTO usa AgregarUsuario, dominio usa AñadirUsuario
+            if (permisos.AgregarUsuario.HasValue) rol.AñadirUsuario = permisos.AgregarUsuario.Value;
+            if (permisos.EliminarUsuario.HasValue) rol.EliminarUsuario = permisos.EliminarUsuario.Value;
+
+            if (permisos.EliminarResidencia.HasValue) rol.EliminarResidencia = permisos.EliminarResidencia.Value;
         }
     }
 }

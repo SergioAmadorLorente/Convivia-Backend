@@ -19,8 +19,21 @@ namespace Convivia.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUsuarioEspacioDto model, CancellationToken ct)
         {
-            var created = await _service.CrearUsuarioEspacioAsync(model, ct);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                var created = await _service.CrearUsuarioEspacioAsync(model, ct);
+                if (created == null)
+                    return BadRequest("No se pudo crear el UsuarioEspacio.");
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Error interno del servidor.");
+            }
         }
 
         // GET api/usuarioEspacio/{id}

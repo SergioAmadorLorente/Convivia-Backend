@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Convivia.Application.Services;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Convivia.API.Controllers
 {
@@ -90,16 +91,9 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            try
-            {
-                var result = await _service.EliminarEspacioAsync(id, ct);
-                return result ? NoContent() : NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // RESTRICT violation -> 409 Conflict
-                return Conflict(new { message = ex.Message });
-            }
+                var result = await _service.ActualizarEspacioParcialAsync(id, model, ct);
+            if (result == null) NotFound();
+            return Ok(result);
         }
 
         // DELETE api/espacio/{id}

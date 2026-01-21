@@ -128,6 +128,8 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var existent = await _facturaRepository.GetByIdAsync(id, ct);
+            if (existent == null) return null;
 
             var updates = ObtenerActualizacionesDesdeDto(dto);
             if (updates.Count == 0)
