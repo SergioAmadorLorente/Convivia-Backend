@@ -91,8 +91,6 @@ namespace Convivia.API.Controllers
         /// <param name="espacioId">ID del espacio</param>
         /// <param name="deudorId">ID del usuario deudor (UsuarioEspacioId)</param>
         [HttpGet("deudor/{deudorId}")]
-        [ProducesResponseType(typeof(List<FacturaDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetByDeudor(string espacioId, string deudorId, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(espacioId)) return BadRequest("EspacioId es requerido.");
@@ -127,7 +125,6 @@ namespace Convivia.API.Controllers
         /// <param name="espacioId">ID del espacio</param>
         /// <param name="id">ID de la factura a actualizar</param>
         /// <param name="model">Campos a actualizar (solo los enviados se modifican)</param>
-        /// <returns>La factura actualizada</returns>
         [HttpPut("{id}/merge")]
         public async Task<IActionResult> PutMerge(string espacioId, string id, [FromBody] UpdateFacturaDto model, CancellationToken ct)
         {
