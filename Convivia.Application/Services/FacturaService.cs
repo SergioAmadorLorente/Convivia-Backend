@@ -83,6 +83,8 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var existing = await _facturaRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
 
             // Mapear DTO -> Domain (nuevo objeto completo)
             var domain = _mapper.Map<Factura>(dto);

@@ -119,6 +119,8 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var espacioexistente = await _espacioRepository.GetByIdAsync(id, ct);
+            if (espacioexistente == null) return null;
 
             // Mapear DTO -> Domain (suponiendo que tienes la entidad Espacio)
             var domain = _mapper.Map<Espacio>(dto);

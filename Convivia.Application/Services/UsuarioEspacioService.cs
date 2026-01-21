@@ -41,7 +41,7 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId no puede estar vacío", nameof(dto.EspacioId));
             if (string.IsNullOrWhiteSpace(dto.UsuarioId)) throw new ArgumentException("UsuarioId no puede estar vacío", nameof(dto.UsuarioId));
             if (dto.TareasId == null) throw new ArgumentException("TareasId no puede ser nulo", nameof(dto.TareasId));
-            //if (string.IsNullOrWhiteSpace(dto.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacío", nameof(dto.PermisoId));
+            if (string.IsNullOrWhiteSpace(dto.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacío", nameof(dto.PermisoId));
 
 
             // DTO -> Domain
@@ -101,6 +101,8 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var existing = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
 
             // Mapear DTO -> Domain (nuevo objeto completo)
             var domain = _mapper.Map<UsuarioEspacio>(dto);

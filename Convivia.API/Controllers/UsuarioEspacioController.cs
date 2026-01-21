@@ -19,15 +19,6 @@ namespace Convivia.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUsuarioEspacioDto model, CancellationToken ct)
         {
-            if (model == null) return BadRequest();
-            if (model.Ausente == null) throw new ArgumentNullException(nameof(model.Ausente));
-            if (model.Karma < 0) throw new ArgumentOutOfRangeException(nameof(model.Karma), "Karma no puede ser negativo");
-            if (string.IsNullOrWhiteSpace(model.Rol)) throw new ArgumentException("Rol no puede estar vacío", nameof(model.Rol));
-            if (string.IsNullOrWhiteSpace(model.EspacioId)) throw new ArgumentException("EspacioId no puede estar vacío", nameof(model.EspacioId));
-            if (string.IsNullOrWhiteSpace(model.UsuarioId)) throw new ArgumentException("UsuarioId no puede estar vacío", nameof(model.UsuarioId));
-            if (model.TareasId == null) throw new ArgumentNullException(nameof(model.TareasId));
-            if (string.IsNullOrWhiteSpace(model.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacío", nameof(model.PermisoId));
-
             var created = await _service.CrearUsuarioEspacioAsync(model, ct);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
