@@ -384,6 +384,9 @@ namespace Convivia.Application.Services
                     if (tarea == null) continue;
 
                     // Actualizar a overdue si es necesario antes de filtrar
+                    if (!IsOverdue(tarea, pt))
+                        tarea.Estado = TareaEstado.Pendiente;
+
                     await UpdateToOverdueIfNeededAsync(tarea, pt);
 
                     if (diaSemana.HasValue && tarea.DiaSemana != diaSemana) continue;
