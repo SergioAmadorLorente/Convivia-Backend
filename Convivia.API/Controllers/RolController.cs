@@ -6,6 +6,10 @@ using Convivia.Application.Services;
 
 namespace Convivia.API.Controllers
 {
+    /// <summary>
+    /// Controlador para la gestión de roles del sistema.
+    /// Define los diferentes tipos de roles disponibles: Usuario, Admin y Moderador.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class RolController : ControllerBase
@@ -17,7 +21,12 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        // POST api/rol
+        /// <summary>
+        /// Crea un nuevo rol.
+        /// </summary>
+        /// <param name="model">Datos del rol a crear</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <remarks>Este endpoint está oculto de la documentación de la API</remarks>
         [HttpPost]
         [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> Create([FromBody] CreateRolDto model, CancellationToken ct)
@@ -35,7 +44,12 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // GET api/rol/{id}
+        /// <summary>
+        /// Obtiene un rol específico por su ID.
+        /// </summary>
+        /// <param name="id">ID del rol</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <remarks>Este endpoint está oculto de la documentación de la API</remarks>
         [HttpGet("{id}")]
         [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
@@ -47,7 +61,10 @@ namespace Convivia.API.Controllers
             return Ok(rol);
         }
 
-        // GET api/rol
+        /// <summary>
+        /// Obtiene todos los roles disponibles en el sistema.
+        /// </summary>
+        /// <param name="ct">Token de cancelación</param>
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
@@ -55,7 +72,16 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // GET api/rol/nombres-validos
+        /// <summary>
+        /// Obtiene los nombres válidos de roles disponibles con sus descripciones.
+        /// </summary>
+        /// <returns>Nombres de roles y sus descripciones detalladas</returns>
+        /// <remarks>
+        /// Los roles disponibles son:
+        /// - Usuario: Puede crear y editar tareas, y asignarse tareas
+        /// - Admin: Tiene todos los permisos disponibles
+        /// - Moderador: Puede crear, editar y eliminar tareas, asignar tareas y gestionar usuarios
+        /// </remarks>
         [HttpGet("nombres-validos")]
         public IActionResult GetNombresValidos()
         {
@@ -71,7 +97,13 @@ namespace Convivia.API.Controllers
             });
         }
 
-        // PUT api/rol/{id}
+        /// <summary>
+        /// Actualiza un rol existente.
+        /// </summary>
+        /// <param name="id">ID del rol a actualizar</param>
+        /// <param name="model">Nuevos datos del rol</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <remarks>Este endpoint está oculto de la documentación de la API</remarks>
         [HttpPut("{id}")]
         [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateRolDto model, CancellationToken ct)
@@ -95,7 +127,12 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // DELETE api/rol/{id}
+        /// <summary>
+        /// Elimina un rol del sistema.
+        /// </summary>
+        /// <param name="id">ID del rol a eliminar</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Sin contenido si se eliminó correctamente, o error de conflicto si hay restricciones</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {

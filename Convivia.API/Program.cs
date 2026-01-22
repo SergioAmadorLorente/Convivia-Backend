@@ -40,6 +40,10 @@ builder.Services.AddSwaggerGen(c =>
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
+    // Habilitar comentarios XML del proyecto DTOs
+    var sharedXmlPath = Path.Combine(AppContext.BaseDirectory, "Convivia.Shared.xml");
+    if (File.Exists(sharedXmlPath))
+        c.IncludeXmlComments(sharedXmlPath);
 });
 
 // Necesario para acceder a HttpContext desde servicios (CorrelationProvider, etc.)
