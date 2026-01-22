@@ -1,5 +1,6 @@
-Ôªøusing System;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,9 +12,6 @@ using Convivia.Application.Repositories;
 
 namespace Convivia.Application.Services
 {
-    /// <summary>
-    /// Servicio de aplicaci√≥n que orquesta la l√≥gica de facturas usando IFacturaRepository.
-    /// </summary>
     public class FacturaService
     {
         private readonly IFacturaRepository _facturaRepository;
@@ -27,26 +25,21 @@ namespace Convivia.Application.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        /// <summary>
-        /// Crea una factura y devuelve la factura persistida (con Id y metadatos).
-        /// </summary>
-        public async Task<FacturaDto> CrearFacturaAsync(CreateFacturaDto dto, CancellationToken ct = default)
+        public async Task<FacturaDto> CrearFacturaAsync(string espacioId, CreateFacturaDto dto, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre no puede estar vac√≠o", nameof(dto.Nombre));
+            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre no puede estar vacÌo", nameof(dto.Nombre));
             if (dto.Precio < 0) throw new ArgumentException("Precio no puede ser negativo", nameof(dto.Precio));
-
-            // DTO -> Domain
+            if (dto.Deudores == null || dto.Deudores.Count == 0)
+                throw new ArgumentException("Debe haber al menos un deudor en la factura", nameof(dto.Deudores));
+            if (dto.PagoMediano == null) dto.PagoMediano = (float) dto.Precio / dto.Deudores.Count;
             var facturaDomain = _mapper.Map<Factura>(dto);
+            var id = await _facturaRepository.AddAsync(espacioId, facturaDomain, ct);
 
-            // Persistir y obtener id           
-            var id = await _facturaRepository.AddAsync(facturaDomain, ct);
-
-            // Recuperar entidad guardada y devolver DTO consistente
-            var createdDomain = await _facturaRepository.GetByIdAsync(id, ct);
+            var createdDomain = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
             if (createdDomain == null)
             {
-                // devolver DTO m√≠nimo con id para evitar fallos en rutas
                 return new FacturaDto { Id = id };
             }
 
@@ -54,108 +47,205 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(createdDto.Id))
                 createdDto.Id = id;
 
+            createdDto.TieneImagen = createdDomain.DocumentoImagen != null && createdDomain.DocumentoImagen.Length > 0;
             return createdDto;
         }
 
         /// <summary>
         /// Obtiene una factura por id.
         /// </summary>
-        public async Task<FacturaDto?> ObtenerFacturaAsync(string id, CancellationToken ct = default)
+        public async Task<FacturaDto?> ObtenerFacturaAsync(string espacioId, string id, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            var domain = await _facturaRepository.GetByIdAsync(id, ct);
-            return domain == null ? null : _mapper.Map<FacturaDto>(domain);
+            
+            var domain = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
+            if (domain == null) return null;
+            
+            var dto = _mapper.Map<FacturaDto>(domain);
+            dto.TieneImagen = domain.DocumentoImagen != null && domain.DocumentoImagen.Length > 0;
+            return dto;
         }
 
         /// <summary>
-        /// Lista todas las facturas.
+        /// Lista todas las facturas de un espacio.
         /// </summary>
-        public async Task<List<FacturaDto>> ListarTodasAsync(CancellationToken ct = default)
+        public async Task<List<FacturaDto>> ListarTodasAsync(string espacioId, CancellationToken ct = default)
         {
-            var list = await _facturaRepository.GetAllAsync(ct);
-            return list?.Select(f => _mapper.Map<FacturaDto>(f)).ToList() ?? new List<FacturaDto>();
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            
+            var list = await _facturaRepository.GetAllAsync(espacioId, ct);
+            var dtos = list?.Select(f =>
+            {
+                var dto = _mapper.Map<FacturaDto>(f);
+                dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
+                return dto;
+            }).ToList() ?? new List<FacturaDto>();
+            
+            return dtos;
+        }
+
+        /// <summary>
+        /// Lista todas las facturas de un espacio creadas por un usuario especÌfico.
+        /// </summary>
+        public async Task<List<FacturaDto>> ListarPorCreadorAsync(string espacioId, string creadorId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(creadorId)) throw new ArgumentNullException(nameof(creadorId));
+
+            var list = await _facturaRepository.GetByCreadorAsync(espacioId, creadorId, ct);
+            var dtos = list?.Select(f =>
+            {
+                var dto = _mapper.Map<FacturaDto>(f);
+                dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
+                return dto;
+            }).ToList() ?? new List<FacturaDto>();
+
+            return dtos;
+        }
+
+        /// <summary>
+        /// Lista todas las facturas de un espacio donde un usuario es deudor.
+        /// </summary>
+        public async Task<List<FacturaDto>> ListarPorDeudorAsync(string espacioId, string deudorId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(deudorId)) throw new ArgumentNullException(nameof(deudorId));
+
+            var facturasDeudor = await _facturaRepository.GetByDeudorAsync(espacioId, deudorId, ct);
+            var dtos = facturasDeudor?.Select(f =>
+            {
+                var dto = _mapper.Map<FacturaDto>(f);
+                dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
+                return dto;
+            }).ToList() ?? new List<FacturaDto>();
+
+            return dtos;
         }
 
         /// <summary>
         /// Overwrite completo: reemplaza todo el documento en Firestore.
         /// </summary>
-        public async Task<FacturaDto?> ActualizarFacturaCompletaAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
+        public async Task<FacturaDto?> ActualizarFacturaCompletaAsync(string espacioId, string id, UpdateFacturaDto dto, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            // Mapear DTO -> Domain (nuevo objeto completo)
             var domain = _mapper.Map<Factura>(dto);
-
-            // Asegurar que el Id de dominio coincide con el id pasado
             domain.Id = id;
 
-            // Persistir como overwrite (merge = false)
-            await _facturaRepository.UpdateAsync(id, domain, merge: false, ct);
+            await _facturaRepository.UpdateAsync(espacioId, id, domain, merge: false, ct);
 
-            var updated = await _facturaRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<FacturaDto>(updated);
+            var updated = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
+            if (updated == null) return null;
+            
+            var resultDto = _mapper.Map<FacturaDto>(updated);
+            resultDto.TieneImagen = updated.DocumentoImagen != null && updated.DocumentoImagen.Length > 0;
+            return resultDto;
         }
 
         /// <summary>
         /// Merge: fusiona los campos del objeto con los del documento existente (SetOptions.MergeAll).
         /// </summary>
-        public async Task<FacturaDto?> ActualizarFacturaMergeAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
+        public async Task<FacturaDto?> ActualizarFacturaMergeAsync(string espacioId, string id, UpdateFacturaDto dto, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var existing = await _facturaRepository.GetByIdAsync(id, ct);
+            var existing = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
             if (existing == null) return null;
 
-            // Mapear DTO sobre la entidad existente (Mapster configurado para IgnoreNullValues)
             _mapper.Map(dto, existing);
 
-            // Persistir con merge para evitar sobrescribir campos no mapeados
-            await _facturaRepository.UpdateAsync(id, existing, merge: true, ct);
+            await _facturaRepository.UpdateAsync(espacioId, id, existing, merge: true, ct);
 
-            var updated = await _facturaRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<FacturaDto>(updated);
+            var updated = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
+            if (updated == null) return null;
+            
+            var resultDto = _mapper.Map<FacturaDto>(updated);
+            resultDto.TieneImagen = updated.DocumentoImagen != null && updated.DocumentoImagen.Length > 0;
+            return resultDto;
         }
 
         /// <summary>
         /// Parcial / PATCH: construye un diccionario con solo las propiedades no nulas del DTO
         /// y llama a la sobrecarga del repositorio que acepta IDictionary (update parcial).
         /// </summary>
-        public async Task<FacturaDto?> ActualizarFacturaParcialAsync(string id, UpdateFacturaDto dto, CancellationToken ct = default)
+        public async Task<FacturaDto?> ActualizarFacturaParcialAsync(string espacioId, string id, UpdateFacturaDto dto, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             var updates = ObtenerActualizacionesDesdeDto(dto);
             if (updates.Count == 0)
             {
-                // Nada que actualizar: devolver la entidad actual
-                var current = await _facturaRepository.GetByIdAsync(id, ct);
-                return current == null ? null : _mapper.Map<FacturaDto>(current);
+                var current = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
+                if (current == null) return null;
+                
+                var currentDto = _mapper.Map<FacturaDto>(current);
+                currentDto.TieneImagen = current.DocumentoImagen != null && current.DocumentoImagen.Length > 0;
+                return currentDto;
             }
 
-            // useSetMerge: false -> UpdateAsync estricto (fallar√° si no existe)
-            await _facturaRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
+            await _facturaRepository.UpdateAsync(espacioId, id, updates, useSetMerge: false, ct);
 
-            var updated = await _facturaRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<FacturaDto>(updated);
+            var updated = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
+            if (updated == null) return null;
+            
+            var resultDto = _mapper.Map<FacturaDto>(updated);
+            resultDto.TieneImagen = updated.DocumentoImagen != null && updated.DocumentoImagen.Length > 0;
+            return resultDto;
         }
 
+        public async Task<bool> EliminarFacturaAsync(string espacioId, string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
 
+            var existing = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
+            if (existing == null) return false;
 
+            await _facturaRepository.DeleteAsync(espacioId, id, ct);
+            return true;
+        }
+
+        // MÈtodos para gestiÛn de im·genes
+        public async Task<byte[]?> ObtenerImagenAsync(string espacioId, string id, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+
+            return await _facturaRepository.GetImagenAsync(espacioId, id, ct);
+        }
+
+        public async Task<bool> ActualizarImagenAsync(string espacioId, string id, byte[] imagen, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
+            if (imagen == null || imagen.Length == 0) throw new ArgumentException("Imagen no puede estar vacÌa", nameof(imagen));
+
+            var existing = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
+            if (existing == null) return false;
+
+            await _facturaRepository.UpdateImagenAsync(espacioId, id, imagen, ct);
+            return true;
+        }
 
         /// <summary>
         /// Elimina una factura.
         /// </summary>
-        public async Task<bool> EliminarFacturaAsync(string id, CancellationToken ct = default)
+        public async Task<bool> EliminarImagenAsync(string espacioId, string id, CancellationToken ct = default)
         {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
 
-            var existing = await _facturaRepository.GetByIdAsync(id, ct);
+            var existing = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
             if (existing == null) return false;
 
-            await _facturaRepository.DeleteAsync(id, ct);
+            await _facturaRepository.DeleteImagenAsync(espacioId, id, ct);
             return true;
         }
 
@@ -163,22 +253,22 @@ namespace Convivia.Application.Services
         /// Mapeo manual para PATCH y actualizaciones parciales.
         /// 
         /// Razonamiento(para que MARC SASTRE no me mate xD):
-        /// - PATCH debe enviar √∫nicamente los campos que cambian; Mapster por s√≠ solo puede generar objetos
-        ///   con valores por defecto o nulls que provocar√≠an sobrescrituras no deseadas en Firestore.
-        /// - Aqu√≠ construimos expl√≠citamente un IDictionary<string, object> con las claves exactas de Firestore
-        ///   y solo a√±adimos propiedades no nulas/validadas, evitando borrar datos accidentalmente.
+        /// - PATCH debe enviar ˙nicamente los campos que cambian; Mapster por sÌ solo puede generar objetos
+        ///   con valores por defecto o nulls que provocarÌan sobrescrituras no deseadas en Firestore.
+        /// - AquÌ construimos explÌcitamente un IDictionary<string, object> con las claves exactas de Firestore
+        ///   y solo aÒadimos propiedades no nulas/validadas, evitando borrar datos accidentalmente.
         /// - Usamos Mapster para operaciones FULL o MERGE (cuando mapeamos DTO sobre la entidad existente
-        ///   con IgnoreNullValues), pero para PATCH preferimos este enfoque expl√≠cito por seguridad, control
+        ///   con IgnoreNullValues), pero para PATCH preferimos este enfoque explÌcito por seguridad, control
         ///   de nombres de campo, y eficiencia (no requiere leer/escribir todo el documento).
         /// 
-        /// Instrucciones para compa√±eros:
-        /// - Si necesit√°is a√±adir un campo nuevo, actualizar tambi√©n la clave usada en este diccionario.
-        /// - Validar y filtrar aqu√≠ cualquier campo sensible (p. ej. FechaCreacion, campos de auditor√≠a).
-        /// - Si prefer√≠s automatizar, pod√©is adaptar el patr√≥n semi-autom√°tico (Adapt + filtrar nulos),
+        /// Instrucciones para compaÒeros:
+        /// - Si necesit·is aÒadir un campo nuevo, actualizar tambiÈn la clave usada en este diccionario.
+        /// - Validar y filtrar aquÌ cualquier campo sensible (p. ej. FechaCreacion, campos de auditorÌa).
+        /// - Si preferÌs automatizar, podÈis adaptar el patrÛn semi-autom·tico (Adapt + filtrar nulos),
         ///   pero revisad cuidadosamente nombres y conversiones antes de enviar a Firestore.
         ///   
-        /// Desarrollar√© asi todos los services con un helper manual, me parece mucho m√°s seguro, se que puede parecer ineficiente, 
-        /// pero al tenner controlados las entidadaes que existen y al tener acceso a la bd nosotros, de esta manera es mejor y m√°s seguro
+        /// DesarrollarÈ asi todos los services con un helper manual, me parece mucho m·s seguro, se que puede parecer ineficiente, 
+        /// pero al tenner controlados las entidadaes que existen y al tener acceso a la bd nosotros, de esta manera es mejor y m·s seguro
         /// </summary>
         private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateFacturaDto dto)
         {
@@ -186,10 +276,10 @@ namespace Convivia.Application.Services
 
             if (dto.Nombre != null) updates["Nombre"] = dto.Nombre;
             if (dto.Precio.HasValue) updates["Precio"] = dto.Precio.Value;
-            if (dto.Reparto != null && dto.Reparto.Count > 0) updates["Reparto"] = dto.Reparto;
+            if (dto.PagoMediano.HasValue) updates["PagoMediano"] = dto.PagoMediano.Value;
+            if (dto.Deudores != null && dto.Deudores.Count > 0) updates["Deudores"] = dto.Deudores;
             if (dto.Pagado.HasValue) updates["Pagado"] = dto.Pagado.Value;
-            if (dto.DocumentoUrl != null) updates["DocumentoUrl"] = dto.DocumentoUrl;
-            if (!string.IsNullOrWhiteSpace(dto.TareaId)) updates["TareaId"] = dto.TareaId;
+            if (dto.CreadorFactura != null) updates["CreadorFactura"] = dto.CreadorFactura;
 
             return updates;
         }
