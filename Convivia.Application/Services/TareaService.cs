@@ -50,6 +50,9 @@ namespace Convivia.Application.Services
             if (esPuntual && !dto.FechaLimite.HasValue)
                 throw new ArgumentException("FechaLimite es obligatoria para tareas puntuales.", nameof(dto.FechaLimite));
 
+            if (esPuntual && dto.UsuariosAsignacion != null && dto.UsuariosAsignacion.Count > 1)
+                throw new ArgumentException("Una tarea puntual no puede tener más de un usuario asignado.", nameof(dto.UsuariosAsignacion));
+
             var createPlantilla = _mapper.Map<CreatePlantillaTareaDto>(dto);
             createPlantilla.DiasRepeticion = dto.DiasRepeticion ?? new List<int>();
             createPlantilla.UsuariosAsignacion = dto.UsuariosAsignacion ?? new List<string>();
@@ -235,7 +238,7 @@ namespace Convivia.Application.Services
             // Actualizar a overdue si es necesario antes de procesar cambios de estado
             await UpdateToOverdueIfNeededAsync(existing, domPlantilla);
             
-            ProcessEstadoUpdate(existing, domPlantilla, dto, ct);
+            await ProcessEstadoUpdate(existing, domPlantilla, dto, ct);
 
             var domain = _mapper.Map<Tarea>(dto);
             domain.Id = tareaid;
@@ -476,7 +479,7 @@ namespace Convivia.Application.Services
             }
         }
 
-        private void ProcessEstadoUpdate(Tarea tarea, PlantillaTarea plantilla, UpdateTareaDto dto, CancellationToken ct)
+        private async Task ProcessEstadoUpdate(Tarea tarea, PlantillaTarea plantilla, UpdateTareaDto dto, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(dto.Estado)) return;
 
@@ -495,7 +498,7 @@ namespace Convivia.Application.Services
 
             if (esCompletar && tarea.Estado != TareaEstado.Completada && tarea.Estado != TareaEstado.CompletadaFueradePlazo && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                _ = AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
+                await AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
             }
         }
 

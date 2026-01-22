@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace Convivia.Application.Services
 {
-    public class UsuarioEspacioService
+    public class UsuarioEspacioService : IUsuarioEspacioService
     {
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
         private readonly IMapper _mapper;

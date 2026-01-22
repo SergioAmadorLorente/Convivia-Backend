@@ -1,7 +1,10 @@
 ﻿using Mapster;
-using Convivia.Infrastructure.Models; 
+using Convivia.Infrastructure.Models;
 using Convivia.Domain.Entities;
 using Convivia.Shared.Contracts;
+using System;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Convivia.Infrastructure.Mappers
 {
@@ -28,7 +31,7 @@ namespace Convivia.Infrastructure.Mappers
             // Peticion
             config.NewConfig<FireStorePeticion, Peticion>();
             config.NewConfig<Peticion, FireStorePeticion>();
-            
+
             // PlantillaTarea
             config.NewConfig<FirestorePlantillaTarea, PlantillaTarea>();
             config.NewConfig<PlantillaTarea, FirestorePlantillaTarea>();
@@ -54,9 +57,13 @@ namespace Convivia.Infrastructure.Mappers
 
             // ErrorRecord persistence mapping (DTO <-> Firestore model)
             config.NewConfig<FireStoreErrorRecord, ErrorRecordDto>();
-            config.NewConfig<ErrorRecordDto, FireStoreErrorRecord>() 
-                .Map(dest => dest.CorrelationId, src => src.CorrelationId ?? string.Empty) 
-                .Map(dest => dest.TimestampUtc, src => src.TimestampUtc == default ? DateTime.UtcNow : src.TimestampUtc);
+            config.NewConfig<ErrorRecordDto, FireStoreErrorRecord>()
+                .Map(dest => dest.CorrelationId, src => src.CorrelationId ?? string.Empty)
+                .Map(dest => dest.TimestampUtc, src => src.TimestampUtc == default ? DateTime.UtcNow : src.TimestampUtc)
+                // Convertir ValidationErrors (IReadOnlyDictionary) a Dictionary para Firestore
+                .Map(dest => dest.ValidationErrors, src => src.ValidationErrors == null ? null : src.ValidationErrors.ToDictionary(kv => kv.Key, kv => kv.Value))
+                .Map(dest => dest.Entity, src => src.Entity)
+                .Map(dest => dest.Key, src => src.Key);
         }
 
     }

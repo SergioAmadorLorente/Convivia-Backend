@@ -32,8 +32,14 @@ namespace Convivia.API.Controllers
             var created = await _service.CrearInvitacionAsync(model, ct);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
+
         [HttpGet("throw")]
-        public IActionResult Throw() => throw new Exception("test-exception");
+        public IActionResult Throw()
+        {
+            // Añade un log para confirmar ejecución
+            Console.WriteLine("InvitacionesController.Throw invoked");
+            throw new Exception("test-exception");
+        }
 
 
         // GET api/invitaciones/{id}

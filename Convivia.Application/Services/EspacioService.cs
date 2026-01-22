@@ -30,7 +30,7 @@ namespace Convivia.Application.Services
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
         private readonly ILogger<EspacioService> _logger;
         private readonly IMemoryCache _cache;
-        private readonly UsuarioEspacioService _usuarioEspacioService;
+        private readonly IUsuarioEspacioService _usuarioEspacioService;
         private readonly IUsuarioRepository _usuarioRepo;
 
         public EspacioService(
@@ -40,7 +40,7 @@ namespace Convivia.Application.Services
             IEspacioRepository espacioRepository, 
             IMapper mapper,
             IUsuarioRepository usuarioRepo,IMemoryCache cache, 
-            UsuarioEspacioService usuarioEspacioService
+            IUsuarioEspacioService usuarioEspacioService
         )
         {
             _espacioRepository = espacioRepository ?? throw new ArgumentNullException(nameof(espacioRepository));
