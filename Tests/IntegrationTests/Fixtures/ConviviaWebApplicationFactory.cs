@@ -41,7 +41,7 @@ namespace Convivia.Tests.IntegrationTests.Fixtures
                 services.AddSingleton(provider =>
                 {
                     var config = provider.GetRequiredService<IConfiguration>();
-                    var projectId = config["Firebase:ProjectId"] ?? "convivia-testing";
+                    var projectId = config["Firebase:ProjectId"] ?? "convivia-862f2";
                     return FirestoreDb.Create(projectId);
                 });
 

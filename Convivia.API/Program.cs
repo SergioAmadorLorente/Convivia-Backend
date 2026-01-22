@@ -2,6 +2,7 @@ using Convivia.API.Controllers;
 using Convivia.API.Middleware;
 using Convivia.Application.Extensions;
 using Convivia.Application.Mappers;
+using Convivia.Application.Services;
 using Convivia.Infrastructure.Extensions;
 using Convivia.Infrastructure.Infraestructure;
 using Convivia.Infrastructure.Repositories;
@@ -12,7 +13,7 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// logging, Firebase init y FirestoreDb singleton (tu cÃ³digo actual)
+// logging, Firebase init y FirestoreDb singleton (tu código actual)
 builder.Logging.ClearProviders().AddConsole().AddDebug();
 FirebaseConfig.InitializeFirebase();
 
@@ -31,12 +32,13 @@ builder.Services.AddMemoryCache();
 builder.Services.AddMapster();
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddSingleton<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>();
+
+// Registrar capas (una sola vez)
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Registrar capas (antes de Build)
-builder.Services.AddApplicationServices();               // registra InvitacionService, mappers, etc.
-builder.Services.AddInfrastructure(builder.Configuration); // registra IInvitacionRepository, IFirebaseService, FirebaseService, etc.
+// Registrar servicios que faltaban explícitamente (asegura que la implementación exista)
+builder.Services.AddScoped<IUsuarioEspacioService, UsuarioEspacioService>();
 
 // Controllers y Swagger - DO NOT add JsonStringEnumConverter here so enums are serialized as numbers (defaults)
 builder.Services.AddControllers();
@@ -62,7 +64,7 @@ app.UseCorrelationId(); // 1. CorrelationId
 app.UseMiddleware<ExceptionHandlingMiddleware>(); // 2. Exception handling middleware
 
 //app.MapSalaEndpoints();
-// app.MapInvitacionEndpoints(); // descomenta cuando estÃ© listo
+// app.MapInvitacionEndpoints(); // descomenta cuando esté listo
 
 app.Run();
 
