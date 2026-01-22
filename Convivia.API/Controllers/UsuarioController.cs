@@ -121,7 +121,7 @@ namespace Convivia.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(id) || model == null) return BadRequest();
 
-            var updated = await _service.ActualizarUsuarioCompletoAsync(id, model, ct);
+            var updated = await _service.ActualizarUsuarioParcialAsync(id, model, ct);
             if (updated == null) return NotFound();
             return Ok(updated);
         }
@@ -139,7 +139,6 @@ namespace Convivia.API.Controllers
             var resultat = await _service.EliminarUsuarioAsync(id, ct);
             return resultat ? NoContent() : NotFound();
         }
-
 
     }
 }

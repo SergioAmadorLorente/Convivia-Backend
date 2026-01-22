@@ -1,4 +1,4 @@
-using FirebaseAdmin;
+ï»¿using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using System;
 using System.IO;
@@ -11,14 +11,14 @@ namespace Convivia.Infrastructure.Infraestructure
     {
         /// <summary>
         /// Inicializa la instancia de FirebaseApp si no existe.
-        /// También establece GOOGLE_APPLICATION_CREDENTIALS para ADC cuando aplica.
+        /// Tambiï¿½n establece GOOGLE_APPLICATION_CREDENTIALS para ADC cuando aplica.
         /// Soporta: archivo en disco, variable FIREBASE_CREDENTIALS_JSON, o ADC.
         /// </summary>
         public static void InitializeFirebase()
         {
             if (FirebaseApp.DefaultInstance != null)
             {
-                Console.WriteLine("[FirebaseConfig] FirebaseApp ya está inicializado. Omitiendo.");
+                Console.WriteLine("[FirebaseConfig] FirebaseApp ya estï¿½ inicializado. Omitiendo.");
                 return;
             }
 
@@ -37,7 +37,7 @@ namespace Convivia.Infrastructure.Infraestructure
                 {
                     Console.WriteLine($"[FirebaseConfig] Archivo encontrado. Validando contenido...");
                     var fileJson = File.ReadAllText(credPath);
-                    // Mostrar primeros caracteres para verificar que se está leyendo correctamente
+                    // Mostrar primeros caracteres para verificar que se estï¿½ leyendo correctamente
                     Console.WriteLine($"[FirebaseConfig] Primeros 100 caracteres del archivo: {fileJson.Substring(0, Math.Min(100, fileJson.Length))}");
                     using var doc = JsonDocument.Parse(fileJson);
                     var root = doc.RootElement;
@@ -48,9 +48,9 @@ namespace Convivia.Infrastructure.Infraestructure
                     if (hasPk && hasCe)
                     {
                         credential = GoogleCredential.FromFile(credPath);
-                        // Establecer variable para ADC en el proceso (opcional pero útil)
+                        // Establecer variable para ADC en el proceso (opcional pero ï¿½til)
                         Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credPath, EnvironmentVariableTarget.Process);
-                        Console.WriteLine("[FirebaseConfig] Credenciales válidas encontradas en archivo. GOOGLE_APPLICATION_CREDENTIALS establecido.");
+                        Console.WriteLine("[FirebaseConfig] Credenciales vï¿½lidas encontradas en archivo. GOOGLE_APPLICATION_CREDENTIALS establecido.");
                     }
                     else
                     {
@@ -59,7 +59,7 @@ namespace Convivia.Infrastructure.Infraestructure
                 }
                 else
                 {
-                    Console.WriteLine($"[FirebaseConfig] No se encontró el archivo en ruta esperada: {credPath}");
+                    Console.WriteLine($"[FirebaseConfig] No se encontrï¿½ el archivo en ruta esperada: {credPath}");
                 }
 
                 // 3. Si no obtuvimos credencial del archivo, probar variable de entorno con JSON completo
@@ -78,21 +78,21 @@ namespace Convivia.Infrastructure.Infraestructure
                             if (hasPk2 && hasCe2)
                             {
                                 credential = GoogleCredential.FromJson(envJson);
-                                Console.WriteLine("[FirebaseConfig] Credenciales válidas obtenidas desde FIREBASE_CREDENTIALS_JSON.");
+                                Console.WriteLine("[FirebaseConfig] Credenciales vï¿½lidas obtenidas desde FIREBASE_CREDENTIALS_JSON.");
                             }
                             else
                             {
-                                Console.WriteLine("[FirebaseConfig] FIREBASE_CREDENTIALS_JSON está presente pero no contiene private_key/client_email.");
+                                Console.WriteLine("[FirebaseConfig] FIREBASE_CREDENTIALS_JSON estï¿½ presente pero no contiene private_key/client_email.");
                             }
                         }
                         catch (JsonException je)
                         {
-                            Console.WriteLine($"[FirebaseConfig] FIREBASE_CREDENTIALS_JSON no es JSON válido: {je.Message}");
+                            Console.WriteLine($"[FirebaseConfig] FIREBASE_CREDENTIALS_JSON no es JSON vï¿½lido: {je.Message}");
                         }
                     }
                 }
 
-                // 4. Si todavía no hay credencial, intentar ADC (p. ej. en GCP, Cloud Run, etc.)
+                // 4. Si todavï¿½a no hay credencial, intentar ADC (p. ej. en GCP, Cloud Run, etc.)
                 if (credential == null)
                 {
                     try
@@ -102,19 +102,19 @@ namespace Convivia.Infrastructure.Infraestructure
                     }
                     catch (Exception)
                     {
-                        // No hacemos nada aquí: entraremos a la comprobación final y lanzaremos error informativo.
+                        // No hacemos nada aquï¿½: entraremos a la comprobaciï¿½n final y lanzaremos error informativo.
                         credential = null;
                     }
                 }
 
-                // 5. Si no hay credencial válida, lanzar con instrucción clara
+                // 5. Si no hay credencial vï¿½lida, lanzar con instrucciï¿½n clara
                 if (credential == null)
                 {
                     throw new InvalidOperationException(
-                        "No se encontraron credenciales válidas para Firebase. Suministra un Service Account completo. " +
-                        "Opciones válidas:\n" +
+                        "No se encontraron credenciales vï¿½lidas para Firebase. Suministra un Service Account completo. " +
+                        "Opciones vï¿½lidas:\n" +
                         " - Guardar el JSON completo en 'Firebase/serviceAccount.json' (private_key y client_email presentes), o\n" +
-                        " - Establecer la variable de entorno FIREBASE_CREDENTIALS_PATH apuntando a un archivo JSON válido, o\n" +
+                        " - Establecer la variable de entorno FIREBASE_CREDENTIALS_PATH apuntando a un archivo JSON vï¿½lido, o\n" +
                         " - Establecer FIREBASE_CREDENTIALS_JSON con el contenido JSON del Service Account, o\n" +
                         " - Ejecutar en un entorno con ADC configuradas (p. ej. GCP)."
                     );

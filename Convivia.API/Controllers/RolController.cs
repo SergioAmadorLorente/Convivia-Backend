@@ -31,7 +31,7 @@ namespace Convivia.API.Controllers
         [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> Create([FromBody] CreateRolDto model, CancellationToken ct)
         {
-            if (model == null) return BadRequest("El modelo no puede ser nulo.");
+            if (model == null) return BadRequest(new { error = "El modelo no puede ser nulo." });
 
             try
             {
@@ -41,6 +41,10 @@ namespace Convivia.API.Controllers
             catch (ArgumentException ex)
             {
                 return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Error interno del servidor." });
             }
         }
 
@@ -125,6 +129,10 @@ namespace Convivia.API.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Error interno del servidor." });
+            }
         }
 
         /// <summary>
@@ -147,6 +155,10 @@ namespace Convivia.API.Controllers
             catch (InvalidOperationException ex)
             {
                 return Conflict(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Error interno del servidor." });
             }
         }
     }

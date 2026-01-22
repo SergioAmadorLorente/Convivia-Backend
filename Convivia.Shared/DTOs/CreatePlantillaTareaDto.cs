@@ -44,11 +44,6 @@ namespace Convivia.Shared.DTOs
         public string? TimeZoneId { get; set; }
 
         /// <summary>
-        /// ID de factura asociada (opcional).
-        /// </summary>
-        public string? FacturaId { get; set; }
-
-        /// <summary>
         /// ¿Asignar usuarios aleatoriamente a las tareas de esta plantilla?
         /// Solo aplicable si DiasRepeticion.Count > 0 (tarea repetida).
         /// </summary>

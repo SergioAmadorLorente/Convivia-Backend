@@ -93,6 +93,8 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var existing = await _usuarioRepository.GetByIdAsync(id, ct);
+            if (existing == null) return null;
 
             // Mapear DTO -> Domain (nuevo objeto completo)
             var domain = _mapper.Map<Usuario>(dto);
@@ -136,6 +138,8 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var existente = await _usuarioRepository.GetByIdAsync(id, ct);
+            if (existente == null) return null;
 
             var updates = ObtenerActualizacionesDesdeDto(dto);
             if (updates.Count == 0)

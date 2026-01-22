@@ -28,6 +28,19 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (rol == null) throw new ArgumentNullException(nameof(rol));
             var persist = rol.Adapt<FireStoreRol>();
+
+            // Ensure an id exists (Mapster may copy an empty string and overwrite default ctor value)
+            if (string.IsNullOrWhiteSpace(persist.Id))
+            {
+                persist.Id = Guid.NewGuid().ToString("N");
+            }
+
+            // Also ensure domain object has Id set for consistency
+            if (string.IsNullOrWhiteSpace(rol.Id))
+            {
+                rol.Id = persist.Id;
+            }
+
             return await base.AddAsync(persist, persist.Id, ct);
         }
 

@@ -1,9 +1,12 @@
+using Convivia.API.Controllers;
 using Convivia.API.Middleware;
 using Convivia.Application.Extensions;
-using Convivia.Infrastructure.Correlation;
+using Convivia.Application.Mappers;
+using Convivia.Application.Services;
 using Convivia.Infrastructure.Extensions;
 using Convivia.Infrastructure.Infraestructure;
-using Convivia.Shared.Correlation;
+using Convivia.Infrastructure.Repositories;
+using Convivia.Shared.DTOs;
 using Google.Cloud.Firestore;
 using Mapster;
 using Serilog;
@@ -21,10 +24,11 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
+// logging, Firebase init y FirestoreDb singleton (tu cÃ³digo actual)
 // Registrar Serilog en el host
 builder.Host.UseSerilog();
 
-// Servicios y configuraci�n
+// Servicios y configuración
 builder.Logging.ClearProviders().AddConsole().AddDebug();
 FirebaseConfig.InitializeFirebase();
 
@@ -36,15 +40,23 @@ builder.Services.AddSingleton(provider =>
     return FirestoreDb.Create(projectId);
 });
 
+// Registrar MemoryCache
 builder.Services.AddMemoryCache();
+
+// Registrar Mapster antes de los servicios que lo usan
 builder.Services.AddMapster();
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddSingleton<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>();
+
+// Registrar capas (una sola vez)
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+// Registrar servicios que faltaban explÃ­citamente (asegura que la implementaciÃ³n exista)
+builder.Services.AddScoped<IUsuarioEspacioService, UsuarioEspacioService>();
+
+// Controllers y Swagger - DO NOT add JsonStringEnumConverter here so enums are serialized as numbers (defaults)
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -63,7 +75,26 @@ builder.Services.AddScoped<ICorrelationProvider, CorrelationProvider>();
 
 var app = builder.Build();
 
-// Pipeline de middlewares (orden cr�tico)
+// Middleware y mapeo de endpoints
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+// app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+
+//app.MapEspacioEndpoints();
+// Middlewares: orden crÃ­tico
+// 1) CorrelationId debe ejecutarse lo mÃ¡s temprano posible para que el resto del pipeline lo vea.
+// 2) ExceptionHandling debe venir inmediatamente despuÃ©s para capturar y reutilizar el correlation id.
+app.UseCorrelationId(); // 1. CorrelationId
+app.UseMiddleware<ExceptionHandlingMiddleware>(); // 2. Exception handling middleware
+
+//app.MapSalaEndpoints();
+// app.MapInvitacionEndpoints(); // descomenta cuando estÃ© listo
+
+app.Run();
+
+public partial class Program { }
+// Pipeline de middlewares (orden crítico)
 
 // 1) Middleware inline que garantiza CorrelationId desde el inicio y lo empuja al LogContext.
 app.Use(async (context, next) =>
@@ -99,12 +130,12 @@ app.Use(async (context, next) =>
     // Intentar obtener CorrelationId (ya lo puso el middleware anterior)
     var correlationId = context.Items["CorrelationId"]?.ToString() ?? context.TraceIdentifier ?? string.Empty;
 
-    // Datos b�sicos de la petici�n
+    // Datos básicos de la petición
     var method = context.Request?.Method;
     var path = context.Request?.Path.Value;
     var query = context.Request?.QueryString.Value;
 
-    // Log de inicio de petici�n
+    // Log de inicio de petición
     Log.Information("Request starting {Method} {Path}{Query} CorrelationId={CorrelationId} RequestId={RequestId}",
         method, path, query, correlationId, context.TraceIdentifier);
 
@@ -113,7 +144,7 @@ app.Use(async (context, next) =>
         await next();
         sw.Stop();
 
-        // Log de respuesta (�xito)
+        // Log de respuesta (éxito)
         Log.Information("Request finished {Method} {Path}{Query} responded {StatusCode} in {Elapsed:0.0000} ms CorrelationId={CorrelationId} RequestId={RequestId}",
             method, path, query, context.Response?.StatusCode, sw.Elapsed.TotalMilliseconds, correlationId, context.TraceIdentifier);
     }
@@ -121,7 +152,7 @@ app.Use(async (context, next) =>
     {
         sw.Stop();
 
-        // Log de excepci�n (ya lo captura tu ExceptionHandlingMiddleware, pero lo dejamos por seguridad)
+        // Log de excepción (ya lo captura tu ExceptionHandlingMiddleware, pero lo dejamos por seguridad)
         Log.Error(ex, "Request error {Method} {Path}{Query} after {Elapsed:0.0000} ms CorrelationId={CorrelationId} RequestId={RequestId}",
             method, path, query, sw.Elapsed.TotalMilliseconds, correlationId, context.TraceIdentifier);
 
@@ -131,7 +162,7 @@ app.Use(async (context, next) =>
 
 
 
-// 3) Middleware de manejo de excepciones (debe venir despu�s para poder leer el CorrelationId)
+// 3) Middleware de manejo de excepciones (debe venir después para poder leer el CorrelationId)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // 4) Routing y auth
