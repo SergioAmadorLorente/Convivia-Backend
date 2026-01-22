@@ -131,7 +131,7 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            var existing = await _facturaRepository.GetByIdAsync(id, ct);
+            var existing = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
             if (existing == null) return null;
 
             var domain = _mapper.Map<Factura>(dto);
@@ -180,7 +180,7 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            var existent = await _facturaRepository.GetByIdAsync(id, ct);
+            var existent = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
             if (existent == null) return null;
 
             var updates = ObtenerActualizacionesDesdeDto(dto);
