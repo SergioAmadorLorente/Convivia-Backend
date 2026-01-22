@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Convivia.Infrastructure.Correlation
+namespace Convivia.Shared.Correlation
 {
     public interface ICorrelationProvider
     {
