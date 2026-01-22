@@ -1,4 +1,5 @@
 using Convivia.API.Controllers;
+using Convivia.API.Middleware;
 using Convivia.Application.Extensions;
 using Convivia.Application.Mappers;
 using Convivia.Infrastructure.Extensions;
