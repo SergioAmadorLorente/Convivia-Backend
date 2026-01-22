@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Serilog.Context; 
 
 namespace Convivia.API.Middleware
 {
@@ -25,40 +26,33 @@ namespace Convivia.API.Middleware
             context.Request.Headers.TryGetValue(HeaderName, out var incomingValues);
             var incoming = incomingValues.ToString();
 
-            // Validar GUID si viene, si no generar uno nuevo
-            string correlationId;
-            if (!string.IsNullOrWhiteSpace(incoming) && Guid.TryParse(incoming, out _))
-            {
-                correlationId = incoming;
-            }
-            else
-            {
-                correlationId = Guid.NewGuid().ToString();
-            }
+            string correlationId = !string.IsNullOrWhiteSpace(incoming) && Guid.TryParse(incoming, out _)
+                ? incoming
+                : Guid.NewGuid().ToString();
 
-            // Guardarlo en HttpContext.Items para que otros componentes lo lean
+            // Exponer inmediatamente para que otros middlewares lo lean
             context.Items["CorrelationId"] = correlationId;
 
-            // Asegurar header de respuesta de forma idempotente
-            context.Response.OnStarting(() =>
-            {
-                context.Response.Headers[HeaderName] = correlationId;
-                return Task.CompletedTask;
-            });
+            // Establecer TraceIdentifier para que frameworks/SerilogRequestLogging lo puedan usar
+            context.TraceIdentifier = correlationId;
 
-            // Propagar a Activity (OpenTelemetry/diagnostics) si existe
+            // Poner cabecera de respuesta de forma inmediata (no depender de OnStarting)
+            context.Response.Headers[HeaderName] = correlationId;
+
             if (Activity.Current != null)
             {
                 Activity.Current.SetTag("correlation_id", correlationId);
                 Activity.Current.AddBaggage("correlation_id", correlationId);
             }
 
-            // Abrir scope de logging para que ILogger incluya la propiedad
+            // Empujar la propiedad al LogContext de Serilog y mantener BeginScope para ILogger
+            using (LogContext.PushProperty("CorrelationId", correlationId))
             using (_logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId }))
             {
                 await _next(context);
             }
         }
+
     }
 
     public static class CorrelationIdMiddlewareExtensions

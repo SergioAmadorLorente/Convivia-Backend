@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Diagnostics;
+using Convivia.Shared.Correlation;
 
 namespace Convivia.Infrastructure.Correlation
 {
