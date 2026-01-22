@@ -10,6 +10,10 @@ using System.Threading.Tasks;
 
 namespace Convivia.API.Controllers
 {
+    /// <summary>
+    /// Controlador para la gestión de plantillas de tareas dentro de espacios.
+    /// Las plantillas definen tareas recurrentes que se asignan automáticamente.
+    /// </summary>
     [ApiController]
     [Route("api/espacio/{espacioid}")]
     [Produces("application/json")]
@@ -22,8 +26,15 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
+        /// <summary>
+        /// Actualiza parcialmente una plantilla de tarea.
+        /// </summary>
+        /// <param name="espacioid">ID del espacio</param>
+        /// <param name="id">ID de la plantilla de tarea</param>
+        /// <param name="dto">Campos a actualizar (los no enviados no se modifican)</param>
         [HttpPatch("{plantillaId}")]
         public async Task<ActionResult<PlantillaTareaDto>> UpdatePlantilla(string espacioid, string plantillaId, UpdatePlantillaTareaDto dto)
+
         {
             var plantillaDto = await _service.UpdateAsync(espacioid, plantillaId, dto);
             return plantillaDto != null ? Ok(plantillaDto) : NotFound();

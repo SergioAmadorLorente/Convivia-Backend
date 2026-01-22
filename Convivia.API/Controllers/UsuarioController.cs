@@ -6,6 +6,10 @@ using Convivia.Application.Services;
 
 namespace Convivia.API.Controllers
 {
+    /// <summary>
+    /// Controlador para la gestión de usuarios del sistema.
+    /// Permite crear, consultar, actualizar y eliminar usuarios, así como buscar por correo electrónico.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class UsuarioController : ControllerBase
@@ -17,7 +21,11 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        // POST api/usuario
+        /// <summary>
+        /// Crea un nuevo usuario en el sistema.
+        /// </summary>
+        /// <param name="model">Datos del usuario a crear (nombre, email, password)</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUsuarioDto model, CancellationToken ct)
         {
@@ -31,7 +39,11 @@ namespace Convivia.API.Controllers
             return Ok(created);
         }
 
-        // GET api/usuarios/{id}
+        /// <summary>
+        /// Obtiene un usuario específico por su ID.
+        /// </summary>
+        /// <param name="id">ID del usuario</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
@@ -41,7 +53,10 @@ namespace Convivia.API.Controllers
             if (usuario == null) return NotFound();
             return Ok(usuario);
         }
-        // GET api/Usuario
+        /// <summary>
+        /// Obtiene todos los usuarios del sistema.
+        /// </summary>
+        /// <param name="ct">Token de cancelación</param>
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
@@ -49,7 +64,11 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // GET api/usuarios/correo/{correo}
+        /// <summary>
+        /// Obtiene un usuario por su correo electrónico.
+        /// </summary>
+        /// <param name="correo">Correo electrónico del usuario</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpGet("correo/{correo}")]
         public async Task<IActionResult> GetByEmail(string correo, CancellationToken ct)
         {
@@ -59,7 +78,12 @@ namespace Convivia.API.Controllers
             if (usuario == null) return NotFound($"No se encontró usuario con el correo: {correo}");
             return Ok(usuario);
         }
-        // PUT api/usuario
+        /// <summary>
+        /// Actualiza completamente un usuario (overwrite). Reemplaza todos los campos.
+        /// </summary>
+        /// <param name="id">ID del usuario a actualizar</param>
+        /// <param name="model">Nuevos datos completos del usuario</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpPut("{id}")]
         public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
         {
@@ -70,8 +94,12 @@ namespace Convivia.API.Controllers
             return Ok(updated);
         }
 
-        // PUT api/usuario/{id}/merge
-        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        /// <summary>
+        /// Actualiza un usuario fusionando los campos enviados con los existentes (merge).
+        /// </summary>
+        /// <param name="id">ID del usuario a actualizar</param>
+        /// <param name="model">Campos a actualizar (solo los enviados se modifican)</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpPut("{id}/merge")]
         public async Task<IActionResult> PutMerge(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
         {
@@ -82,8 +110,12 @@ namespace Convivia.API.Controllers
             return Ok(updated);
         }
 
-        // PATCH api/usuario/{id}
-        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
+        /// <summary>
+        /// Actualiza parcialmente un usuario. Solo actualiza los campos enviados.
+        /// </summary>
+        /// <param name="id">ID del usuario a actualizar</param>
+        /// <param name="model">Campos a actualizar (los no enviados no se modifican)</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(string id, [FromBody] UpdateUsuarioDto model, CancellationToken ct)
         {
@@ -93,7 +125,12 @@ namespace Convivia.API.Controllers
             if (updated == null) return NotFound();
             return Ok(updated);
         }
-        // DELETE api/Usuario/{id}
+        /// <summary>
+        /// Elimina un usuario del sistema.
+        /// </summary>
+        /// <param name="id">ID del usuario a eliminar</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Sin contenido si se eliminó correctamente</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {

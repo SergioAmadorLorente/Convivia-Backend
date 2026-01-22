@@ -7,6 +7,10 @@ using Convivia.Domain.Entities;
 
 namespace Convivia.API.Controllers
 {
+    /// <summary>
+    /// Controlador para la gestión de permisos del sistema.
+    /// Define qué acciones puede realizar cada rol dentro de los espacios.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class PermisosController : ControllerBase
@@ -18,7 +22,12 @@ namespace Convivia.API.Controllers
             _service = service;
         }
 
-        // POST api/permisos
+        /// <summary>
+        /// Crea un nuevo conjunto de permisos.
+        /// </summary>
+        /// <param name="model">Datos del permiso a crear</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>El ID del permiso creado</returns>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreatePermisoDto model, CancellationToken ct)
         {
@@ -35,7 +44,11 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // GET api/permisos/{id}
+        /// <summary>
+        /// Obtiene un conjunto de permisos específico por su ID.
+        /// </summary>
+        /// <param name="id">ID del permiso</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
@@ -46,7 +59,10 @@ namespace Convivia.API.Controllers
             return Ok(permiso);
         }
 
-        // GET api/permisos
+        /// <summary>
+        /// Obtiene todos los conjuntos de permisos del sistema.
+        /// </summary>
+        /// <param name="ct">Token de cancelación</param>
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
@@ -54,7 +70,12 @@ namespace Convivia.API.Controllers
             return Ok(list);
         }
 
-        // GET api/permisos/rol/{rol}
+        /// <summary>
+        /// Obtiene los permisos asociados a un rol específico.
+        /// </summary>
+        /// <param name="rol">Tipo de rol (Usuario, Admin, Moderador)</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Lista de permisos del rol especificado</returns>
         [HttpGet("rol/{rol}")]
         public async Task<IActionResult> GetByRol(TipoRol rol, CancellationToken ct)
         {
@@ -69,8 +90,12 @@ namespace Convivia.API.Controllers
             }
         }
 
-        // PUT api/permiso/{id}
-        // Overwrite completo: reemplaza todo el documento en Firestore.
+        /// <summary>
+        /// Actualiza completamente un conjunto de permisos (overwrite). Reemplaza todos los campos.
+        /// </summary>
+        /// <param name="id">ID del permiso a actualizar</param>
+        /// <param name="model">Nuevos datos completos del permiso</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpPut("{id}")]
         public async Task<IActionResult> PutOverwrite(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
         {
@@ -81,8 +106,12 @@ namespace Convivia.API.Controllers
             return Ok(updated);
         }
 
-        // PUT api/permiso/{id}/merge
-        // Merge explícito: fusiona los campos del DTO con el documento existente.
+        /// <summary>
+        /// Actualiza un conjunto de permisos fusionando los campos enviados con los existentes (merge).
+        /// </summary>
+        /// <param name="id">ID del permiso a actualizar</param>
+        /// <param name="model">Campos a actualizar (solo los enviados se modifican)</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpPut("{id}/merge")]
         public async Task<IActionResult> PutMerge(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
         {
@@ -93,8 +122,12 @@ namespace Convivia.API.Controllers
             return Ok(updated);
         }
 
-        // PATCH api/permiso/{id}
-        // Parcial: actualiza solo los campos enviados (IDictionary -> Update parcial en Firestore).
+        /// <summary>
+        /// Actualiza parcialmente un conjunto de permisos. Solo actualiza los campos enviados.
+        /// </summary>
+        /// <param name="id">ID del permiso a actualizar</param>
+        /// <param name="model">Campos a actualizar (los no enviados no se modifican)</param>
+        /// <param name="ct">Token de cancelación</param>
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(string id, [FromBody] UpdatePermisoDto model, CancellationToken ct)
         {
@@ -107,7 +140,12 @@ namespace Convivia.API.Controllers
 
 
 
-        // DELETE api/permiso/{id}
+        /// <summary>
+        /// Elimina un conjunto de permisos.
+        /// </summary>
+        /// <param name="id">ID del permiso a eliminar</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Sin contenido si se eliminó correctamente</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id, CancellationToken ct)
         {
