@@ -68,7 +68,7 @@ namespace Convivia.Tests.IntegrationTests
                 Nombre = $"Test Factura {Guid.NewGuid()}",
                 Precio = 100.50m,
                 Pagado = false,
-                Reparto = new Dictionary<string, float> { { "user1", 100.50f } }
+                // Reparto = new Dictionary<string, float> { { "user1", 100.50f } }
             };
 
             // Act
@@ -105,7 +105,7 @@ namespace Convivia.Tests.IntegrationTests
                     Nombre = $"Factura {i}-{Guid.NewGuid()}",
                     Precio = 50.0m + i * 10,
                     Pagado = i % 2 == 0,
-                    Reparto = new Dictionary<string, float> { { $"user{i}", 50.0f + i * 10 } }
+                    // Reparto = new Dictionary<string, float> { { $"user{i}", 50.0f + i * 10 } }
                 };
                 var response = await _client.PostAsJsonAsync(endpoint, createDto);
 
@@ -173,7 +173,7 @@ namespace Convivia.Tests.IntegrationTests
             {
                 Nombre = $"Zero Price Factura {Guid.NewGuid()}",
                 Precio = 0m,
-                Reparto = new Dictionary<string, float>()
+                // Reparto = new Dictionary<string, float>()
             };
 
             // Act
@@ -225,7 +225,7 @@ namespace Convivia.Tests.IntegrationTests
                 Nombre = $"GetByID Test {Guid.NewGuid()}",
                 Precio = 200.75m,
                 Pagado = true,
-                Reparto = new Dictionary<string, float> { { "user1", 200.75f } }
+                // Reparto = new Dictionary<string, float> { { "user1", 200.75f } }
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdFactura = await createResponse.Content.ReadFromJsonAsync<FacturaDto>();
@@ -279,7 +279,7 @@ namespace Convivia.Tests.IntegrationTests
                 Nombre = $"Update Test {Guid.NewGuid()}",
                 Precio = 150.00m,
                 Pagado = false,
-                Reparto = new Dictionary<string, float> { { "user1", 150.0f } }
+                // Reparto = new Dictionary<string, float> { { "user1", 150.0f } }
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdFactura = await createResponse.Content.ReadFromJsonAsync<FacturaDto>();
@@ -341,7 +341,7 @@ namespace Convivia.Tests.IntegrationTests
                 Nombre = $"Merge Test {Guid.NewGuid()}",
                 Precio = 175.50m,
                 Pagado = false,
-                Reparto = new Dictionary<string, float> { { "user1", 175.50f } }
+                // Reparto = new Dictionary<string, float> { { "user1", 175.50f } }
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdFactura = await createResponse.Content.ReadFromJsonAsync<FacturaDto>();
@@ -399,7 +399,7 @@ namespace Convivia.Tests.IntegrationTests
                 Nombre = originalNombre,
                 Precio = 300.00m,
                 Pagado = false,
-                Reparto = new Dictionary<string, float> { { "user1", 300.0f } }
+                // Reparto = new Dictionary<string, float> { { "user1", 300.0f } }
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdFactura = await createResponse.Content.ReadFromJsonAsync<FacturaDto>();
@@ -459,7 +459,7 @@ namespace Convivia.Tests.IntegrationTests
             {
                 Nombre = $"Delete Test {Guid.NewGuid()}",
                 Precio = 99.99m,
-                Reparto = new Dictionary<string, float> { { "user1", 99.99f } }
+                // Reparto = new Dictionary<string, float> { { "user1", 99.99f } }
             };
             var createResponse = await _client.PostAsJsonAsync(createEndpoint, createDto);
             var createdFactura = await createResponse.Content.ReadFromJsonAsync<FacturaDto>();
@@ -510,7 +510,7 @@ namespace Convivia.Tests.IntegrationTests
                 Nombre = $"Complete Flow {Guid.NewGuid()}",
                 Precio = 500.50m,
                 Pagado = false,
-                Reparto = new Dictionary<string, float> { { "user1", 500.50f } }
+                // Reparto = new Dictionary<string, float> { { "user1", 500.50f } }
             };
 
             // CREATE

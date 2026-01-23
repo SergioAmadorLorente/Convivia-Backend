@@ -7,6 +7,7 @@ using Convivia.Infrastructure.Infraestructure;
 using Convivia.Infrastructure.Services;
 using Google.Cloud.Firestore;
 using System.Threading;
+using Microsoft.VisualStudio.TestPlatform.TestHost;
 
 namespace Convivia.Tests.IntegrationTests.Fixtures
 {
