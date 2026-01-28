@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
 using Convivia.Application.Services;
+using Convivia.Shared.Helpers;
 
 namespace Convivia.API.Controllers
 {
@@ -202,6 +203,7 @@ namespace Convivia.API.Controllers
         /// <returns>Confirmación de la operación</returns>
         /// <remarks>
         /// Tamaño máximo: 0.5 MiB (524,288 bytes). Solo se aceptan archivos de tipo image/*.
+        /// Si la imagen supera el tamaño máximo, se redimensionará automáticamente para adaptarse.
         /// </remarks>
         [HttpPost("{id}/imagen")]
         [Consumes("multipart/form-data")]
@@ -215,10 +217,6 @@ namespace Convivia.API.Controllers
             if (!imagen.ContentType.StartsWith("image/"))
                 return BadRequest("El archivo debe ser una imagen.");
 
-            const long maxSizeBytes = 524288; // 0.5 MiB
-            if (imagen.Length > maxSizeBytes)
-                return BadRequest($"La imagen excede el tamaño máximo permitido de 0.5 MiB ({maxSizeBytes} bytes). Tamaño actual: {imagen.Length} bytes.");
-
             byte[] bytes;
             using (var ms = new MemoryStream())
             {
@@ -226,10 +224,19 @@ namespace Convivia.API.Controllers
                 bytes = ms.ToArray();
             }
 
+            // Optimizar la imagen si supera el tamaño máximo
+            var originalSize = bytes.Length;
+            bytes = ImageHelper.OptimizeImageIfNeeded(bytes);
+            var wasOptimized = originalSize != bytes.Length;
+
             var result = await _service.ActualizarImagenAsync(espacioId, id, bytes, ct);
             if (!result) return NotFound("Factura no encontrada.");
 
-            return Ok(new { success = true, message = "Imagen subida correctamente." });
+            var message = wasOptimized 
+                ? $"Imagen subida y optimizada correctamente. Tamaño original: {originalSize} bytes, tamaño final: {bytes.Length} bytes."
+                : "Imagen subida correctamente.";
+
+            return Ok(new { success = true, message, wasOptimized, originalSize, finalSize = bytes.Length });
         }
 
         /// <summary>
@@ -240,6 +247,7 @@ namespace Convivia.API.Controllers
         /// <param name="imagen">Archivo de imagen (máximo 0.5 MiB)</param>
         /// <remarks>
         /// Tamaño máximo: 0.5 MiB (524,288 bytes). Solo se aceptan archivos de tipo image/*.
+        /// Si la imagen supera el tamaño máximo, se redimensionará automáticamente para adaptarse.
         /// </remarks>
         [HttpPut("{id}/imagen")]
         [Consumes("multipart/form-data")]
@@ -253,10 +261,6 @@ namespace Convivia.API.Controllers
             if (!imagen.ContentType.StartsWith("image/"))
                 return BadRequest("El archivo debe ser una imagen.");
 
-            const long maxSizeBytes = 524288; // 0.5 MiB
-            if (imagen.Length > maxSizeBytes)
-                return BadRequest($"La imagen excede el tamaño máximo permitido de 0.5 MiB ({maxSizeBytes} bytes). Tamaño actual: {imagen.Length} bytes.");
-
             byte[] bytes;
             using (var ms = new MemoryStream())
             {
@@ -264,10 +268,19 @@ namespace Convivia.API.Controllers
                 bytes = ms.ToArray();
             }
 
+            // Optimizar la imagen si supera el tamaño máximo
+            var originalSize = bytes.Length;
+            bytes = ImageHelper.OptimizeImageIfNeeded(bytes);
+            var wasOptimized = originalSize != bytes.Length;
+
             var result = await _service.ActualizarImagenAsync(espacioId, id, bytes, ct);
             if (!result) return NotFound("Factura no encontrada.");
 
-            return Ok(new { success = true, message = "Imagen actualizada correctamente." });
+            var message = wasOptimized 
+                ? $"Imagen actualizada y optimizada correctamente. Tamaño original: {originalSize} bytes, tamaño final: {bytes.Length} bytes."
+                : "Imagen actualizada correctamente.";
+
+            return Ok(new { success = true, message, wasOptimized, originalSize, finalSize = bytes.Length });
         }
 
         /// <summary>
