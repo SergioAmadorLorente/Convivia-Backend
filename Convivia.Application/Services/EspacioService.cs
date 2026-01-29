@@ -32,6 +32,7 @@ namespace Convivia.Application.Services
         private readonly IMemoryCache _cache;
         private readonly IUsuarioEspacioService _usuarioEspacioService;
         private readonly IUsuarioRepository _usuarioRepo;
+        private readonly TareaService _tareaServ;
 
         public EspacioService(
             IPlantillaTareaRepository plantillaTareaRepo,
@@ -40,7 +41,8 @@ namespace Convivia.Application.Services
             IEspacioRepository espacioRepository, 
             IMapper mapper,
             IUsuarioRepository usuarioRepo,IMemoryCache cache, 
-            IUsuarioEspacioService usuarioEspacioService
+            IUsuarioEspacioService usuarioEspacioService,
+            TareaService tareaServ
         )
         {
             _espacioRepository = espacioRepository ?? throw new ArgumentNullException(nameof(espacioRepository));
@@ -51,6 +53,7 @@ namespace Convivia.Application.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _usuarioEspacioService = usuarioEspacioService ?? throw new ArgumentNullException(nameof(usuarioEspacioService));
+            _tareaServ = tareaServ ?? throw new ArgumentNullException(nameof(tareaServ));
         }
 
         public async Task<EspacioDto> CrearEspacioAsync(CreateEspacioDto dto, CancellationToken ct = default)
@@ -183,14 +186,18 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Id requerido", nameof(id));
 
             // 1) RESTRICT: evita materializar colecciones grandes
-            if (await _usuarioEspacioRepo.ExistsByEspacioIdAsync(id, ct).ConfigureAwait(false))
-                throw new InvalidOperationException($"No se puede eliminar el espacio {id}: existen usuarios asociados.");
+            /*if (await _usuarioEspacioRepo.ExistsByEspacioIdAsync(id, ct).ConfigureAwait(false))
+                throw new InvalidOperationException($"No se puede eliminar el espacio {id}: existen usuarios asociados.");*/
 
             // 2) Obtener espacio y plantillas (idempotente si no existe)
             var espacio = await _espacioRepository.GetByIdAsync(id, ct).ConfigureAwait(false);
             if (espacio == null) return false;
 
-            var plantillas = await _plantillaTareaRepo.GetByUsuarioEspacioIdAsync(espacio.Id, ct).ConfigureAwait(false);
+            var plantillas = await _tareaServ.GetAllByEspacioAsync(espacio.Id).ConfigureAwait(false);
+
+            // 2) Obtener usuarioespacios 
+
+            var usuarioEspacios = await _usuarioEspacioRepo.GetByEspacioIdAsync(espacio.Id, ct).ConfigureAwait(false);
 
             // 3) Borrar plantillas en batches (BatchHelper maneja reintentos)
             await BatchHelper.ProcessInBatchesAsync(
@@ -198,6 +205,21 @@ namespace Convivia.Application.Services
                 async (batch, token) =>
                 {
                     var deletes = batch.Select(p => _plantillaTareaRepo.DeleteAsync(p.Id, token));
+                    await Task.WhenAll(deletes).ConfigureAwait(false);
+                },
+                batchSize: 200,
+                maxRetries: 3,
+                initialRetryDelay: TimeSpan.FromSeconds(1),
+                logger: _logger,
+                ct: ct
+            ).ConfigureAwait(false);
+
+            // 4) Borrar usuarioEspacios en batches
+            await BatchHelper.ProcessInBatchesAsync(
+                usuarioEspacios,
+                async (batch, token) =>
+                {
+                    var deletes = batch.Select(ue => _usuarioEspacioRepo.DeleteAsync(ue.Id, token));
                     await Task.WhenAll(deletes).ConfigureAwait(false);
                 },
                 batchSize: 200,
