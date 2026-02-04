@@ -274,7 +274,7 @@ namespace Convivia.Application.Services
                     if (usuariosAsignacion != null && usuariosAsignacion.Count > 0)
                     {
                         tareaExistente.UsuarioEspacioId = usuarioAsignado;
-                        await _tareaRepository.UpdateAsync(tareaExistente.Id, tareaExistente, merge: true);
+                        await _tareaRepository.UpdateAsync(plantilla.EspacioId, tareaExistente.Id, tareaExistente, merge: true);
                         _logger.LogInformation("Tarea {TareaId} del día {Dia} actualizada con usuario {UsuarioId}", 
                             tareaExistente.Id, dia, usuarioAsignado ?? "sin asignar");
                     }
