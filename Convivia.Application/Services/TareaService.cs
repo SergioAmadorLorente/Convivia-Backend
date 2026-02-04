@@ -92,7 +92,7 @@ namespace Convivia.Application.Services
             var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaId);
             if (plantilla == null) return null;
 
-            var tarea = await _tareaRepository.GetInstanciaAsync(plantillaId, tareaId);
+            var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaId, tareaId);
             if (tarea == null) return null;
 
             var pt = plantilla.Adapt<PlantillaTarea>();
