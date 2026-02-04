@@ -8,6 +8,8 @@ namespace Convivia.Application.Repositories
     public interface IPlantillaTareaRepository : IRepository<PlantillaTarea>
     {
         Task<PlantillaTarea?> GetByEspacioAndIdAsync(string espacioid, string id, CancellationToken ct = default);
-        Task<IEnumerable<Tarea>> GetByUsuarioEspacioIdAsync(string usuarioespacioid, CancellationToken ct = default);
+        Task<IEnumerable<PlantillaTarea>> GetAllByEspacioAsync(string espacioId, CancellationToken ct = default);
+        Task DeleteAsync(string espacioId, string id, CancellationToken ct = default);
+        Task UpdateAsync(string espacioId, string id, IDictionary<string, object> updates, bool useSetMerge = true, CancellationToken ct = default);
     }
 }

@@ -232,7 +232,7 @@ namespace Convivia.Application.Tests.Services
                 .ReturnsAsync("plantilla1");
 
             _tareaRepositoryMock
-                .Setup(r => r.AddAsyncList(It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsyncList(It.IsAny<string>(), It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<string>());
 
             // Act + Assert
@@ -310,8 +310,8 @@ namespace Convivia.Application.Tests.Services
             List<Tarea>? tareasGuardadas = null;
 
             _tareaRepositoryMock
-                .Setup(r => r.AddAsyncList(It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
-                .Callback<List<Tarea>, CancellationToken>((t, ct) => tareasGuardadas = t)
+                .Setup(r => r.AddAsyncList(It.IsAny<string>(), It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
+                .Callback<string, List<Tarea>, CancellationToken>((esp, t, ct) => tareasGuardadas = t)
                 .ReturnsAsync(new List<string> { "tarea-1" });
 
             var result = await _sut.AddAsync("espacio1", dto);
@@ -382,9 +382,9 @@ namespace Convivia.Application.Tests.Services
             List<Tarea>? tareasGuardadas = null;
 
             _tareaRepositoryMock
-                .Setup(r => r.AddAsyncList(It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsyncList(It.IsAny<string>(), It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<string> { "t1", "t2" })
-                .Callback<IEnumerable<Tarea>, CancellationToken>((t, ct) =>
+                .Callback<string, IEnumerable<Tarea>, CancellationToken>((esp, t, ct) =>
                 {
                     tareasGuardadas = t.ToList();
                 });
@@ -398,6 +398,7 @@ namespace Convivia.Application.Tests.Services
             Assert.All(tareasGuardadas, t => Assert.Equal(TareaEstado.Pendiente, t.Estado));
             Assert.All(tareasGuardadas, t => Assert.Null(t.UsuarioEspacioId));
             Assert.All(tareasGuardadas, t => Assert.Equal("plantilla-123", t.PlantillaId));
+
         }
 
         [Fact]
@@ -445,9 +446,9 @@ namespace Convivia.Application.Tests.Services
             List<Tarea>? tareasGuardadas = null;
 
             _tareaRepositoryMock
-                .Setup(r => r.AddAsyncList(It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsyncList(It.IsAny<string>(), It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<string> { "t1", "t2" })
-                .Callback<IEnumerable<Tarea>, CancellationToken>((t, ct) =>
+                .Callback<string, IEnumerable<Tarea>, CancellationToken>((esp, t, ct) =>
                 {
                     tareasGuardadas = t.ToList();
                 });
@@ -508,9 +509,9 @@ namespace Convivia.Application.Tests.Services
             List<Tarea>? tareasGuardadas = null;
 
             _tareaRepositoryMock
-                .Setup(r => r.AddAsyncList(It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.AddAsyncList(It.IsAny<string>(), It.IsAny<List<Tarea>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<string> { "t1", "t2", "t3" })
-                .Callback<List<Tarea>, CancellationToken>((t, ct) =>
+                .Callback<string, List<Tarea>, CancellationToken>((esp, t, ct) =>
                 {
                     tareasGuardadas = t.ToList();
                 });

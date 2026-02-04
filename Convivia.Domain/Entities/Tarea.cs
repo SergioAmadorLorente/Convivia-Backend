@@ -45,3 +45,8 @@ namespace Convivia.Domain.Entities
 
     }
 }
+/// <INFO>
+///    PlantillaTareea > Tarea * Repeticions semanals
+///    Cuando pasa la semana las tareas vuelven a estar pendientes
+///    
+/// </INFO>

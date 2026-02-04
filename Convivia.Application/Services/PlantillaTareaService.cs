@@ -71,8 +71,7 @@ namespace Convivia.Application.Services
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAllAsync()
         {
-            var plantillas = await _repository.GetAllAsync();
-            return _mapper.Map<IEnumerable<PlantillaTareaDto>>(plantillas);
+            throw new NotImplementedException("Use GetAllByEspacioAsync instead. PlantillaTarea requires espacioId.");
         }
 
         public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioAsync(string espacioid)
@@ -80,9 +79,8 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(espacioid)) 
                 throw new ArgumentNullException(nameof(espacioid));
 
-            var plantillas = await _repository.GetAllAsync();
-            var filtered = plantillas.Where(p => p.EspacioId == espacioid);
-            return _mapper.Map<IEnumerable<PlantillaTareaDto>>(filtered);
+            var plantillas = await _repository.GetAllByEspacioAsync(espacioid);
+            return _mapper.Map<IEnumerable<PlantillaTareaDto>>(plantillas);
         }
 
         // ============ UPDATE ============
@@ -132,7 +130,7 @@ namespace Convivia.Application.Services
                 { "TareasId", tareasIds }
             };
 
-            await _repository.UpdateAsync(plantillaId, updates, useSetMerge: true);
+            await _repository.UpdateAsync(espacioid, plantillaId, updates, useSetMerge: true);
         }
 
         // ============ DELETE ============
@@ -148,7 +146,7 @@ namespace Convivia.Application.Services
             if (plantilla == null)
                 return false;
 
-            await _repository.DeleteAsync(id);
+            await _repository.DeleteAsync(espacioid, id);
             return true;
         }
 
@@ -226,7 +224,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantillaId, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.EspacioId, plantillaId, tareaId);
                     if (tarea != null && tarea.DiaSemana == diaRemovido)
                     {
                         await _tareaRepository.DeleteAsync(tareaId);
@@ -293,7 +291,7 @@ namespace Convivia.Application.Services
                         UsuarioEspacioId = usuarioAsignado
                     };
 
-                    await _tareaRepository.AddAsync(nuevaTarea);
+                    await _tareaRepository.AddAsync(plantilla.EspacioId, nuevaTarea);
                     plantilla.TareasId.Add(nuevaTarea.Id);
                     _logger.LogInformation("Tarea {TareaId} creada para día {Dia} con usuario {UsuarioId}", 
                         nuevaTarea.Id, dia, usuarioAsignado ?? "sin asignar");
@@ -305,7 +303,7 @@ namespace Convivia.Application.Services
         {
             foreach (var tareaId in plantilla.TareasId ?? new List<string>())
             {
-                var tarea = await _tareaRepository.GetInstanciaAsync(plantillaId, tareaId);
+                var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.EspacioId, plantillaId, tareaId);
                 if (tarea != null && tarea.HoraLimite.HasValue)
                     return tarea.HoraLimite;
             }
@@ -316,7 +314,7 @@ namespace Convivia.Application.Services
         {
             foreach (var tareaId in plantilla.TareasId ?? new List<string>())
             {
-                var tarea = await _tareaRepository.GetInstanciaAsync(plantillaId, tareaId);
+                var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.EspacioId, plantillaId, tareaId);
                 if (tarea != null && tarea.DiaSemana == dia)
                     return tarea;
             }
