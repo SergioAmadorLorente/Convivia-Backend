@@ -24,6 +24,7 @@ namespace Convivia.Tests.Services
         private readonly Mock<IMapper> _mapper;
         private readonly Mock<ILogger<EspacioService>> _logger;
         private readonly Mock<IUsuarioEspacioService> _usuarioEspacioService;
+        private readonly Mock<TareaService> _tareaService;
         private readonly IMemoryCache _cache;
 
         private readonly EspacioService _service;
@@ -37,6 +38,12 @@ namespace Convivia.Tests.Services
             _mapper = new Mock<IMapper>();
             _logger = new Mock<ILogger<EspacioService>>();
             _usuarioEspacioService = new Mock<IUsuarioEspacioService>();
+            _tareaService = new Mock<TareaService>(
+                MockBehavior.Loose,
+                Mock.Of<ITareaRepository>(),
+                Mock.Of<IMapper>(),
+                Mock.Of<ILogger<TareaService>>()
+            );
 
             _cache = new MemoryCache(new MemoryCacheOptions());
 
@@ -48,7 +55,8 @@ namespace Convivia.Tests.Services
                 _mapper.Object,
                 _usuarioRepo.Object,
                 _cache,
-                _usuarioEspacioService.Object
+                _usuarioEspacioService.Object,
+                _tareaService.Object
             );
         }
 

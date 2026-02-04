@@ -70,7 +70,7 @@ namespace Convivia.Application.Services
                 tarea.PlantillaId = plantillaId;
             }
 
-            var idsCreadas = await _tareaRepository.AddAsyncList(tareas);
+            var idsCreadas = await _tareaRepository.AddAsyncList(espacioid, tareas);
 
             // Actualizar la plantilla para agregar los IDs de tareas creadas
             if (idsCreadas != null && idsCreadas.Count > 0)
@@ -168,7 +168,7 @@ namespace Convivia.Application.Services
             var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
             if (plantilla == null) return null;
 
-            var existing = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
+            var existing = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
             if (existing == null) return null;
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
@@ -184,7 +184,7 @@ namespace Convivia.Application.Services
                 await _tareaRepository.UpdateAsync(tareaid, updates, useSetMerge: false, ct);
             }
 
-            var updated = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
+            var updated = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
             return updated == null ? null : MapTareaToDto(updated, plantilla, domPlantilla);
         }
 
@@ -198,7 +198,7 @@ namespace Convivia.Application.Services
             var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
             if (plantilla == null) return null;
 
-            var existing = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
+            var existing = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
             if (existing == null) return null;
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
@@ -214,9 +214,9 @@ namespace Convivia.Application.Services
 
             CalcularProrroga(existing, domPlantilla);
 
-            await _tareaRepository.UpdateAsync(tareaid, existing, merge: true, ct);
+            await _tareaRepository.UpdateAsync(espacioid, tareaid, existing, merge: true, ct);
 
-            var updated = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
+            var updated = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
             return updated == null ? null : MapTareaToDto(updated, plantilla, domPlantilla);
         }
 
@@ -230,7 +230,7 @@ namespace Convivia.Application.Services
             var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
             if (plantilla == null) return null;
 
-            var existing = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
+            var existing = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
             if (existing == null) return null;
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
@@ -248,9 +248,9 @@ namespace Convivia.Application.Services
 
             CalcularProrroga(domain, domPlantilla);
 
-            await _tareaRepository.UpdateAsync(tareaid, domain, merge: false, ct);
+            await _tareaRepository.UpdateAsync(espacioid, tareaid, domain, merge: false, ct);
 
-            var updated = await _tareaRepository.GetInstanciaAsync(plantillaid, tareaid, ct);
+            var updated = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
             return updated == null ? null : MapTareaToDto(updated, plantilla, domPlantilla);
         }
 
@@ -383,7 +383,7 @@ namespace Convivia.Application.Services
 
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.Id, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantilla.Id, tareaId);
                     if (tarea == null) continue;
 
                     // Actualizar a overdue si es necesario antes de filtrar
@@ -438,12 +438,12 @@ namespace Convivia.Application.Services
             {
                 foreach (var tareaId in plantilla.TareasId ?? new List<string>())
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.Id, tareaId);
+                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.EspacioId, plantilla.Id, tareaId);
                     if (tarea == null || tarea.DiaSemana < 0 || tarea.Estado != TareaEstado.Completada) continue;
 
                     tarea.Estado = TareaEstado.Pendiente;
                     tarea.FechaRealizacion = null;
-                    await _tareaRepository.UpdateAsync(tareaId, tarea, merge: true);
+                    await _tareaRepository.UpdateAsync(plantilla.EspacioId, tareaId, tarea, merge: true);
                     _logger.LogDebug("Tarea repetida {TareaId} reseteada a Pendiente.", tareaId);
                 }
             }
@@ -470,7 +470,7 @@ namespace Convivia.Application.Services
             try
             {
                 tarea.Estado = TareaEstado.FueraDePlazo;
-                await _tareaRepository.UpdateAsync(tarea.Id, tarea, merge: true);
+                await _tareaRepository.UpdateAsync(plantilla.EspacioId, tarea.Id, tarea, merge: true);
                 _logger.LogDebug("Tarea {TareaId} actualizada a FueraDePlazo", tarea.Id);
             }
             catch (Exception ex)

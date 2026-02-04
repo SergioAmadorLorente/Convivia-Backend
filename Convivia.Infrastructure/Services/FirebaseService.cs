@@ -28,78 +28,45 @@ namespace Convivia.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("id required", nameof(id));
             if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-            // If collection contains '/', treat as path to subcollection
+            // If collection contains '/', treat as path to nested subcollection
             if (collection.Contains("/"))
             {
                 var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-                // pattern: parentCollection/parentId/subcollection
+                
+                // Build nested collection reference dynamically
                 if (parts.Length >= 3)
                 {
-                    var parentCollection = parts[0];
-                    var parentId = parts[1];
-                    var subcollection = parts[2];
-                    await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(id).SetAsync(entity, cancellationToken: cancellationToken);
-                    return;
+                    DocumentReference docRef = null;
+                    
+                    // Start with the root collection
+                    for (int i = 0; i < parts.Length; i += 2)
+                    {
+                        if (i == 0)
+                        {
+                            // First collection/document pair
+                            docRef = _db.Collection(parts[0]).Document(parts[1]);
+                        }
+                        else if (i + 1 < parts.Length)
+                        {
+                            // Navigate through nested subcollections
+                            docRef = docRef.Collection(parts[i]).Document(parts[i + 1]);
+                        }
+                        else
+                        {
+                            // Last part is the final subcollection name
+                            await docRef.Collection(parts[i]).Document(id).SetAsync(entity, cancellationToken: cancellationToken);
+                            return;
+                        }
+                    }
+                    
+                    // If we finished the loop without returning, something is wrong
+                    throw new ArgumentException($"Invalid collection path format: {collection}. Expected pattern: collection/docId/subcollection or collection/docId/subcollection/docId/subcollection", nameof(collection));
                 }
             }
 
             await _db.Collection(collection).Document(id).SetAsync(entity, cancellationToken: cancellationToken);
         }
 
-        /*
-        public async Task<string> AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
-            if (entity == null) throw new ArgumentNullException(nameof(entity));
-
-            // Try read existing Id property from entity
-            string? existingId = null;
-            try
-            {
-                var prop = typeof(T).GetProperty("Id");
-                if (prop != null && prop.CanRead)
-                {
-                    var val = prop.GetValue(entity) as string;
-                    if (!string.IsNullOrWhiteSpace(val)) existingId = val;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Could not read Id property from entity of type {TypeName}", typeof(T).FullName);
-            }
-
-            if (collection.Contains("/"))
-            {
-                var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 3)
-                {
-                    var parentCollection = parts[0];
-                    var parentId = parts[1];
-                    var subcollection = parts[2];
-
-                    if (!string.IsNullOrWhiteSpace(existingId))
-                    {
-                        // Use provided id to create document with same name
-                        await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(existingId).SetAsync(entity, cancellationToken: cancellationToken);
-                        return existingId;
-                    }
-
-                    var docRef = await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).AddAsync(entity, cancellationToken: cancellationToken);
-                    SetIdIfPossible(entity, docRef.Id);
-                    return docRef.Id;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(existingId))
-            {
-                await _db.Collection(collection).Document(existingId).SetAsync(entity, cancellationToken: cancellationToken);
-                return existingId;
-            }
-
-            var newDoc = await _db.Collection(collection).AddAsync(entity, cancellationToken: cancellationToken);
-            SetIdIfPossible(entity, newDoc.Id);
-            return newDoc.Id;
-        }*/
         public async Task<string> AddAsync<T>(string collection, T entity, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
@@ -206,16 +173,35 @@ namespace Convivia.Infrastructure.Services
             if (collection.Contains("/"))
             {
                 var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                
+                // Build nested collection reference dynamically
                 if (parts.Length >= 3)
                 {
-                    var parentCollection = parts[0];
-                    var parentId = parts[1];
-                    var subcollection = parts[2];
-                    var snap = await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(id).GetSnapshotAsync(cancellationToken);
-                    if (!snap.Exists) return null;
-                    var entity = snap.ConvertTo<T>();
-                    SetIdIfPossible(entity, snap.Id);
-                    return entity;
+                    DocumentReference docRef = null;
+                    
+                    // Navigate through nested collections/documents
+                    for (int i = 0; i < parts.Length; i += 2)
+                    {
+                        if (i == 0)
+                        {
+                            // First collection/document pair
+                            docRef = _db.Collection(parts[0]).Document(parts[1]);
+                        }
+                        else if (i + 1 < parts.Length)
+                        {
+                            // Navigate through nested subcollections
+                            docRef = docRef.Collection(parts[i]).Document(parts[i + 1]);
+                        }
+                        else
+                        {
+                            // Last part is the final subcollection name
+                            var snap = await docRef.Collection(parts[i]).Document(id).GetSnapshotAsync(cancellationToken);
+                            if (!snap.Exists) return null;
+                            var entity = snap.ConvertTo<T>();
+                            SetIdIfPossible(entity, snap.Id);
+                            return entity;
+                        }
+                    }
                 }
             }
 
@@ -238,13 +224,27 @@ namespace Convivia.Infrastructure.Services
             if (collection.Contains("/"))
             {
                 var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                
                 if (parts.Length >= 3)
                 {
-                    var parentCollection = parts[0];
-                    var parentId = parts[1];
-                    var subcollection = parts[2];
-                    await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(id).SetAsync(entity, options, cancellationToken: cancellationToken);
-                    return;
+                    DocumentReference docRef = null;
+                    
+                    for (int i = 0; i < parts.Length; i += 2)
+                    {
+                        if (i == 0)
+                        {
+                            docRef = _db.Collection(parts[0]).Document(parts[1]);
+                        }
+                        else if (i + 1 < parts.Length)
+                        {
+                            docRef = docRef.Collection(parts[i]).Document(parts[i + 1]);
+                        }
+                        else
+                        {
+                            await docRef.Collection(parts[i]).Document(id).SetAsync(entity, options, cancellationToken: cancellationToken);
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -261,17 +261,31 @@ namespace Convivia.Infrastructure.Services
             if (collection.Contains("/"))
             {
                 var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                
                 if (parts.Length >= 3)
                 {
-                    var parentCollection = parts[0];
-                    var parentId = parts[1];
-                    var subcollection = parts[2];
-                    var docRef = _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(id);
-                    if (useSetMerge)
-                        await docRef.SetAsync(updates, SetOptions.MergeAll, cancellationToken);
-                    else
-                        await docRef.UpdateAsync(updates, null, cancellationToken);
-                    return;
+                    DocumentReference docRef = null;
+                    
+                    for (int i = 0; i < parts.Length; i += 2)
+                    {
+                        if (i == 0)
+                        {
+                            docRef = _db.Collection(parts[0]).Document(parts[1]);
+                        }
+                        else if (i + 1 < parts.Length)
+                        {
+                            docRef = docRef.Collection(parts[i]).Document(parts[i + 1]);
+                        }
+                        else
+                        {
+                            var finalDocRef = docRef.Collection(parts[i]).Document(id);
+                            if (useSetMerge)
+                                await finalDocRef.SetAsync(updates, SetOptions.MergeAll, cancellationToken);
+                            else
+                                await finalDocRef.UpdateAsync(updates, null, cancellationToken);
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -290,13 +304,27 @@ namespace Convivia.Infrastructure.Services
             if (collection.Contains("/"))
             {
                 var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                
                 if (parts.Length >= 3)
                 {
-                    var parentCollection = parts[0];
-                    var parentId = parts[1];
-                    var subcollection = parts[2];
-                    await _db.Collection(parentCollection).Document(parentId).Collection(subcollection).Document(id).DeleteAsync(cancellationToken: cancellationToken);
-                    return;
+                    DocumentReference docRef = null;
+                    
+                    for (int i = 0; i < parts.Length; i += 2)
+                    {
+                        if (i == 0)
+                        {
+                            docRef = _db.Collection(parts[0]).Document(parts[1]);
+                        }
+                        else if (i + 1 < parts.Length)
+                        {
+                            docRef = docRef.Collection(parts[i]).Document(parts[i + 1]);
+                        }
+                        else
+                        {
+                            await docRef.Collection(parts[i]).Document(id).DeleteAsync(cancellationToken: cancellationToken);
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -385,7 +413,53 @@ namespace Convivia.Infrastructure.Services
         {
             if (string.IsNullOrWhiteSpace(collection)) throw new ArgumentException("collection required", nameof(collection));
 
-            var snapshot = await _db.Collection(collection).GetSnapshotAsync(cancellationToken);
+            QuerySnapshot snapshot;
+            
+            if (collection.Contains("/"))
+            {
+                var parts = collection.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                
+                if (parts.Length >= 3)
+                {
+                    DocumentReference docRef = null;
+                    
+                    for (int i = 0; i < parts.Length; i += 2)
+                    {
+                        if (i == 0)
+                        {
+                            docRef = _db.Collection(parts[0]).Document(parts[1]);
+                        }
+                        else if (i + 1 < parts.Length)
+                        {
+                            docRef = docRef.Collection(parts[i]).Document(parts[i + 1]);
+                        }
+                        else
+                        {
+                            // Last part is the final subcollection name
+                            snapshot = await docRef.Collection(parts[i]).GetSnapshotAsync(cancellationToken);
+                            var nestedResult = new List<T>();
+                            foreach (var doc in snapshot.Documents)
+                            {
+                                try
+                                {
+                                    var entity = doc.ConvertTo<T>();
+                                    SetIdIfPossible(entity, doc.Id);
+                                    if (entity != null)
+                                        nestedResult.Add(entity);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError(ex, "Error converting document {DocumentId} in GetAllAsync", doc.Id);
+                                    LogDocumentContents(doc);
+                                }
+                            }
+                            return nestedResult;
+                        }
+                    }
+                }
+            }
+            
+            snapshot = await _db.Collection(collection).GetSnapshotAsync(cancellationToken);
             var result = new List<T>();
 
             foreach (var doc in snapshot.Documents)
