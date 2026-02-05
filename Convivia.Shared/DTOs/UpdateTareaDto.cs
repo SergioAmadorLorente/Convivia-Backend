@@ -14,11 +14,6 @@ namespace Convivia.Shared.DTOs
         public DateTime? FechaRealizacion { get; set; }
 
         /// <summary>
-        /// Nueva prórroga concedida para completar la tarea (opcional).
-        /// </summary>
-        public TimeSpan? Prorroga { get; set; }
-
-        /// <summary>
         /// Nuevo estado de la tarea (opcional).
         /// </summary>
         public string? Estado { get; set; }

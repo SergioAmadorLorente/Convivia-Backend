@@ -150,5 +150,31 @@ namespace Convivia.API.Controllers
             var updated = await _service.UpdatePartialAsync(espacioid, plantillaId, tareaId, dto, ct);
             return updated != null ? Ok(updated) : NotFound();
         }
+
+        /// <summary>
+        /// Completa o descompleta una tarea. Al completar suma karma al usuario asignado.
+        /// </summary>
+        /// <param name="espacioid">ID del espacio</param>
+        /// <param name="plantillaId">ID de la plantilla de tarea</param>
+        /// <param name="tareaId">ID de la tarea</param>
+        /// <param name="dto">Indica si la tarea debe marcarse como completada o pendiente</param>
+        /// <param name="ct">Token de cancelación</param>
+        [HttpPost("{plantillaId}/{tareaId}/completar")]
+        public async Task<ActionResult<TareaDto>> CompletarTarea(string espacioid, string plantillaId, string tareaId, [FromBody] CompletarTareaDto dto, CancellationToken ct)
+        {
+            try
+            {
+                var updated = await _service.CompletarTareaAsync(espacioid, plantillaId, tareaId, dto.TareaCompletada, ct);
+                return updated != null ? Ok(updated) : NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

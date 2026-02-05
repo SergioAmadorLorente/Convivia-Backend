@@ -34,12 +34,7 @@ namespace Convivia.Shared.DTOs
         public int karma { get; set; }
 
         /// <summary>
-        /// Tiempo de prórroga adicional concedido para completar la tarea (opcional).
-        /// </summary>
-        public TimeSpan? Prorroga { get; set; }
-
-        /// <summary>
-        /// Estado actual de la tarea (pendiente, en progreso, completada, etc.).
+        /// Estado actual de la tarea (Pendiente o Completada).
         /// </summary>
         public string Estado { get; set; }
 

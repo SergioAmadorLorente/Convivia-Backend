@@ -7,9 +7,7 @@ namespace Convivia.Domain.Entities
     public enum TareaEstado
     {
         Pendiente = 0,
-        FueraDePlazo = 1,
-        Completada = 2,
-        CompletadaFueradePlazo = 3
+        Completada = 1
     }
 
     public class Tarea
@@ -17,8 +15,6 @@ namespace Convivia.Domain.Entities
         public string? Id { get; set; } = Guid.NewGuid().ToString("N");
 
         public DateTime? FechaRealizacion { get; set; }
-
-        public TimeSpan? Prorroga { get; set; }
 
         public TareaEstado Estado { get; set; } = TareaEstado.Pendiente;
 

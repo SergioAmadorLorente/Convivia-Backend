@@ -1,4 +1,4 @@
-﻿using Convivia.Domain.Models;
+using Convivia.Domain.Models;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
@@ -17,9 +17,6 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty]
         public DateTime? FechaRealizacion { get; set; }
-
-        [FirestoreProperty]
-        public double? ProrrogaSegundos { get; set; }
 
         [FirestoreProperty]
         public string Estado { get; set; }
