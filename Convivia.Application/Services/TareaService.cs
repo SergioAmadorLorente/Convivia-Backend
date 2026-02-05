@@ -95,6 +95,9 @@ namespace Convivia.Application.Services
             var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaId, tareaId);
             if (tarea == null) return null;
 
+            // Resetear tarea si es repetitiva y ha pasado a una nueva semana
+            await ResetTareaIfNewWeekAsync(espacioid, tarea);
+
             var pt = plantilla.Adapt<PlantillaTarea>();
 
             return MapTareaToDto(tarea, plantilla, pt);
@@ -271,6 +274,12 @@ namespace Convivia.Application.Services
             // Actualizar estado y fecha
             tarea.Estado = nuevoEstado;
             tarea.FechaRealizacion = completar ? DateTime.UtcNow : null;
+            
+            // Actualizar semana de modificación para tareas repetitivas
+            if (tarea.DiaSemana >= 0 && tarea.DiaSemana <= 6)
+            {
+                tarea.UltimaSemanaModificacion = GetWeekIdentifier(DateTime.UtcNow);
+            }
 
             // Sumar karma si se está completando la tarea
             if (completar && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
@@ -418,6 +427,9 @@ namespace Convivia.Application.Services
                     var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantilla.Id, tareaId);
                     if (tarea == null) continue;
 
+                    // Resetear tarea si es repetitiva y ha pasado a una nueva semana
+                    await ResetTareaIfNewWeekAsync(espacioid, tarea);
+
                     if (diaSemana.HasValue && tarea.DiaSemana != diaSemana) continue;
                     if (estado.HasValue && !MatchesEstado(tarea, estado.Value)) continue;
                     if (!string.IsNullOrWhiteSpace(usuarioId) && tarea.UsuarioEspacioId != usuarioId) continue;
@@ -492,6 +504,13 @@ namespace Convivia.Application.Services
                 dto.FechaRealizacion = DateTime.UtcNow;
 
             bool esCompletar = parsedEstado == TareaEstado.Completada;
+            
+            // Actualizar semana de modificación para tareas repetitivas al completar
+            if (esCompletar && tarea.DiaSemana >= 0 && tarea.DiaSemana <= 6)
+            {
+                tarea.UltimaSemanaModificacion = GetWeekIdentifier(DateTime.UtcNow);
+            }
+            
             if (esCompletar && tarea.Estado != TareaEstado.Completada && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
                 await AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
@@ -574,6 +593,52 @@ namespace Convivia.Application.Services
             // daysDiff == 0: es hoy, verificar hora
             return nowLocal.Hour > tarea.HoraLimite.Value.Hour ||
                    (nowLocal.Hour == tarea.HoraLimite.Value.Hour && nowLocal.Minute >= tarea.HoraLimite.Value.Minute);
+        }
+
+        /// <summary>
+        /// Obtiene el identificador de semana en formato YYYYWW usando ISO 8601.
+        /// ISOWeek maneja automáticamente todos los casos de borde en cambios de año.
+        /// </summary>
+        private static int GetWeekIdentifier(DateTime date)
+        {
+            int year = System.Globalization.ISOWeek.GetYear(date);
+            int weekNum = System.Globalization.ISOWeek.GetWeekOfYear(date);
+            
+            return year * 100 + weekNum;
+        }
+
+        /// <summary>
+        /// Resetea una tarea repetitiva si ha pasado a una nueva semana
+        /// </summary>
+        private async Task ResetTareaIfNewWeekAsync(string espacioid, Tarea tarea)
+        {
+            // Solo resetear tareas repetitivas (DiaSemana entre 0-6)
+            if (tarea.DiaSemana < 0 || tarea.DiaSemana > 6)
+                return;
+
+            // Solo resetear si la tarea está completada
+            if (tarea.Estado != TareaEstado.Completada)
+                return;
+
+            int currentWeek = GetWeekIdentifier(DateTime.UtcNow);
+            
+            // Si no tiene semana registrada o es una semana anterior, resetear
+            if (!tarea.UltimaSemanaModificacion.HasValue || tarea.UltimaSemanaModificacion.Value < currentWeek)
+            {
+                try
+                {
+                    tarea.Estado = TareaEstado.Pendiente;
+                    tarea.FechaRealizacion = null;
+                    tarea.UltimaSemanaModificacion = currentWeek;
+                    
+                    await _tareaRepository.UpdateAsync(espacioid, tarea.Id, tarea, merge: true);
+                    _logger.LogDebug("Tarea repetitiva {TareaId} reseteada para nueva semana {Week}", tarea.Id, currentWeek);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error reseteando tarea {TareaId} para nueva semana", tarea.Id);
+                }
+            }
         }
     }
 }

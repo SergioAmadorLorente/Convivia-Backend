@@ -114,7 +114,8 @@ namespace Convivia.Application.Mappers
                 .Ignore(dest => dest.DiaSemana)
                 .Ignore(dest => dest.Estado)
                 .Ignore(dest => dest.UsuarioEspacioId)
-                .Ignore(dest => dest.FechaRealizacion);
+                .Ignore(dest => dest.FechaRealizacion)
+                .Ignore(dest => dest.UltimaSemanaModificacion);
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try

@@ -29,5 +29,8 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty]
         public string? HoraLimite { get; set; }
+
+        [FirestoreProperty]
+        public int? UltimaSemanaModificacion { get; set; }
     }
 }
