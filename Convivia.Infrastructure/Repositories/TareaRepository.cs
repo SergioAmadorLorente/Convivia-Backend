@@ -34,10 +34,6 @@ namespace Convivia.Infrastructure.Repositories
                 if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
                 
                 var firestoreEntity = tarea.Adapt<FirestoreTarea>();
-                if (tarea.Prorroga.HasValue)
-                    firestoreEntity.ProrrogaSegundos = tarea.Prorroga.Value.TotalSeconds;
-                else
-                    firestoreEntity.ProrrogaSegundos = null;
 
                 if (tarea.HoraLimite.HasValue)
                     firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
@@ -59,10 +55,6 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(tarea.PlantillaId)) throw new ArgumentException("PlantillaId requerido en Tarea", nameof(tarea));
 
             var firestoreEntity = tarea.Adapt<FirestoreTarea>();
-            if (tarea.Prorroga.HasValue)
-                firestoreEntity.ProrrogaSegundos = tarea.Prorroga.Value.TotalSeconds;
-            else
-                firestoreEntity.ProrrogaSegundos = null;
 
             if (tarea.HoraLimite.HasValue)
                 firestoreEntity.HoraLimite = tarea.HoraLimite.Value.ToString("HH:mm");
@@ -100,10 +92,6 @@ namespace Convivia.Infrastructure.Repositories
             if (firestoreEntity == null) return null;
             var entity = firestoreEntity.Adapt<Tarea>();
             var ft = firestoreEntity;
-            if (ft.ProrrogaSegundos.HasValue)
-                entity.Prorroga = TimeSpan.FromSeconds(ft.ProrrogaSegundos.Value);
-            else
-                entity.Prorroga = null;
 
             if (!string.IsNullOrWhiteSpace(ft.HoraLimite))
             {
@@ -140,10 +128,6 @@ namespace Convivia.Infrastructure.Repositories
                 throw new ArgumentException("Id de la tarea requerido", nameof(tareaActualizada));
 
             var firestoreEntity = tareaActualizada.Adapt<FirestoreTarea>();
-            if (tareaActualizada.Prorroga.HasValue)
-                firestoreEntity.ProrrogaSegundos = tareaActualizada.Prorroga.Value.TotalSeconds;
-            else
-                firestoreEntity.ProrrogaSegundos = null;
 
             if (tareaActualizada.HoraLimite.HasValue)
                 firestoreEntity.HoraLimite = tareaActualizada.HoraLimite.Value.ToString("HH:mm");
@@ -172,10 +156,6 @@ namespace Convivia.Infrastructure.Repositories
 
             var firestoreEntity = tareaActualizada.Adapt<FirestoreTarea>();
             var subcollectionPath = GetSubcollectionPath(espacioId, tareaActualizada.PlantillaId);
-            if (tareaActualizada.Prorroga.HasValue)
-                firestoreEntity.ProrrogaSegundos = tareaActualizada.Prorroga.Value.TotalSeconds;
-            else
-                firestoreEntity.ProrrogaSegundos = null;
 
             if (tareaActualizada.HoraLimite.HasValue)
                 firestoreEntity.HoraLimite = tareaActualizada.HoraLimite.Value.ToString("HH:mm");
