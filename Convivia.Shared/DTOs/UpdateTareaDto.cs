@@ -19,7 +19,7 @@ namespace Convivia.Shared.DTOs
         public string? Estado { get; set; }
 
         /// <summary>
-        /// Nuevo usuario asignado a la tarea (UsuarioEspacioId) (opcional).
+        /// Nuevo usuario asignado a la tarea (UsuarioId) (opcional).
         /// </summary>
         public string? UsuarioEspacioId { get; set; }
 

@@ -75,7 +75,7 @@ namespace Convivia.API.Controllers
         /// Obtiene todas las facturas de un espacio creadas por un usuario específico.
         /// </summary>
         /// <param name="espacioId">ID del espacio</param>
-        /// <param name="creadorId">ID del usuario creador (UsuarioEspacioId)</param>
+        /// <param name="creadorId">ID del usuario creador (UsuarioId)</param>
         [HttpGet("creador/{creadorId}")]
         public async Task<IActionResult> GetByCreador(string espacioId, string creadorId, CancellationToken ct)
         {
@@ -90,7 +90,7 @@ namespace Convivia.API.Controllers
         /// Obtiene todas las facturas de un espacio donde un usuario es deudor.
         /// </summary>
         /// <param name="espacioId">ID del espacio</param>
-        /// <param name="deudorId">ID del usuario deudor (UsuarioEspacioId)</param>
+        /// <param name="deudorId">ID del usuario deudor (UsuarioId)</param>
         [HttpGet("deudor/{deudorId}")]
         public async Task<IActionResult> GetByDeudor(string espacioId, string deudorId, CancellationToken ct)
         {

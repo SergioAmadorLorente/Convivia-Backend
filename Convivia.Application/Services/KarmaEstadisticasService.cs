@@ -4,6 +4,8 @@ using Convivia.Shared.DTOs;
 using Mapster;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,16 +14,13 @@ namespace Convivia.Application.Services
     public class KarmaEstadisticasService
     {
         private readonly IKarmaEstadisticasRepository _karmaRepository;
-        private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
         private readonly ILogger<KarmaEstadisticasService> _logger;
 
         public KarmaEstadisticasService(
             IKarmaEstadisticasRepository karmaRepository,
-            IUsuarioEspacioRepository usuarioEspacioRepository,
             ILogger<KarmaEstadisticasService> logger)
         {
             _karmaRepository = karmaRepository ?? throw new ArgumentNullException(nameof(karmaRepository));
-            _usuarioEspacioRepository = usuarioEspacioRepository ?? throw new ArgumentNullException(nameof(usuarioEspacioRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -126,6 +125,71 @@ namespace Convivia.Application.Services
             // Restar karma
             var updated = await _karmaRepository.SubtractKarmaAsync(espacioId, usuarioEspacioId, karmaAmount, ct);
             return updated.Adapt<KarmaEstadisticasDto>();
+        }
+
+        /// <summary>
+        /// Obtiene el ranking de karma de usuarios en un espacio
+        /// </summary>
+        /// <param name="espacioId">ID del espacio</param>
+        /// <param name="tipoKarma">Tipo de karma para ordenar: "total", "semanal" o "mensual"</param>
+        /// <param name="top">Número máximo de usuarios a retornar (por defecto 10)</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Lista de usuarios ordenados por karma descendente</returns>
+        public async Task<List<KarmaRankingDto>> GetKarmaRankingAsync(
+            string espacioId,
+            string tipoKarma = "total",
+            int top = 10,
+            CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId))
+                throw new ArgumentNullException(nameof(espacioId));
+
+            if (top <= 0)
+                throw new ArgumentException("El parámetro 'top' debe ser mayor a 0", nameof(top));
+
+            tipoKarma = tipoKarma?.ToLower() ?? "total";
+            if (tipoKarma != "total" && tipoKarma != "semanal" && tipoKarma != "mensual")
+                throw new ArgumentException("tipoKarma debe ser 'total', 'semanal' o 'mensual'", nameof(tipoKarma));
+
+            try
+            {
+                // Obtener todas las estadísticas del espacio
+                var todasEstadisticas = await _karmaRepository.GetAllByEspacioIdAsync(espacioId, ct);
+                
+                // Crear el ranking directamente desde las estadísticas
+                var ranking = todasEstadisticas.Select(estadistica => new KarmaRankingDto
+                {
+                    UsuarioId = estadistica.UsuarioEspacioId,
+                    KarmaTotal = estadistica.KarmaTotal,
+                    KarmaSemanal = estadistica.KarmaSemanal,
+                    KarmaMensual = estadistica.KarmaMensual
+                }).ToList();
+
+                // Ordenar según el tipo de karma
+                ranking = tipoKarma switch
+                {
+                    "semanal" => ranking.OrderByDescending(r => r.KarmaSemanal).ThenByDescending(r => r.KarmaTotal).ToList(),
+                    "mensual" => ranking.OrderByDescending(r => r.KarmaMensual).ThenByDescending(r => r.KarmaTotal).ToList(),
+                    _ => ranking.OrderByDescending(r => r.KarmaTotal).ToList()
+                };
+
+                // Limitar al top N y asignar posiciones
+                ranking = ranking.Take(top).ToList();
+                for (int i = 0; i < ranking.Count; i++)
+                {
+                    ranking[i].Posicion = i + 1;
+                }
+
+                _logger.LogDebug("Ranking de karma generado para espacio {EspacioId}: {Count} usuarios, tipo {TipoKarma}",
+                    espacioId, ranking.Count, tipoKarma);
+
+                return ranking;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error obteniendo ranking de karma para espacio {EspacioId}", espacioId);
+                throw;
+            }
         }
 
         private async Task<KarmaEstadisticas?> CreateEstadisticasAsync(string espacioId, string usuarioEspacioId, CancellationToken ct)

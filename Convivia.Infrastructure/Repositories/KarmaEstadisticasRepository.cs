@@ -33,9 +33,9 @@ namespace Convivia.Infrastructure.Repositories
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             
-            /*var usuarioEspacio = await GetUsuarioEspacioAsync(entity.UsuarioEspacioId);
+            /*var usuarioEspacio = await GetUsuarioEspacioAsync(entity.UsuarioId);
             if (usuarioEspacio == null)
-                throw new InvalidOperationException($"No se encontró UsuarioEspacio con ID {entity.UsuarioEspacioId}");*/
+                throw new InvalidOperationException($"No se encontró UsuarioEspacio con ID {entity.UsuarioId}");*/
 
             var collectionPath = GetKarmaCollectionPath(espacioId);
             var persist = entity.Adapt<FirestoreKarmaEstadisticas>();
@@ -162,6 +162,59 @@ namespace Convivia.Infrastructure.Repositories
                 karmaAmount, usuarioEspacioId, estadisticas.KarmaTotal, estadisticas.KarmaSemanal, estadisticas.KarmaMensual);
 
             return estadisticas;
+        }
+
+        public async Task<IEnumerable<KarmaEstadisticas>> GetAllByEspacioIdAsync(string espacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId))
+                throw new ArgumentNullException(nameof(espacioId));
+
+            try
+            {
+                var collectionPath = GetKarmaCollectionPath(espacioId);
+                var persistList = await _firebase.GetAllAsync<FirestoreKarmaEstadisticas>(collectionPath, ct);
+                
+                var result = new List<KarmaEstadisticas>();
+                
+                foreach (var persist in persistList)
+                {
+                    var estadisticas = persist.Adapt<KarmaEstadisticas>();
+                    
+                    // Aplicar reset automático si es necesario
+                    bool needsUpdate = false;
+                    int currentWeek = GetCurrentWeek();
+                    int currentMonth = GetCurrentMonth();
+
+                    if (!estadisticas.UltimaSemana.HasValue || estadisticas.UltimaSemana.Value < currentWeek)
+                    {
+                        estadisticas.KarmaSemanal = 0;
+                        estadisticas.UltimaSemana = currentWeek;
+                        needsUpdate = true;
+                    }
+
+                    if (!estadisticas.UltimoMes.HasValue || estadisticas.UltimoMes.Value < currentMonth)
+                    {
+                        estadisticas.KarmaMensual = 0;
+                        estadisticas.UltimoMes = currentMonth;
+                        needsUpdate = true;
+                    }
+
+                    if (needsUpdate)
+                    {
+                        estadisticas.UltimaActualizacion = DateTime.UtcNow;
+                        await UpdateAsync(espacioId, estadisticas.Id, estadisticas, ct);
+                    }
+
+                    result.Add(estadisticas);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error obteniendo todas las estadísticas de karma del espacio {EspacioId}", espacioId);
+                throw;
+            }
         }
 
         public async Task UpdateAsync(string espacioId, string id, KarmaEstadisticas entity, CancellationToken ct = default)

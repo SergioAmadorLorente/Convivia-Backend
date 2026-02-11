@@ -1,4 +1,5 @@
 using Convivia.Domain.Entities;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,9 +8,14 @@ namespace Convivia.Application.Repositories
     public interface IKarmaEstadisticasRepository : IRepository<KarmaEstadisticas>
     {
         /// <summary>
-        /// Obtiene las estadísticas de karma por EspacioId y UsuarioEspacioId
+        /// Obtiene las estadísticas de karma por EspacioId y UsuarioId
         /// </summary>
         Task<KarmaEstadisticas?> GetByUsuarioEspacioIdAsync(string espacioId, string usuarioEspacioId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Obtiene todas las estadísticas de karma de un espacio
+        /// </summary>
+        Task<IEnumerable<KarmaEstadisticas>> GetAllByEspacioIdAsync(string espacioId, CancellationToken ct = default);
 
         /// <summary>
         /// Suma karma a las estadísticas (actualiza total, semanal y mensual)

@@ -44,7 +44,7 @@ namespace Convivia.Shared.DTOs
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
       //  [FirestoreProperty("UsuarioEspacios")]
-       // public List<UsuarioEspacioId> UsuarioEspacios { get; set; } = new List<UsuarioEspacioId>();
+       // public List<UsuarioId> UsuarioEspacios { get; set; } = new List<UsuarioId>();
 
       //  [FirestoreProperty("Invitaciones")]
        // public List<InvitacionId> Invitaciones { get; set; } = new List<InvitacionId>();

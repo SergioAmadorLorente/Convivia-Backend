@@ -37,7 +37,7 @@ namespace Convivia.Shared.DTOs
         public bool Pagado { get; set; }
 
         /// <summary>
-        /// ID del usuario (UsuarioEspacioId) que crea la factura. Representa quién ha hecho el pago inicial.
+        /// ID del usuario (UsuarioId) que crea la factura. Representa quién ha hecho el pago inicial.
         /// </summary>
         public string CreadorFactura { get; set; }
     }

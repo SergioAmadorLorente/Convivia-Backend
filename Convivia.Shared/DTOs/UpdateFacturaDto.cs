@@ -38,7 +38,7 @@ namespace Convivia.Shared.DTOs
         public bool? Pagado { get; set; }
 
         /// <summary>
-        /// Nuevo creador de la factura (opcional). ID del usuario (UsuarioEspacioId).
+        /// Nuevo creador de la factura (opcional). ID del usuario (UsuarioId).
         /// </summary>
         public string? CreadorFactura { get; set; }
     }
