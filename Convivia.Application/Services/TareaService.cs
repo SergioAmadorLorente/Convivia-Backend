@@ -18,6 +18,7 @@ namespace Convivia.Application.Services
         private readonly IMapper _mapper;
         private readonly PlantillaTareaService _ptservice;
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
+        private readonly KarmaEstadisticasService _karmaService;
         private readonly ILogger<TareaService> _logger;
 
         private static readonly int[] KARMAS_VALIDOS = { 5, 15, 25, 50 };
@@ -27,12 +28,14 @@ namespace Convivia.Application.Services
             IMapper mapper,
             PlantillaTareaService ptservice,
             IUsuarioEspacioRepository usuarioEspacioRepository,
+            KarmaEstadisticasService karmaService,
             ILogger<TareaService> logger)
         {
             _tareaRepository = tareaRepository ?? throw new ArgumentNullException(nameof(tareaRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _ptservice = ptservice ?? throw new ArgumentNullException(nameof(ptservice));
             _usuarioEspacioRepository = usuarioEspacioRepository ?? throw new ArgumentNullException(nameof(usuarioEspacioRepository));
+            _karmaService = karmaService ?? throw new ArgumentNullException(nameof(karmaService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -284,7 +287,13 @@ namespace Convivia.Application.Services
             // Sumar karma si se está completando la tarea
             if (completar && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                await AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
+                await AwardKarmaToUserAsync(espacioid, tarea.UsuarioEspacioId, plantilla.karma, ct);
+            }
+            
+            // Restar karma si se está descompletando la tarea
+            if (!completar && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
+            {
+                await RemoveKarmaFromUserAsync(espacioid, tarea.UsuarioEspacioId, plantilla.karma, ct);
             }
 
             // Guardar cambios
@@ -513,22 +522,53 @@ namespace Convivia.Application.Services
             
             if (esCompletar && tarea.Estado != TareaEstado.Completada && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                await AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
+                await AwardKarmaToUserAsync(plantilla.EspacioId, tarea.UsuarioEspacioId, plantilla.karma, ct);
             }
         }
 
-        private async Task AwardKarmaToUserAsync(string usuarioEspacioId, int karma, CancellationToken ct)
+        private async Task AwardKarmaToUserAsync(string espacioId, string usuarioEspacioId, int karma, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(usuarioEspacioId) || karma <= 0) return;
+            if (string.IsNullOrWhiteSpace(espacioId) || string.IsNullOrWhiteSpace(usuarioEspacioId) || karma <= 0) 
+                return;
 
             try
             {
+                // Actualizar karma en UsuarioEspacio (mantener compatibilidad)
                 await _usuarioEspacioRepository.UpdateKarmaAsync(usuarioEspacioId, karma, ct);
-                _logger.LogDebug("Karma {Karma} sumado al usuario {UsuarioId}", karma, usuarioEspacioId);
+                
+                // Actualizar estadísticas de karma (nuevo sistema con subcolecciones)
+                await _karmaService.AddKarmaAsync(espacioId, usuarioEspacioId, karma, ct);
+                
+                _logger.LogDebug("Karma {Karma} sumado al usuario {UsuarioId} en espacio {EspacioId}", 
+                    karma, usuarioEspacioId, espacioId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sumando karma al usuario {UsuarioId}", usuarioEspacioId);
+                _logger.LogError(ex, "Error sumando karma al usuario {UsuarioId} en espacio {EspacioId}", 
+                    usuarioEspacioId, espacioId);
+            }
+        }
+
+        private async Task RemoveKarmaFromUserAsync(string espacioId, string usuarioEspacioId, int karma, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId) || string.IsNullOrWhiteSpace(usuarioEspacioId) || karma <= 0) 
+                return;
+
+            try
+            {
+                // Restar karma en las estadísticas de karma
+                var result = await _karmaService.SubtractKarmaAsync(espacioId, usuarioEspacioId, karma, ct);
+                
+                if (result != null)
+                {
+                    _logger.LogDebug("Karma {Karma} restado al usuario {UsuarioId} en espacio {EspacioId}", 
+                        karma, usuarioEspacioId, espacioId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restando karma al usuario {UsuarioId} en espacio {EspacioId}", 
+                    usuarioEspacioId, espacioId);
             }
         }
 
