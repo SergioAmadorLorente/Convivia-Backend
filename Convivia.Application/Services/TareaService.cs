@@ -680,5 +680,74 @@ namespace Convivia.Application.Services
                 }
             }
         }
+
+        /// <summary>
+        /// Obtiene las estadísticas de tareas de un usuario en un espacio
+        /// </summary>
+        /// <param name="espacioId">ID del espacio</param>
+        /// <param name="usuarioEspacioId">ID del usuario espacio</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Estadísticas de tareas (completadas, pendientes, tardes)</returns>
+        public async Task<TareaEstadisticasDto> GetEstadisticasAsync(string espacioId, string usuarioEspacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId))
+                throw new ArgumentNullException(nameof(espacioId));
+
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
+                throw new ArgumentNullException(nameof(usuarioEspacioId));
+
+            // Obtener todas las plantillas del espacio
+            var plantillas = await _ptservice.GetAllByEspacioAsync(espacioId);
+
+            int completadas = 0;
+            int pendientes = 0;
+            int tardes = 0;
+
+            foreach (var plantilla in plantillas)
+            {
+                // Verificar si la plantilla está activa
+                bool plantillaActiva = IsPlantillaActive(plantilla);
+                if (!plantillaActiva)
+                    continue;
+
+                var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+
+                // Revisar cada tarea de la plantilla
+                foreach (var tareaId in plantilla.TareasId ?? new List<string>())
+                {
+                    var tarea = await _tareaRepository.GetInstanciaAsync(espacioId, plantilla.Id, tareaId, ct);
+                    
+                    // Solo contar tareas asignadas a este usuario
+                    if (tarea == null || tarea.UsuarioEspacioId != usuarioEspacioId)
+                        continue;
+
+                    // Resetear tarea si es repetitiva y ha pasado a una nueva semana
+                    await ResetTareaIfNewWeekAsync(espacioId, tarea);
+
+                    // Contar tareas
+                    if (tarea.Estado == TareaEstado.Completada)
+                    {
+                        completadas++;
+                    }
+                    else
+                    {
+                        pendientes++;
+
+                        // Verificar si está tarde
+                        if (IsOverdue(tarea, domPlantilla))
+                        {
+                            tardes++;
+                        }
+                    }
+                }
+            }
+
+            return new TareaEstadisticasDto
+            {
+                Completadas = completadas,
+                Pendientes = pendientes,
+                Tardes = tardes
+            };
+        }
     }
 }
