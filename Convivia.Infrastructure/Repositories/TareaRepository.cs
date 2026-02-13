@@ -231,7 +231,7 @@ namespace Convivia.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(usuarioEspacioId))
                 throw new ArgumentNullException(nameof(usuarioEspacioId));
 
-            // Consulta Firestore por UsuarioEspacioId
+            // Consulta Firestore por UsuarioId
             var tareasUsuarioEspacio = await _firebase
                 .QueryAsync<FirestoreTarea>(_collection, nameof(FirestoreTarea.UsuarioEspacioId), usuarioEspacioId)
                 .ConfigureAwait(false);

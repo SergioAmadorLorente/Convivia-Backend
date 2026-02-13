@@ -18,6 +18,7 @@ namespace Convivia.Application.Services
         private readonly IMapper _mapper;
         private readonly PlantillaTareaService _ptservice;
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepository;
+        private readonly KarmaEstadisticasService _karmaService;
         private readonly ILogger<TareaService> _logger;
 
         private static readonly int[] KARMAS_VALIDOS = { 5, 15, 25, 50 };
@@ -27,12 +28,14 @@ namespace Convivia.Application.Services
             IMapper mapper,
             PlantillaTareaService ptservice,
             IUsuarioEspacioRepository usuarioEspacioRepository,
+            KarmaEstadisticasService karmaService,
             ILogger<TareaService> logger)
         {
             _tareaRepository = tareaRepository ?? throw new ArgumentNullException(nameof(tareaRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _ptservice = ptservice ?? throw new ArgumentNullException(nameof(ptservice));
             _usuarioEspacioRepository = usuarioEspacioRepository ?? throw new ArgumentNullException(nameof(usuarioEspacioRepository));
+            _karmaService = karmaService ?? throw new ArgumentNullException(nameof(karmaService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -94,6 +97,9 @@ namespace Convivia.Application.Services
 
             var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaId, tareaId);
             if (tarea == null) return null;
+
+            // Resetear tarea si es repetitiva y ha pasado a una nueva semana
+            await ResetTareaIfNewWeekAsync(espacioid, tarea);
 
             var pt = plantilla.Adapt<PlantillaTarea>();
 
@@ -271,11 +277,23 @@ namespace Convivia.Application.Services
             // Actualizar estado y fecha
             tarea.Estado = nuevoEstado;
             tarea.FechaRealizacion = completar ? DateTime.UtcNow : null;
+            
+            // Actualizar semana de modificación para tareas repetitivas
+            if (tarea.DiaSemana >= 0 && tarea.DiaSemana <= 6)
+            {
+                tarea.UltimaSemanaModificacion = GetWeekIdentifier(DateTime.UtcNow);
+            }
 
             // Sumar karma si se está completando la tarea
             if (completar && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                await AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
+                await AwardKarmaToUserAsync(espacioid, tarea.UsuarioEspacioId, plantilla.karma, ct);
+            }
+            
+            // Restar karma si se está descompletando la tarea
+            if (!completar && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
+            {
+                await RemoveKarmaFromUserAsync(espacioid, tarea.UsuarioEspacioId, plantilla.karma, ct);
             }
 
             // Guardar cambios
@@ -418,6 +436,9 @@ namespace Convivia.Application.Services
                     var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantilla.Id, tareaId);
                     if (tarea == null) continue;
 
+                    // Resetear tarea si es repetitiva y ha pasado a una nueva semana
+                    await ResetTareaIfNewWeekAsync(espacioid, tarea);
+
                     if (diaSemana.HasValue && tarea.DiaSemana != diaSemana) continue;
                     if (estado.HasValue && !MatchesEstado(tarea, estado.Value)) continue;
                     if (!string.IsNullOrWhiteSpace(usuarioId) && tarea.UsuarioEspacioId != usuarioId) continue;
@@ -492,24 +513,62 @@ namespace Convivia.Application.Services
                 dto.FechaRealizacion = DateTime.UtcNow;
 
             bool esCompletar = parsedEstado == TareaEstado.Completada;
+            
+            // Actualizar semana de modificación para tareas repetitivas al completar
+            if (esCompletar && tarea.DiaSemana >= 0 && tarea.DiaSemana <= 6)
+            {
+                tarea.UltimaSemanaModificacion = GetWeekIdentifier(DateTime.UtcNow);
+            }
+            
             if (esCompletar && tarea.Estado != TareaEstado.Completada && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                await AwardKarmaToUserAsync(tarea.UsuarioEspacioId, plantilla.karma, ct);
+                await AwardKarmaToUserAsync(plantilla.EspacioId, tarea.UsuarioEspacioId, plantilla.karma, ct);
             }
         }
 
-        private async Task AwardKarmaToUserAsync(string usuarioEspacioId, int karma, CancellationToken ct)
+        private async Task AwardKarmaToUserAsync(string espacioId, string usuarioEspacioId, int karma, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(usuarioEspacioId) || karma <= 0) return;
+            if (string.IsNullOrWhiteSpace(espacioId) || string.IsNullOrWhiteSpace(usuarioEspacioId) || karma <= 0) 
+                return;
 
             try
             {
+                // Actualizar karma en UsuarioEspacio (mantener compatibilidad)
                 await _usuarioEspacioRepository.UpdateKarmaAsync(usuarioEspacioId, karma, ct);
-                _logger.LogDebug("Karma {Karma} sumado al usuario {UsuarioId}", karma, usuarioEspacioId);
+                
+                // Actualizar estadísticas de karma (nuevo sistema con subcolecciones)
+                await _karmaService.AddKarmaAsync(espacioId, usuarioEspacioId, karma, ct);
+                
+                _logger.LogDebug("Karma {Karma} sumado al usuario {UsuarioId} en espacio {EspacioId}", 
+                    karma, usuarioEspacioId, espacioId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sumando karma al usuario {UsuarioId}", usuarioEspacioId);
+                _logger.LogError(ex, "Error sumando karma al usuario {UsuarioId} en espacio {EspacioId}", 
+                    usuarioEspacioId, espacioId);
+            }
+        }
+
+        private async Task RemoveKarmaFromUserAsync(string espacioId, string usuarioEspacioId, int karma, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId) || string.IsNullOrWhiteSpace(usuarioEspacioId) || karma <= 0) 
+                return;
+
+            try
+            {
+                // Restar karma en las estadísticas de karma
+                var result = await _karmaService.SubtractKarmaAsync(espacioId, usuarioEspacioId, karma, ct);
+                
+                if (result != null)
+                {
+                    _logger.LogDebug("Karma {Karma} restado al usuario {UsuarioId} en espacio {EspacioId}", 
+                        karma, usuarioEspacioId, espacioId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restando karma al usuario {UsuarioId} en espacio {EspacioId}", 
+                    usuarioEspacioId, espacioId);
             }
         }
 
@@ -574,6 +633,121 @@ namespace Convivia.Application.Services
             // daysDiff == 0: es hoy, verificar hora
             return nowLocal.Hour > tarea.HoraLimite.Value.Hour ||
                    (nowLocal.Hour == tarea.HoraLimite.Value.Hour && nowLocal.Minute >= tarea.HoraLimite.Value.Minute);
+        }
+
+        /// <summary>
+        /// Obtiene el identificador de semana en formato YYYYWW usando ISO 8601.
+        /// ISOWeek maneja automáticamente todos los casos de borde en cambios de año.
+        /// </summary>
+        private static int GetWeekIdentifier(DateTime date)
+        {
+            int year = System.Globalization.ISOWeek.GetYear(date);
+            int weekNum = System.Globalization.ISOWeek.GetWeekOfYear(date);
+            
+            return year * 100 + weekNum;
+        }
+
+        /// <summary>
+        /// Resetea una tarea repetitiva si ha pasado a una nueva semana
+        /// </summary>
+        private async Task ResetTareaIfNewWeekAsync(string espacioid, Tarea tarea)
+        {
+            // Solo resetear tareas repetitivas (DiaSemana entre 0-6)
+            if (tarea.DiaSemana < 0 || tarea.DiaSemana > 6)
+                return;
+
+            // Solo resetear si la tarea está completada
+            if (tarea.Estado != TareaEstado.Completada)
+                return;
+
+            int currentWeek = GetWeekIdentifier(DateTime.UtcNow);
+            
+            // Si no tiene semana registrada o es una semana anterior, resetear
+            if (!tarea.UltimaSemanaModificacion.HasValue || tarea.UltimaSemanaModificacion.Value < currentWeek)
+            {
+                try
+                {
+                    tarea.Estado = TareaEstado.Pendiente;
+                    tarea.FechaRealizacion = null;
+                    tarea.UltimaSemanaModificacion = currentWeek;
+                    
+                    await _tareaRepository.UpdateAsync(espacioid, tarea.Id, tarea, merge: true);
+                    _logger.LogDebug("Tarea repetitiva {TareaId} reseteada para nueva semana {Week}", tarea.Id, currentWeek);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error reseteando tarea {TareaId} para nueva semana", tarea.Id);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las estadísticas de tareas de un usuario en un espacio
+        /// </summary>
+        /// <param name="espacioId">ID del espacio</param>
+        /// <param name="usuarioEspacioId">ID del usuario espacio</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Estadísticas de tareas (completadas, pendientes, tardes)</returns>
+        public async Task<TareaEstadisticasDto> GetEstadisticasAsync(string espacioId, string usuarioEspacioId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId))
+                throw new ArgumentNullException(nameof(espacioId));
+
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
+                throw new ArgumentNullException(nameof(usuarioEspacioId));
+
+            // Obtener todas las plantillas del espacio
+            var plantillas = await _ptservice.GetAllByEspacioAsync(espacioId);
+
+            int completadas = 0;
+            int pendientes = 0;
+            int tardes = 0;
+
+            foreach (var plantilla in plantillas)
+            {
+                // Verificar si la plantilla está activa
+                bool plantillaActiva = IsPlantillaActive(plantilla);
+                if (!plantillaActiva)
+                    continue;
+
+                var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+
+                // Revisar cada tarea de la plantilla
+                foreach (var tareaId in plantilla.TareasId ?? new List<string>())
+                {
+                    var tarea = await _tareaRepository.GetInstanciaAsync(espacioId, plantilla.Id, tareaId, ct);
+                    
+                    // Solo contar tareas asignadas a este usuario
+                    if (tarea == null || tarea.UsuarioEspacioId != usuarioEspacioId)
+                        continue;
+
+                    // Resetear tarea si es repetitiva y ha pasado a una nueva semana
+                    await ResetTareaIfNewWeekAsync(espacioId, tarea);
+
+                    // Contar tareas
+                    if (tarea.Estado == TareaEstado.Completada)
+                    {
+                        completadas++;
+                    }
+                    else
+                    {
+                        pendientes++;
+
+                        // Verificar si está tarde
+                        if (IsOverdue(tarea, domPlantilla))
+                        {
+                            tardes++;
+                        }
+                    }
+                }
+            }
+
+            return new TareaEstadisticasDto
+            {
+                Completadas = completadas,
+                Pendientes = pendientes,
+                Tardes = tardes
+            };
         }
     }
 }

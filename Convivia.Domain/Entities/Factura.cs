@@ -30,7 +30,7 @@ namespace Convivia.Domain.Entities
         public float PagoMediano { get; set; }
 
         /// <summary>
-        /// Reparto representado por usuario (UsuarioEspacioId) -> pagado (true/false).
+        /// Reparto representado por usuario (UsuarioId) -> pagado (true/false).
         /// </summary>
         public Dictionary<string, bool> Deudores { get; set; } = new Dictionary<string, bool>();
 
@@ -40,7 +40,7 @@ namespace Convivia.Domain.Entities
         public bool Pagado { get; set; }
 
         /// <summary>
-        /// ID del usuario (UsuarioEspacioId) que creó la factura.
+        /// ID del usuario (UsuarioId) que creó la factura.
         /// </summary>
         public string CreadorFactura { get; set; }
 

@@ -39,6 +39,7 @@ namespace Convivia.Infrastructure.Extensions
             services.AddScoped<IReservaRepository, ReservaRepository>();
             services.AddScoped<IUsuarioEspacioRepository, UsuarioEspacioRepository>();
             services.AddScoped<IFacturaRepository, FacturaRepository>();
+            services.AddScoped<IKarmaEstadisticasRepository, KarmaEstadisticasRepository>();
 
             return services;
         }

@@ -59,7 +59,7 @@ namespace Convivia.Shared.DTOs
         public bool Overdue { get; set; }
 
         /// <summary>
-        /// ID del usuario asignado a la tarea (UsuarioEspacioId) (opcional).
+        /// ID del usuario asignado a la tarea (UsuarioId) (opcional).
         /// </summary>
         public string? UsuarioEspacioId { get; set; }
 

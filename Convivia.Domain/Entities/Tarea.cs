@@ -26,6 +26,12 @@ namespace Convivia.Domain.Entities
 
         public TimeOnly? HoraLimite { get; set; }
 
+        /// <summary>
+        /// Almacena el año y semana de la última modificación en formato YYYYWW (ej: 202453)
+        /// Se usa para detectar cambios de semana en tareas repetitivas
+        /// </summary>
+        public int? UltimaSemanaModificacion { get; set; }
+
         public Tarea()
         {
         }
@@ -42,7 +48,7 @@ namespace Convivia.Domain.Entities
     }
 }
 /// <INFO>
-///    PlantillaTareea > Tarea * Repeticions semanals
+///    PlantillaTareea > Tarea * Repeticions semanalss
 ///    Cuando pasa la semana las tareas vuelven a estar pendientes
 ///    
 /// </INFO>

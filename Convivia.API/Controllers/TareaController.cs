@@ -176,5 +176,38 @@ namespace Convivia.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Obtiene las estadísticas de tareas de un usuario en un espacio.
+        /// Devuelve el número de tareas completadas, pendientes y tardías.
+        /// </summary>
+        /// <param name="espacioid">ID del espacio</param>
+        /// <param name="usuarioId">ID del usuario</param>
+        /// <param name="ct">Token de cancelación</param>
+        /// <returns>Estadísticas de tareas del usuario</returns>
+        /// <response code="200">Retorna las estadísticas de tareas</response>
+        /// <response code="400">Parámetros inválidos</response>
+        /// <response code="500">Error interno del servidor</response>
+        [HttpGet("estadisticas/{usuarioId}")]
+        public async Task<ActionResult<TareaEstadisticasDto>> GetEstadisticas(string espacioid, string usuarioId, CancellationToken ct = default)
+        {
+            try
+            {
+                var estadisticas = await _service.GetEstadisticasAsync(espacioid, usuarioId, ct);
+                return Ok(estadisticas);
+            }
+            catch (ArgumentNullException ex)
+            {
+                return BadRequest(new { message = ex.Message, parameter = ex.ParamName });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new 
+                { 
+                    message = "Error interno al obtener estadísticas de tareas", 
+                    error = ex.Message 
+                });
+            }
+        }
     }
 }

@@ -70,6 +70,12 @@ namespace Convivia.Application.Mappers
             // Factura mappings 
             Config.MapsterConfig.RegisterPair<Factura, FacturaDto, CreateFacturaDto, UpdateFacturaDto>(config);
 
+            // KarmaEstadisticas mappings - Solo los 3 valores esenciales
+            config.NewConfig<KarmaEstadisticas, KarmaEstadisticasDto>()
+                .Map(dest => dest.KarmaTotal, src => src.KarmaTotal)
+                .Map(dest => dest.KarmaSemanal, src => src.KarmaSemanal)
+                .Map(dest => dest.KarmaMensual, src => src.KarmaMensual);
+
             // Error mappings (Contract <-> ContractDto)
             config.NewConfig<ErrorRecord, ErrorRecordDto>()
                 .Map(dest => dest.CorrelationId, src => src.CorrelationId ?? string.Empty)
@@ -114,7 +120,8 @@ namespace Convivia.Application.Mappers
                 .Ignore(dest => dest.DiaSemana)
                 .Ignore(dest => dest.Estado)
                 .Ignore(dest => dest.UsuarioEspacioId)
-                .Ignore(dest => dest.FechaRealizacion);
+                .Ignore(dest => dest.FechaRealizacion)
+                .Ignore(dest => dest.UltimaSemanaModificacion);
 
             // Scan infrastructure assembly for IRegister implementations (Domain <-> Persistence)
             try

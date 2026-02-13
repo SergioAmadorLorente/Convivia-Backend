@@ -26,6 +26,7 @@ namespace Convivia.Application.Tests.Services
         private readonly Mock<ILogger<PlantillaTareaService>> _plantillaLoggerMock;
         private readonly Mock<ILogger<TareaService>> _tareaLoggerMock;
         private readonly Mock<ITareaRepository> _tareaRepoForPlantillaMock;
+        private readonly Mock<KarmaEstadisticasService> _karmaServiceMock;
 
         private readonly PlantillaTareaService _plantillaService;
         private readonly TareaService _sut; // System Under Test
@@ -39,6 +40,7 @@ namespace Convivia.Application.Tests.Services
             _plantillaLoggerMock = new Mock<ILogger<PlantillaTareaService>>();
             _tareaLoggerMock = new Mock<ILogger<TareaService>>();
             _tareaRepoForPlantillaMock = new Mock<ITareaRepository>();
+            _karmaServiceMock = new Mock<KarmaEstadisticasService>();
 
             _plantillaService = new PlantillaTareaService(
                 _plantillaTareaRepositoryMock.Object,
@@ -52,6 +54,7 @@ namespace Convivia.Application.Tests.Services
                 _mapperMock.Object,
                 _plantillaService,
                 _usuarioEspacioRepositoryMock.Object,
+                _karmaServiceMock.Object,
                 _tareaLoggerMock.Object
             );
         }
