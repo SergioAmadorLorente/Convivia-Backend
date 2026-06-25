@@ -11,8 +11,8 @@ using Xunit;
 namespace Convivia.Tests.IntegrationTests
 {
     /// <summary>
-    /// Pruebas de integración para PermisosController.
-    /// Valida flujos CRUD completos, validación de contenido real y casos de error.
+    /// Pruebas de integraciï¿½n para PermisosController.
+    /// Valida flujos CRUD completos, validaciï¿½n de contenido real y casos de error.
     /// </summary>
     public class PermisosControllerIntegrationTests : IClassFixture<ConviviaWebApplicationFactory>, IAsyncLifetime
     {
@@ -27,12 +27,12 @@ namespace Convivia.Tests.IntegrationTests
         }
 
         /// <summary>
-        /// Inicialización antes de cada clase de tests.
+        /// Inicializaciï¿½n antes de cada clase de tests.
         /// </summary>
         public Task InitializeAsync() => Task.CompletedTask;
 
         /// <summary>
-        /// Limpieza después de todos los tests de esta clase.
+        /// Limpieza despuï¿½s de todos los tests de esta clase.
         /// Elimina los permisos creados durante las pruebas.
         /// </summary>
         public async Task DisposeAsync()
@@ -56,7 +56,7 @@ namespace Convivia.Tests.IntegrationTests
         // =============================================
 
         /// <summary>
-        /// Prueba crear un permiso con datos válidos.
+        /// Prueba crear un permiso con datos vï¿½lidos.
         /// </summary>
         [Fact]
         public async Task Create_WithValidData_ReturnsCreatedWithValidContent()
@@ -85,7 +85,7 @@ namespace Convivia.Tests.IntegrationTests
         }
 
         /// <summary>
-        /// Prueba crear múltiples permisos con diferentes roles.
+        /// Prueba crear mï¿½ltiples permisos con diferentes roles.
         /// </summary>
         [Fact]
         public async Task Create_WithMultipleRoles_AllSucceed()
@@ -139,7 +139,7 @@ namespace Convivia.Tests.IntegrationTests
         }
 
         /// <summary>
-        /// Prueba obtener permiso por ID válido después de crearlo.
+        /// Prueba obtener permiso por ID vï¿½lido despuï¿½s de crearlo.
         /// </summary>
         [Fact]
         public async Task GetById_WithValidId_ReturnsOkWithValidContent()
@@ -184,7 +184,7 @@ namespace Convivia.Tests.IntegrationTests
         }
 
         /// <summary>
-        /// Prueba obtener permisos por rol válido.
+        /// Prueba obtener permisos por rol vï¿½lido.
         /// </summary>
         [Fact]
         public async Task GetByRol_WithValidRol_ReturnsOk()
@@ -380,7 +380,7 @@ namespace Convivia.Tests.IntegrationTests
             Assert.True(deleteResponse.StatusCode == HttpStatusCode.NoContent || 
                        deleteResponse.StatusCode == HttpStatusCode.OK);
 
-            // Verificar que no existe más
+            // Verificar que no existe mï¿½s
             var getResponse = await _client.GetAsync(deleteEndpoint);
             Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
         }
@@ -450,7 +450,7 @@ namespace Convivia.Tests.IntegrationTests
         }
 
         // =============================================
-        // MÉTODOS AUXILIARES DE PARSING
+        // Mï¿½TODOS AUXILIARES DE PARSING
         // =============================================
 
         /// <summary>
@@ -503,7 +503,7 @@ namespace Convivia.Tests.IntegrationTests
                     EditarTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "editarTarea", "EditarTarea" }),
                     AsignarTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "asignarTarea", "AsignarTarea" }),
                     AsignarseTarea = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "asignarseTarea", "AsignarseTarea" }),
-                    AñadirUsuario = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "añadirUsuario", "AñadirUsuario", "anadirUsuario", "AnadirUsuario" }),
+                    AnadirUsuario = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "aï¿½adirUsuario", "Aï¿½adirUsuario", "anadirUsuario", "AnadirUsuario" }),
                     EliminarUsuario = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "eliminarUsuario", "EliminarUsuario" }),
                     EliminarResidencia = FindBoolInElement(root, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "eliminarResidencia", "EliminarResidencia" })
                 };

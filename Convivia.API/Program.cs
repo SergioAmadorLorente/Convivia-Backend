@@ -20,13 +20,13 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj} CorrelationId={CorrelationId} RequestId={RequestId}{NewLine}{Exception}")
+    // esta la comento o me peta INVESTIGAR .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj} CorrelationId={CorrelationId} RequestId={RequestId}{NewLine}{Exception}")
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Registrar Serilog en el host
-builder.Host.UseSerilog();
+//builder.Host.UseSerilog();   esta la comento o me peta INVESTIGAR
 
 // Servicios y configuración
 builder.Logging.ClearProviders().AddConsole().AddDebug();
@@ -73,7 +73,19 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICorrelationProvider, CorrelationProvider>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 // Middlewares y mapeo de endpoints
 if (app.Environment.IsDevelopment())

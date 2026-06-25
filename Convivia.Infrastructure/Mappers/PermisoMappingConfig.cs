@@ -27,7 +27,7 @@ namespace Convivia.Infrastructure.Mappers
                     dest.Rol.CrearTarea = src.CrearTarea;
                     dest.Rol.EliminarTarea = src.EliminarTarea;
                     dest.Rol.EditarTarea = src.EditarTarea;
-                    dest.Rol.AñadirUsuario = src.AñadirUsuario;
+                    dest.Rol.AÃ±adirUsuario = src.AnadirUsuario;
                     dest.Rol.EliminarUsuario = src.EliminarUsuario;
                     dest.Rol.AsignarTarea = src.AsignarTarea;
                     dest.Rol.AsignarseTarea = src.AsignarseTarea;
@@ -42,7 +42,7 @@ namespace Convivia.Infrastructure.Mappers
                 .Map(dest => dest.CrearTarea, src => src.Rol != null && src.Rol.CrearTarea)
                 .Map(dest => dest.EliminarTarea, src => src.Rol != null && src.Rol.EliminarTarea)
                 .Map(dest => dest.EditarTarea, src => src.Rol != null && src.Rol.EditarTarea)
-                .Map(dest => dest.AñadirUsuario, src => src.Rol != null && src.Rol.AñadirUsuario)
+                .Map(dest => dest.AnadirUsuario, src => src.Rol != null && src.Rol.AÃ±adirUsuario)
                 .Map(dest => dest.EliminarUsuario, src => src.Rol != null && src.Rol.EliminarUsuario)
                 .Map(dest => dest.AsignarTarea, src => src.Rol != null && src.Rol.AsignarTarea)
                 .Map(dest => dest.AsignarseTarea, src => src.Rol != null && src.Rol.AsignarseTarea)
@@ -97,7 +97,7 @@ namespace Convivia.Infrastructure.Mappers
                     if (src.EditarTarea.HasValue) dest.Rol.EditarTarea = src.EditarTarea.Value;
                     if (src.AsignarTarea.HasValue) dest.Rol.AsignarTarea = src.AsignarTarea.Value;
                     if (src.AsignarseTarea.HasValue) dest.Rol.AsignarseTarea = src.AsignarseTarea.Value;
-                    if (src.AñadirUsuario.HasValue) dest.Rol.AñadirUsuario = src.AñadirUsuario.Value;
+                    if (src.AnadirUsuario.HasValue) dest.Rol.AÃ±adirUsuario = src.AnadirUsuario.Value;
                     if (src.EliminarUsuario.HasValue) dest.Rol.EliminarUsuario = src.EliminarUsuario.Value;
                     if (src.EliminarResidencia.HasValue) dest.Rol.EliminarResidencia = src.EliminarResidencia.Value;
                 });
@@ -109,7 +109,7 @@ namespace Convivia.Infrastructure.Mappers
                 .Map(dest => dest.CrearTarea, src => src.Rol != null && src.Rol.CrearTarea)
                 .Map(dest => dest.EliminarTarea, src => src.Rol != null && src.Rol.EliminarTarea)
                 .Map(dest => dest.EditarTarea, src => src.Rol != null && src.Rol.EditarTarea)
-                .Map(dest => dest.AñadirUsuario, src => src.Rol != null && src.Rol.AñadirUsuario)
+                .Map(dest => dest.AnadirUsuario, src => src.Rol != null && src.Rol.AÃ±adirUsuario)
                 .Map(dest => dest.EliminarUsuario, src => src.Rol != null && src.Rol.EliminarUsuario)
                 .Map(dest => dest.AsignarTarea, src => src.Rol != null && src.Rol.AsignarTarea)
                 .Map(dest => dest.AsignarseTarea, src => src.Rol != null && src.Rol.AsignarseTarea)

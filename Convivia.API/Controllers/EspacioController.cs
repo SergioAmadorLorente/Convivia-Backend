@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
@@ -43,7 +43,7 @@ namespace Convivia.API.Controllers
         /// </summary>
         /// <param name="id">ID del espacio</param>
         /// <param name="ct">Token de cancelación</param>
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = nameof(GetById))]
         public async Task<IActionResult> GetById(string id, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest();

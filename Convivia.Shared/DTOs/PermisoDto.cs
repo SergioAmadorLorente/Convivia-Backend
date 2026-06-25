@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 namespace Convivia.Shared.DTOs
 {
     /// <summary>
-    /// Representa el conjunto de permisos asignados a un usuario en un espacio según su rol.
+    /// Representa el conjunto de permisos asignados a un usuario en un espacio segï¿½n su rol.
     /// </summary>
     public class PermisoDto
     {
         /// <summary>
-        /// Identificador único del conjunto de permisos.
+        /// Identificador ï¿½nico del conjunto de permisos.
         /// </summary>
         public string Id { get; set; } = string.Empty;
 
@@ -47,9 +47,9 @@ namespace Convivia.Shared.DTOs
         public bool AsignarseTarea { get; set; }
         
         /// <summary>
-        /// Permiso para añadir usuarios al espacio.
+        /// Permiso para aï¿½adir usuarios al espacio.
         /// </summary>
-        public bool AñadirUsuario { get; set; }
+        public bool AnadirUsuario { get; set; }
 
         /// <summary>
         /// Permiso para eliminar usuarios del espacio.

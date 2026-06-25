@@ -24,8 +24,8 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("EditarTarea")]
         public bool EditarTarea { get; set; }
 
-        [FirestoreProperty("AñadirUsuario")]
-        public bool AñadirUsuario { get; set; }
+        [FirestoreProperty("AnadirUsuario")]
+        public bool AnadirUsuario { get; set; }
 
         [FirestoreProperty("EliminarUsuario")]
         public bool EliminarUsuario { get; set; }

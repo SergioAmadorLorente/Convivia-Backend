@@ -15,7 +15,7 @@ namespace Convivia.Shared.DTOs
         /// <summary>
         /// Cambiar el rol base del usuario (opcional).
         /// </summary>
-        [EnumDataType(typeof(TipoRol), ErrorMessage = "El rol debe ser válido")]
+        [EnumDataType(typeof(TipoRol), ErrorMessage = "El rol debe ser vï¿½lido")]
         public TipoRol? Rol { get; set; }
         
         /// <summary>
@@ -44,9 +44,9 @@ namespace Convivia.Shared.DTOs
         public bool? AsignarseTarea { get; set; }
         
         /// <summary>
-        /// Actualizar permiso para añadir usuarios (opcional).
+        /// Actualizar permiso para aï¿½adir usuarios (opcional).
         /// </summary>
-        public bool? AñadirUsuario { get; set; }
+        public bool? AnadirUsuario { get; set; }
 
         /// <summary>
         /// Actualizar permiso para eliminar usuarios (opcional).

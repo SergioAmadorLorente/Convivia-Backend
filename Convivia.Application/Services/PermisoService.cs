@@ -41,7 +41,7 @@ namespace Convivia.Application.Services
             var createdDomain = await _permisoRepository.GetByIdAsync(id, ct);
             if (createdDomain == null)
             {
-                // devolver DTO mínimo con id para evitar fallos en rutas
+                // devolver DTO mï¿½nimo con id para evitar fallos en rutas
                 return new PermisoDto { Id = id };
             }
 
@@ -87,7 +87,7 @@ namespace Convivia.Application.Services
 
         /// <summary>
         /// Overwrite completo: reemplaza todo el documento en Firestore.
-        /// Si solo envías Rol, los demás permisos se resetean a los valores por defecto del rol.
+        /// Si solo envï¿½as Rol, los demï¿½s permisos se resetean a los valores por defecto del rol.
         /// </summary>
         public async Task<PermisoDto?> ActualizarPermisoCompletaAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
         {
@@ -113,7 +113,7 @@ namespace Convivia.Application.Services
 
         /// <summary>
         /// Merge: fusiona los campos del objeto con los del documento existente.
-        /// Solo modifica los campos que envías, preservando los demás.
+        /// Solo modifica los campos que envï¿½as, preservando los demï¿½s.
         /// </summary>
         public async Task<PermisoDto?> ActualizarPermisoMergeAsync(string id, UpdatePermisoDto dto, CancellationToken ct = default)
         {
@@ -127,7 +127,7 @@ namespace Convivia.Application.Services
             if (existing.Rol == null)
                 existing.Rol = new Rol();
 
-            // Si se especifica un nuevo TipoRol, aplicar la configuración base del rol
+            // Si se especifica un nuevo TipoRol, aplicar la configuraciï¿½n base del rol
             if (dto.Rol.HasValue)
             {
                 switch (dto.Rol.Value)
@@ -150,7 +150,7 @@ namespace Convivia.Application.Services
             if (dto.EditarTarea.HasValue) existing.Rol.EditarTarea = dto.EditarTarea.Value;
             if (dto.AsignarTarea.HasValue) existing.Rol.AsignarTarea = dto.AsignarTarea.Value;
             if (dto.AsignarseTarea.HasValue) existing.Rol.AsignarseTarea = dto.AsignarseTarea.Value;
-            if (dto.AñadirUsuario.HasValue) existing.Rol.AñadirUsuario = dto.AñadirUsuario.Value;
+            if (dto.AnadirUsuario.HasValue) existing.Rol.AÃ±adirUsuario = dto.AnadirUsuario.Value;
             if (dto.EliminarUsuario.HasValue) existing.Rol.EliminarUsuario = dto.EliminarUsuario.Value;
             if (dto.EliminarResidencia.HasValue) existing.Rol.EliminarResidencia = dto.EliminarResidencia.Value;
 
@@ -178,7 +178,7 @@ namespace Convivia.Application.Services
                 return current == null ? null : _mapper.Map<PermisoDto>(current);
             }
 
-            // useSetMerge: false -> UpdateAsync estricto (fallará si no existe)
+            // useSetMerge: false -> UpdateAsync estricto (fallarï¿½ si no existe)
             await _permisoRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
 
             var updated = await _permisoRepository.GetByIdAsync(id, ct);
@@ -194,7 +194,7 @@ namespace Convivia.Application.Services
             if (dto.EditarTarea.HasValue) updates["EditarTarea"] = dto.EditarTarea.Value;
             if (dto.AsignarTarea.HasValue) updates["AsignarTarea"] = dto.AsignarTarea.Value;
             if (dto.AsignarseTarea.HasValue) updates["AsignarseTarea"] = dto.AsignarseTarea.Value;
-            if (dto.AñadirUsuario.HasValue) updates["AñadirUsuario"] = dto.AñadirUsuario.Value;
+            if (dto.AnadirUsuario.HasValue) updates["Aï¿½adirUsuario"] = dto.AnadirUsuario.Value;
             if (dto.EliminarUsuario.HasValue) updates["EliminarUsuario"] = dto.EliminarUsuario.Value;
             if (dto.EliminarResidencia.HasValue) updates["EliminarResidencia"] = dto.EliminarResidencia.Value;
             return updates;
