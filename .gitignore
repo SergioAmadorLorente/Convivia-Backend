@@ -328,3 +328,7 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Firebase / Google Cloud secrets
+**/serviceAccount.json
+**/*serviceAccount*.json
