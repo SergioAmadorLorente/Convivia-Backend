@@ -1,4 +1,4 @@
-﻿using Convivia.Domain.Entities;
+using Convivia.Domain.Entities;
 using Convivia.Application.Repositories;
 using Convivia.Infrastructure.Models;
 using Convivia.Shared.Services;
@@ -90,22 +90,43 @@ namespace Convivia.Infrastructure.Repositories
             var subcollectionPath = GetSubcollectionPath(espacioId, plantillaId);
             var firestoreEntity = await _firebase.GetAsync<FirestoreTarea>(subcollectionPath, tareaId, ct);
             if (firestoreEntity == null) return null;
-            var entity = firestoreEntity.Adapt<Tarea>();
-            var ft = firestoreEntity;
 
-            if (!string.IsNullOrWhiteSpace(ft.HoraLimite))
-            {
-                if (TimeOnly.TryParse(ft.HoraLimite, out var to))
-                    entity.HoraLimite = to;
-                else
-                    entity.HoraLimite = null;
-            }
-            else
-            {
-                entity.HoraLimite = null;
-            }
+            return MapFirestoreToTarea(firestoreEntity);
+        }
 
-            return entity;
+        /// <summary>
+        /// Carga en paralelo todas las instancias de tareas de las plantillas indicadas.
+        /// Reduce el patrón N+1 a M queries en paralelo (M = nº de plantillas).
+        /// </summary>
+        public async Task<Dictionary<string, List<Tarea>>> GetAllByEspacioGroupedByPlantillaAsync(
+            string espacioId,
+            IEnumerable<string> plantillaIds,
+            CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentException("espacioId requerido", nameof(espacioId));
+            if (plantillaIds == null) throw new ArgumentNullException(nameof(plantillaIds));
+
+            // Lanzar todas las consultas en paralelo
+            var tasks = plantillaIds
+                .Where(pid => !string.IsNullOrWhiteSpace(pid))
+                .Select(async plantillaId =>
+                {
+                    var path = GetSubcollectionPath(espacioId, plantillaId);
+                    var firestoreTareas = await _firebase.GetAllAsync<FirestoreTarea>(path, ct);
+                    var tareas = firestoreTareas
+                        .Select(ft => MapFirestoreToTarea(ft))
+                        .Where(t => t != null)
+                        .Select(t => t!)
+                        .ToList();
+                    return (plantillaId, tareas);
+                })
+                .ToList();
+
+            var results = await Task.WhenAll(tasks);
+
+            return results.ToDictionary(
+                r => r.plantillaId,
+                r => r.tareas);
         }
 
         public async Task<IEnumerable<Tarea>> GetAllAsync(CancellationToken ct = default)
@@ -240,15 +261,29 @@ namespace Convivia.Infrastructure.Repositories
             if (!tareasUsuarioEspacio.Any())
                 return new List<Tarea>();
 
-            // Mapear FirestoreTarea → Tarea
-            var lista = new List<Tarea>();
-            foreach (var pte in tareasUsuarioEspacio)
+            return tareasUsuarioEspacio.Select(ft => MapFirestoreToTarea(ft)).ToList();
+        }
+
+        // ── Helpers privados ──────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Mapea un FirestoreTarea al modelo de dominio Tarea,
+        /// convirtiendo HoraLimite de string "HH:mm" a TimeOnly.
+        /// </summary>
+        private static Tarea MapFirestoreToTarea(FirestoreTarea ft)
+        {
+            var entity = ft.Adapt<Tarea>();
+
+            if (!string.IsNullOrWhiteSpace(ft.HoraLimite))
             {
-                var tareaMapped = pte.Adapt<Tarea>()!;
-                lista.Add(tareaMapped);
+                entity.HoraLimite = TimeOnly.TryParse(ft.HoraLimite, out var to) ? to : null;
+            }
+            else
+            {
+                entity.HoraLimite = null;
             }
 
-            return lista;
+            return entity;
         }
 
     }
