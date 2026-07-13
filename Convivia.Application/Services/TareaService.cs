@@ -145,6 +145,43 @@ namespace Convivia.Application.Services
             return _mapper.Map<IEnumerable<PlantillaTareaDto>>(pttareas);
         }
 
+        public async Task<IEnumerable<PlantillaTareaDto>> GetAllByEspacioConInstanciaActivaAsync(string espacioid, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
+
+            var plantillas = (await _ptservice.GetAllByEspacioAsync(espacioid)).ToList();
+
+            // ── Optimización: 1 carga batch paralela en lugar de 1 query por tarea ──
+            var plantillaIds = plantillas
+                .Select(p => p.Id)
+                .Where(id => !string.IsNullOrWhiteSpace(id));
+
+            var tareasPorPlantilla = await _tareaRepository
+                .GetAllByEspacioGroupedByPlantillaAsync(espacioid, plantillaIds, ct);
+
+            // Detectar si hay tareas completadas que deben resetearse (nueva semana)
+            var resetTasks = new List<Task>();
+            foreach (var (plantillaId, tareas) in tareasPorPlantilla)
+            {
+                foreach (var tarea in tareas)
+                    resetTasks.Add(ResetTareaIfNewWeekAsync(espacioid, tarea));
+            }
+            if (resetTasks.Count > 0)
+                await Task.WhenAll(resetTasks);
+
+            foreach (var plantilla in plantillas)
+            {
+                var tareas = tareasPorPlantilla.GetValueOrDefault(plantilla.Id) ?? new List<Tarea>();
+                var instanciaActiva = GetInstanciaActivaInMemory(tareas);
+                if (instanciaActiva == null) continue;
+
+                var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+                plantilla.InstanciaActiva = MapTareaToDto(instanciaActiva, plantilla, domPlantilla);
+            }
+
+            return plantillas;
+        }
+
         public async Task<PlantillaTareaDto> GetByEspacioAndIdAsync(string espacioid, string id)
         {
             if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
@@ -152,7 +189,7 @@ namespace Convivia.Application.Services
 
             var pttarea = await _ptservice.GetByEspacioAndIdAsync(espacioid, id);
             if (pttarea == null) throw new ArgumentException("La plantilla no existe o no pertenece al espacio especificado.", nameof(id));
-            
+
             return _mapper.Map<PlantillaTareaDto>(pttarea);
         }
 
@@ -399,6 +436,44 @@ namespace Convivia.Application.Services
             return tareas;
         }
 
+        /// <summary>
+        /// Versión en memoria de GetInstanciaActivaAsync: selecciona la tarea activa de un día
+        /// usando solo LINQ, sin ninguna consulta a Firestore adicional.
+        /// </summary>
+        private static Tarea? GetInstanciaActivaInMemory(IList<Tarea> tareas)
+        {
+            if (tareas == null || tareas.Count == 0) return null;
+
+            int diaActual = ((int)DateTime.UtcNow.DayOfWeek - 1 + 7) % 7;
+
+            // Preferir la tarea del día actual (o puntual) sobre cualquier otra
+            var delDia = tareas.FirstOrDefault(t => t.DiaSemana == diaActual || t.DiaSemana == -1);
+            return delDia ?? tareas[0];
+        }
+
+        private async Task<Tarea?> GetInstanciaActivaAsync(string espacioid, PlantillaTareaDto plantilla, CancellationToken ct = default)
+        {
+            if (plantilla.TareasId == null || plantilla.TareasId.Count == 0)
+                return null;
+
+            int diaActual = ((int)DateTime.UtcNow.DayOfWeek - 1 + 7) % 7;
+            Tarea? primeraInstancia = null;
+
+            foreach (var tareaId in plantilla.TareasId)
+            {
+                var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantilla.Id, tareaId, ct);
+                if (tarea == null)
+                    continue;
+
+                primeraInstancia ??= tarea;
+
+                if (tarea.DiaSemana == diaActual || tarea.DiaSemana == -1)
+                    return tarea;
+            }
+
+            return primeraInstancia;
+        }
+
         private List<int> ConvertirDiasDelCliente(List<int> diasCliente)
         {
             if (diasCliente == null || diasCliente.Count == 0) return new List<int>();
@@ -413,29 +488,38 @@ namespace Convivia.Application.Services
             string? usuarioId,
             string? plantillaId)
         {
-            var pttareas = await _ptservice.GetAllByEspacioAsync(espacioid);
+            var pttareas = (await _ptservice.GetAllByEspacioAsync(espacioid)).ToList();
+
+            // Filtrar plantillas por ID si se especificó
+            if (!string.IsNullOrWhiteSpace(plantillaId))
+                pttareas = pttareas
+                    .Where(p => string.Equals(p.Id, plantillaId, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            // ── Optimización: 1 carga batch paralela en lugar de 1 query por tarea ──
+            var plantillaIds = pttareas.Select(p => p.Id).Where(id => !string.IsNullOrWhiteSpace(id));
+            var tareasPorPlantilla = await _tareaRepository
+                .GetAllByEspacioGroupedByPlantillaAsync(espacioid, plantillaIds);
+
             var tareas = new List<TareaDto>();
 
             foreach (var plantilla in pttareas)
             {
-                // If a specific plantillaId filter was provided, skip other plantillas
-                if (!string.IsNullOrWhiteSpace(plantillaId) && !string.Equals(plantilla.Id, plantillaId, StringComparison.OrdinalIgnoreCase))
-                    continue;
                 bool plantillaActiva = IsPlantillaActive(plantilla);
                 bool esRepetida = plantilla.DiasRepeticion != null && plantilla.DiasRepeticion.Count > 0;
 
                 if (esRepetida && !plantillaActiva) continue;
 
+                var instancias = tareasPorPlantilla.GetValueOrDefault(plantilla.Id) ?? new List<Tarea>();
+
+                // Resetear tareas repetidas completadas en memoria (async writes en paralelo)
                 if (plantillaActiva)
-                    await ResetCompletedRepeatedTasksAsync(plantilla);
+                    await ResetCompletedRepeatedTasksInMemoryAsync(espacioid, plantilla, instancias);
 
                 var pt = plantilla.Adapt<PlantillaTarea>();
 
-                foreach (var tareaId in plantilla.TareasId ?? new List<string>())
+                foreach (var tarea in instancias)
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantilla.Id, tareaId);
-                    if (tarea == null) continue;
-
                     // Resetear tarea si es repetitiva y ha pasado a una nueva semana
                     await ResetTareaIfNewWeekAsync(espacioid, tarea);
 
@@ -467,6 +551,38 @@ namespace Convivia.Application.Services
         private bool MatchesEstado(Tarea tarea, TareaEstado estado)
         {
             return tarea.Estado == estado;
+        }
+
+        /// <summary>
+        /// Versión in-memory de ResetCompletedRepeatedTasksAsync: trabaja sobre las tareas ya
+        /// cargadas, emitiendo solo los writes de actualización necesarios en paralelo.
+        /// </summary>
+        private async Task ResetCompletedRepeatedTasksInMemoryAsync(
+            string espacioId,
+            PlantillaTareaDto plantilla,
+            IList<Tarea> tareas)
+        {
+            if (plantilla.DiasRepeticion == null || plantilla.DiasRepeticion.Count == 0) return;
+            if (!IsPlantillaActive(plantilla)) return;
+
+            try
+            {
+                var resetTasks = tareas
+                    .Where(t => t.DiaSemana >= 0 && t.Estado == TareaEstado.Completada)
+                    .Select(async tarea =>
+                    {
+                        tarea.Estado = TareaEstado.Pendiente;
+                        tarea.FechaRealizacion = null;
+                        await _tareaRepository.UpdateAsync(espacioId, tarea.Id, tarea, merge: true);
+                        _logger.LogDebug("Tarea repetida {TareaId} reseteada a Pendiente.", tarea.Id);
+                    });
+
+                await Task.WhenAll(resetTasks);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reseteando tareas completadas para plantilla {PlantillaId}", plantilla.Id);
+            }
         }
 
         private async Task ResetCompletedRepeatedTasksAsync(PlantillaTareaDto plantilla)
@@ -697,29 +813,27 @@ namespace Convivia.Application.Services
                 throw new ArgumentNullException(nameof(usuarioEspacioId));
 
             // Obtener todas las plantillas del espacio
-            var plantillas = await _ptservice.GetAllByEspacioAsync(espacioId);
+            var plantillas = (await _ptservice.GetAllByEspacioAsync(espacioId)).ToList();
+            var plantillasActivas = plantillas.Where(IsPlantillaActive).ToList();
+
+            // ── Optimización: 1 carga batch paralela en lugar de 1 query por tarea ──
+            var plantillaIds = plantillasActivas.Select(p => p.Id).Where(id => !string.IsNullOrWhiteSpace(id));
+            var tareasPorPlantilla = await _tareaRepository
+                .GetAllByEspacioGroupedByPlantillaAsync(espacioId, plantillaIds, ct);
 
             int completadas = 0;
             int pendientes = 0;
             int tardes = 0;
 
-            foreach (var plantilla in plantillas)
+            foreach (var plantilla in plantillasActivas)
             {
-                // Verificar si la plantilla está activa
-                bool plantillaActiva = IsPlantillaActive(plantilla);
-                if (!plantillaActiva)
-                    continue;
-
                 var domPlantilla = plantilla.Adapt<PlantillaTarea>();
+                var instancias = tareasPorPlantilla.GetValueOrDefault(plantilla.Id) ?? new List<Tarea>();
 
-                // Revisar cada tarea de la plantilla
-                foreach (var tareaId in plantilla.TareasId ?? new List<string>())
+                foreach (var tarea in instancias)
                 {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(espacioId, plantilla.Id, tareaId, ct);
-                    
                     // Solo contar tareas asignadas a este usuario
-                    if (tarea == null || tarea.UsuarioEspacioId != usuarioEspacioId)
-                        continue;
+                    if (tarea.UsuarioEspacioId != usuarioEspacioId) continue;
 
                     // Resetear tarea si es repetitiva y ha pasado a una nueva semana
                     await ResetTareaIfNewWeekAsync(espacioId, tarea);

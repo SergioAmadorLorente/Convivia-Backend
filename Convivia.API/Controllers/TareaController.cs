@@ -1,19 +1,15 @@
 using Convivia.Application.Services;
-using Convivia.Infrastructure.Services;
 using Convivia.Shared.DTOs;
-using Google.Cloud.Firestore;
-using Google.Cloud.Firestore.V1;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Convivia.API.Controllers
 {
     /// <summary>
-    /// Controlador para la gestión de tareas dentro de espacios.
+    /// Controlador para la gestiï¿½n de tareas dentro de espacios.
     /// Permite crear, consultar, actualizar, eliminar y filtrar tareas asignadas a usuarios.
     /// </summary>
     [ApiController]
@@ -22,12 +18,10 @@ namespace Convivia.API.Controllers
     public class TareaController : ControllerBase
     {
         private readonly TareaService _service;
-        private readonly PlantillaTareaService _ptservice;
 
-        public TareaController(TareaService service, PlantillaTareaService ptservice)
+        public TareaController(TareaService service)
         {
             _service = service;
-            _ptservice = ptservice;
         }
 
         /// <summary>
@@ -43,7 +37,7 @@ namespace Convivia.API.Controllers
         }
 
         /// <summary>
-        /// Obtiene una tarea específica por su ID.
+        /// Obtiene una tarea especï¿½fica por su ID.
         /// </summary>
         /// <param name="espacioid">ID del espacio</param>
         /// <param name="plantillaId">ID de la plantilla de tarea</param>
@@ -60,17 +54,17 @@ namespace Convivia.API.Controllers
         /// </summary>
         /// <param name="espacioid">ID del espacio</param>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PlantillaTareaDto>>> GetTareasByEspacioId(string espacioid)
+        public async Task<ActionResult<IEnumerable<PlantillaTareaDto>>> GetTareasByEspacioId(string espacioid, CancellationToken ct)
         {
-            var list = await _ptservice.GetAllByEspacioAsync(espacioid);
+            var list = await _service.GetAllByEspacioConInstanciaActivaAsync(espacioid, ct);
             return !list.Any() ? NotFound() : Ok(list);
         }
 
         /// <summary>
-        /// Filtra tareas por día de la semana, estado y/o usuario asignado.
+        /// Filtra tareas por dï¿½a de la semana, estado y/o usuario asignado.
         /// </summary>
         /// <param name="espacioid">ID del espacio</param>
-        /// <param name="diaSemana">Día de la semana (0-6, opcional)</param>
+        /// <param name="diaSemana">Dï¿½a de la semana (0-6, opcional)</param>
         /// <param name="estado">Estado de la tarea (opcional)</param>
         /// <param name="usuarioId">ID del usuario asignado (opcional)</param>
         /// <returns>Lista de tareas que cumplen los filtros especificados</returns>
@@ -98,7 +92,7 @@ namespace Convivia.API.Controllers
         /// </summary>
         /// <param name="espacioid">ID del espacio</param>
         /// <param name="id">ID de la tarea a eliminar</param>
-        /// <returns>Sin contenido si se eliminó correctamente</returns>
+        /// <returns>Sin contenido si se eliminï¿½ correctamente</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTarea(string espacioid, string id)
         {
@@ -113,7 +107,7 @@ namespace Convivia.API.Controllers
         /// <param name="plantillaId">ID de la plantilla de tarea</param>
         /// <param name="tareaId">ID de la tarea a actualizar</param>
         /// <param name="dto">Nuevos datos completos de la tarea</param>
-        /// <param name="ct">Token de cancelación</param>
+        /// <param name="ct">Token de cancelaciï¿½n</param>
         [HttpPut("{plantillaId}/{tareaId}")]
         public async Task<ActionResult<TareaDto>> PutOverwrite(string espacioid, string plantillaId, string tareaId, [FromBody] UpdateTareaDto dto, CancellationToken ct)
         {
@@ -128,7 +122,7 @@ namespace Convivia.API.Controllers
         /// <param name="plantillaId">ID de la plantilla de tarea</param>
         /// <param name="tareaId">ID de la tarea a actualizar</param>
         /// <param name="dto">Campos a actualizar (solo los enviados se modifican)</param>
-        /// <param name="ct">Token de cancelación</param>
+        /// <param name="ct">Token de cancelaciï¿½n</param>
         [HttpPut("{plantillaId}/{tareaId}/merge")]
         public async Task<ActionResult<TareaDto>> PutMerge(string espacioid, string plantillaId, string tareaId, [FromBody] UpdateTareaDto dto, CancellationToken ct)
         {
@@ -143,7 +137,7 @@ namespace Convivia.API.Controllers
         /// <param name="plantillaId">ID de la plantilla de tarea</param>
         /// <param name="tareaId">ID de la tarea a actualizar</param>
         /// <param name="dto">Campos a actualizar (los no enviados no se modifican)</param>
-        /// <param name="ct">Token de cancelación</param>
+        /// <param name="ct">Token de cancelaciï¿½n</param>
         [HttpPatch("{plantillaId}/{tareaId}")]
         public async Task<ActionResult<TareaDto>> Patch(string espacioid, string plantillaId, string tareaId, [FromBody] UpdateTareaDto dto, CancellationToken ct)
         {
@@ -158,7 +152,7 @@ namespace Convivia.API.Controllers
         /// <param name="plantillaId">ID de la plantilla de tarea</param>
         /// <param name="tareaId">ID de la tarea</param>
         /// <param name="dto">Indica si la tarea debe marcarse como completada o pendiente</param>
-        /// <param name="ct">Token de cancelación</param>
+        /// <param name="ct">Token de cancelaciï¿½n</param>
         [HttpPost("{plantillaId}/{tareaId}/completar")]
         public async Task<ActionResult<TareaDto>> CompletarTarea(string espacioid, string plantillaId, string tareaId, [FromBody] CompletarTareaDto dto, CancellationToken ct)
         {
@@ -178,15 +172,15 @@ namespace Convivia.API.Controllers
         }
 
         /// <summary>
-        /// Obtiene las estadísticas de tareas de un usuario en un espacio.
-        /// Devuelve el número de tareas completadas, pendientes y tardías.
+        /// Obtiene las estadï¿½sticas de tareas de un usuario en un espacio.
+        /// Devuelve el nï¿½mero de tareas completadas, pendientes y tardï¿½as.
         /// </summary>
         /// <param name="espacioid">ID del espacio</param>
         /// <param name="usuarioId">ID del usuario</param>
-        /// <param name="ct">Token de cancelación</param>
-        /// <returns>Estadísticas de tareas del usuario</returns>
-        /// <response code="200">Retorna las estadísticas de tareas</response>
-        /// <response code="400">Parámetros inválidos</response>
+        /// <param name="ct">Token de cancelaciï¿½n</param>
+        /// <returns>Estadï¿½sticas de tareas del usuario</returns>
+        /// <response code="200">Retorna las estadï¿½sticas de tareas</response>
+        /// <response code="400">Parï¿½metros invï¿½lidos</response>
         /// <response code="500">Error interno del servidor</response>
         [HttpGet("estadisticas/{usuarioId}")]
         public async Task<ActionResult<TareaEstadisticasDto>> GetEstadisticas(string espacioid, string usuarioId, CancellationToken ct = default)
@@ -204,7 +198,7 @@ namespace Convivia.API.Controllers
             {
                 return StatusCode(500, new 
                 { 
-                    message = "Error interno al obtener estadísticas de tareas", 
+                    message = "Error interno al obtener estadï¿½sticas de tareas", 
                     error = ex.Message 
                 });
             }

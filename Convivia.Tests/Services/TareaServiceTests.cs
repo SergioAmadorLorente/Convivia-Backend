@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -40,7 +40,10 @@ namespace Convivia.Application.Tests.Services
             _plantillaLoggerMock = new Mock<ILogger<PlantillaTareaService>>();
             _tareaLoggerMock = new Mock<ILogger<TareaService>>();
             _tareaRepoForPlantillaMock = new Mock<ITareaRepository>();
-            _karmaServiceMock = new Mock<KarmaEstadisticasService>();
+            _karmaServiceMock = new Mock<KarmaEstadisticasService>(
+                new Mock<IKarmaEstadisticasRepository>().Object,
+                new Mock<ILogger<KarmaEstadisticasService>>().Object
+            );
 
             _plantillaService = new PlantillaTareaService(
                 _plantillaTareaRepositoryMock.Object,
@@ -1021,6 +1024,125 @@ namespace Convivia.Application.Tests.Services
 
             _tareaRepositoryMock.Verify(r =>
                 r.UpdateAsync(It.IsAny<string>(), It.IsAny<IDictionary<string, object>>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        #endregion
+
+        #region Optimización N+1 Tests
+
+        [Fact]
+        public async Task GetAllByEspacioConInstanciaActivaAsync_ShouldUseBatchMethodAndFilterInMemory()
+        {
+            // Arrange
+            var espacioId = "espacio1";
+            var plantillas = new List<PlantillaTarea>
+            {
+                CreatePlantilla(id: "p1", tzId: "UTC"),
+                CreatePlantilla(id: "p2", tzId: "UTC")
+            };
+
+            var plantillasDto = new List<PlantillaTareaDto>
+            {
+                new PlantillaTareaDto { Id = "p1", TareasId = new List<string> { "t1" } },
+                new PlantillaTareaDto { Id = "p2", TareasId = new List<string> { "t2" } }
+            };
+
+            var tareasGrouped = new Dictionary<string, List<Tarea>>
+            {
+                { "p1", new List<Tarea> { CreateTarea(id: "t1", plantillaId: "p1", diaSemana: -1) } },
+                { "p2", new List<Tarea> { CreateTarea(id: "t2", plantillaId: "p2", diaSemana: -1) } }
+            };
+
+            _plantillaTareaRepositoryMock
+                .Setup(r => r.GetAllByEspacioAsync(espacioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(plantillas);
+
+            _mapperMock
+                .Setup(m => m.Map<IEnumerable<PlantillaTareaDto>>(It.IsAny<IEnumerable<PlantillaTarea>>()))
+                .Returns(plantillasDto);
+
+            _tareaRepositoryMock
+                .Setup(r => r.GetAllByEspacioGroupedByPlantillaAsync(espacioId, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tareasGrouped);
+
+            _mapperMock
+                .Setup(m => m.Map<TareaDto>(It.IsAny<Tarea>()))
+                .Returns(new TareaDto());
+
+            // Act
+            var result = await _sut.GetAllByEspacioConInstanciaActivaAsync(espacioId);
+
+            // Assert
+            Assert.NotNull(result);
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            
+            // Verify our batch method was called exactly once instead of separate GetInstanciaAsync calls
+            _tareaRepositoryMock.Verify(r => 
+                r.GetAllByEspacioGroupedByPlantillaAsync(espacioId, It.Is<IEnumerable<string>>(ids => ids.Contains("p1") && ids.Contains("p2")), It.IsAny<CancellationToken>()),
+                Times.Once);
+
+            _tareaRepositoryMock.Verify(r => 
+                r.GetInstanciaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task GetEstadisticasAsync_ShouldUseBatchMethodAndFilterInMemory()
+        {
+            // Arrange
+            var espacioId = "espacio1";
+            var usuarioEspacioId = "user1";
+            
+            var plantillas = new List<PlantillaTarea>
+            {
+                CreatePlantilla(id: "p1", tzId: "UTC")
+            };
+
+            var plantillasDto = new List<PlantillaTareaDto>
+            {
+                new PlantillaTareaDto 
+                { 
+                    Id = "p1", 
+                    TareasId = new List<string> { "t1" },
+                    FechaLimite = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)) // Activa
+                }
+            };
+
+            var tareasGrouped = new Dictionary<string, List<Tarea>>
+            {
+                { "p1", new List<Tarea> { CreateTarea(id: "t1", plantillaId: "p1", diaSemana: -1, estado: TareaEstado.Completada, usuarioEspacioId: usuarioEspacioId) } }
+            };
+
+            _plantillaTareaRepositoryMock
+                .Setup(r => r.GetAllByEspacioAsync(espacioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(plantillas);
+
+            _mapperMock
+                .Setup(m => m.Map<IEnumerable<PlantillaTareaDto>>(It.IsAny<IEnumerable<PlantillaTarea>>()))
+                .Returns(plantillasDto);
+
+            _tareaRepositoryMock
+                .Setup(r => r.GetAllByEspacioGroupedByPlantillaAsync(espacioId, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tareasGrouped);
+
+            // Act
+            var result = await _sut.GetEstadisticasAsync(espacioId, usuarioEspacioId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(1, result.Completadas);
+            Assert.Equal(0, result.Pendientes);
+            Assert.Equal(0, result.Tardes);
+
+            // Verify our batch method was called exactly once
+            _tareaRepositoryMock.Verify(r => 
+                r.GetAllByEspacioGroupedByPlantillaAsync(espacioId, It.Is<IEnumerable<string>>(ids => ids.Contains("p1")), It.IsAny<CancellationToken>()),
+                Times.Once);
+
+            _tareaRepositoryMock.Verify(r => 
+                r.GetInstanciaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
                 Times.Never);
         }
 
