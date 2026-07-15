@@ -62,5 +62,10 @@ namespace Convivia.Shared.DTOs
         /// false = tarea repetida (DiasRepeticion con valores)
         /// </summary>
         public bool EsPuntual { get; set; }
+
+        /// <summary>
+        /// Instancia activa asociada a la plantilla para el contexto actual del dashboard.
+        /// </summary>
+        public TareaDto? InstanciaActiva { get; set; }
     }
 }
