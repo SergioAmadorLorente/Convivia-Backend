@@ -247,61 +247,113 @@ namespace Convivia.Application.Services
         }
 
         /// <summary>
-        /// Completa o descompleta una tarea, actualizando el estado, fecha de realización y sumando karma al usuario si corresponde
+        /// Completa o descompleta una tarea, actualizando el estado,
+        /// fecha de realización y sumando karma solo si no está overdue.
         /// </summary>
-        public async Task<TareaDto?> CompletarTareaAsync(string espacioid, string plantillaid, string tareaid, bool completar, CancellationToken ct = default)
+        public async Task<TareaDto?> CompletarTareaAsync(
+            string espacioid,
+            string plantillaid,
+            string tareaid,
+            bool completar,
+            CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(espacioid)) throw new ArgumentNullException(nameof(espacioid));
-            if (string.IsNullOrWhiteSpace(plantillaid)) throw new ArgumentNullException(nameof(plantillaid));
-            if (string.IsNullOrWhiteSpace(tareaid)) throw new ArgumentNullException(nameof(tareaid));
+            if (string.IsNullOrWhiteSpace(espacioid))
+                throw new ArgumentNullException(nameof(espacioid));
+
+            if (string.IsNullOrWhiteSpace(plantillaid))
+                throw new ArgumentNullException(nameof(plantillaid));
+
+            if (string.IsNullOrWhiteSpace(tareaid))
+                throw new ArgumentNullException(nameof(tareaid));
 
             var plantilla = await _ptservice.GetByEspacioAndIdAsync(espacioid, plantillaid);
-            if (plantilla == null) return null;
+            if (plantilla == null)
+                return null;
 
-            var tarea = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
-            if (tarea == null) return null;
+            var tarea = await _tareaRepository.GetInstanciaAsync(
+                espacioid,
+                plantillaid,
+                tareaid,
+                ct);
+
+            if (tarea == null)
+                return null;
 
             var domPlantilla = plantilla.Adapt<PlantillaTarea>();
 
-            // Determinar el nuevo estado
-            var nuevoEstado = completar ? TareaEstado.Completada : TareaEstado.Pendiente;
+            // Comprobar si está fuera de plazo ANTES de marcarla como completada
+            bool overdue = IsOverdue(
+                            tarea,
+                            domPlantilla,
+                            ignoreCompletion: true);
 
-            // Si estamos completando y ya estaba completada, no hacer nada
+            var nuevoEstado = completar
+                ? TareaEstado.Completada
+                : TareaEstado.Pendiente;
+
+            // Ya estaba completada
             if (completar && tarea.Estado == TareaEstado.Completada)
                 return MapTareaToDto(tarea, plantilla, domPlantilla);
 
-            // Si estamos descompletando y ya estaba pendiente, no hacer nada
+            // Ya estaba pendiente
             if (!completar && tarea.Estado == TareaEstado.Pendiente)
                 return MapTareaToDto(tarea, plantilla, domPlantilla);
 
-            // Actualizar estado y fecha
+            // Actualizar estado
             tarea.Estado = nuevoEstado;
-            tarea.FechaRealizacion = completar ? DateTime.UtcNow : null;
-            
-            // Actualizar semana de modificación para tareas repetitivas
+            tarea.FechaRealizacion = completar
+                ? DateTime.UtcNow
+                : null;
+
+            // Actualizar semana para tareas repetitivas
             if (tarea.DiaSemana >= 0 && tarea.DiaSemana <= 6)
             {
                 tarea.UltimaSemanaModificacion = GetWeekIdentifier(DateTime.UtcNow);
             }
 
-            // Sumar karma si se está completando la tarea
-            if (completar && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
+            // SOLO sumar karma si NO está overdue
+            if (completar &&
+                !overdue &&
+                !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                await AwardKarmaToUserAsync(espacioid, tarea.UsuarioEspacioId, plantilla.karma, ct);
+                await AwardKarmaToUserAsync(
+                    espacioid,
+                    tarea.UsuarioEspacioId,
+                    plantilla.karma,
+                    ct);
             }
+
+            // SOLO restar karma si previamente pudo haberse ganado
+            if (!completar &&
+                !overdue &&
+                !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
+            {
+                await RemoveKarmaFromUserAsync(
+                    espacioid,
+                    tarea.UsuarioEspacioId,
+                    plantilla.karma,
+                    ct);
+            }
+
             
-            // Restar karma si se está descompletando la tarea
-            if (!completar && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
-            {
-                await RemoveKarmaFromUserAsync(espacioid, tarea.UsuarioEspacioId, plantilla.karma, ct);
-            }
 
             // Guardar cambios
-            await _tareaRepository.UpdateAsync(espacioid, tareaid, tarea, merge: true, ct);
+            await _tareaRepository.UpdateAsync(
+                espacioid,
+                tareaid,
+                tarea,
+                merge: true,
+                ct);
 
-            // Retornar el DTO actualizado
-            var updated = await _tareaRepository.GetInstanciaAsync(espacioid, plantillaid, tareaid, ct);
-            return updated == null ? null : MapTareaToDto(updated, plantilla, domPlantilla);
+            var updated = await _tareaRepository.GetInstanciaAsync(
+                espacioid,
+                plantillaid,
+                tareaid,
+                ct);
+
+            return updated == null
+                ? null
+                : MapTareaToDto(updated, plantilla, domPlantilla);
         }
 
         // ============ DELETE ============
@@ -591,9 +643,13 @@ namespace Convivia.Application.Services
             return updates;
         }
 
-        private static bool IsOverdue(Tarea tarea, PlantillaTarea plantilla)
+        private static bool IsOverdue(
+                 Tarea tarea,
+                 PlantillaTarea plantilla,
+                 bool ignoreCompletion = false)
         {
-            if (tarea.FechaRealizacion.HasValue) return false;
+            if (!ignoreCompletion && tarea.FechaRealizacion.HasValue)
+                return false;
 
             var tz = TimeZoneInfo.FindSystemTimeZoneById(plantilla.TimeZoneId);
             var nowUtc = DateTime.UtcNow;
