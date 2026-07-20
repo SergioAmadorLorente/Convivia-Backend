@@ -29,12 +29,11 @@
   </ItemGroup>
 
   <!-- Incluimos explícitamente el serviceAccount.json del proyecto API y lo copiamos a salida -->
-  <ItemGroup>
-    <Content Include="Firebase\serviceAccount.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
+  <Content Include="Firebase\serviceAccount.json"
+         Condition="Exists('Firebase\serviceAccount.json')">
+  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
 
   <!-- Volvemos a incluir el resto de archivos de forma explícita (wwwroot, etc.) si aplica -->
   <ItemGroup>
