@@ -7,17 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Firebase\base1.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="Firebase\serviceAccount.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
+  <Content Include="Firebase\base1.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
+
+  <Content Include="Firebase\serviceAccount.json"
+           Condition="Exists('Firebase\serviceAccount.json')">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
+</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
