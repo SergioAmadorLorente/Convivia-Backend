@@ -28,14 +28,15 @@
     <ProjectReference Include="..\Convivia.Shared\Convivia.Shared.csproj" />
   </ItemGroup>
 
-  <!-- Incluimos explícitamente el serviceAccount.json del proyecto API y lo copiamos a salida -->
-  <Content Include="Firebase\serviceAccount.json"
-         Condition="Exists('Firebase\serviceAccount.json')">
-  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-  </Content>
+  <!-- ESTE ES EL CAMBIO -->
+  <ItemGroup>
+    <Content Include="Firebase\serviceAccount.json"
+             Condition="Exists('Firebase\serviceAccount.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
 
-  <!-- Volvemos a incluir el resto de archivos de forma explícita (wwwroot, etc.) si aplica -->
   <ItemGroup>
     <Content Include="wwwroot\**\*" Exclude="bin\**;obj\**" />
     <Compile Include="**\*.cs" Exclude="bin\**;obj\**" />
