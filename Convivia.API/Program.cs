@@ -15,6 +15,10 @@ using Serilog;
 using Serilog.Context;
 using Serilog.Events;
 using System.Text.Json.Serialization;
+using Google.Api.Gax.Grpc;
+using Google.Cloud.Firestore.V1;
+using Google.Apis.Auth.OAuth2;
+
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -35,9 +39,32 @@ FirebaseConfig.InitializeFirebase();
 builder.Services.AddSingleton(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
-    var projectId = config["Firebase:ProjectId"] ?? Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID");
-    if (string.IsNullOrWhiteSpace(projectId)) throw new InvalidOperationException("Falta Firebase ProjectId.");
-    return FirestoreDb.Create(projectId);
+
+    var projectId = config["Firebase:ProjectId"]
+        ?? Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID");
+
+    if (string.IsNullOrWhiteSpace(projectId))
+        throw new InvalidOperationException("Falta Firebase ProjectId.");
+
+    GoogleCredential credential;
+
+    var json = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
+
+    if (!string.IsNullOrWhiteSpace(json))
+    {
+        credential = GoogleCredential.FromJson(json);
+    }
+    else
+    {
+        credential = GoogleCredential.GetApplicationDefault();
+    }
+
+    var client = new FirestoreClientBuilder
+    {
+        Credential = credential
+    }.Build();
+
+    return FirestoreDb.Create(projectId, client);
 });
 
 // Registrar MemoryCache
