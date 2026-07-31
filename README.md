@@ -107,3 +107,11 @@ flowchart TB
     APIControllers --> Service
     Service --> APIControllers
 ```
+
+## License
+
+This project is provided for educational, research, and portfolio purposes only.
+
+Commercial use, redistribution, sublicensing, selling, hosting as a service, or creating commercial derivative works is prohibited without the prior written permission of the author.
+
+See the LICENSE file for more information.
