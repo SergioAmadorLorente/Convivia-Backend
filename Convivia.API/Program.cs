@@ -112,6 +112,18 @@ var app = builder.Build();
 app.UseCors("AllowAll");
 app.UseStaticFiles();
 
+var uploadsDirPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+if (!Directory.Exists(uploadsDirPath))
+{
+    Directory.CreateDirectory(uploadsDirPath);
+}
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsDirPath),
+    RequestPath = "/uploads"
+});
+
 // Middlewares y mapeo de endpoints
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {

@@ -44,8 +44,13 @@ namespace Convivia.Infrastructure.Services
             var safeFileName = $"{Guid.NewGuid():N}{extension}";
             var objectPath = $"{folder}/{safeFileName}";
 
+            var projectId = _config["Firebase:ProjectId"]
+                ?? Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID")
+                ?? "convivia-862f2";
+
             var bucketName = _config["Firebase:StorageBucket"]
-                ?? Environment.GetEnvironmentVariable("FIREBASE_STORAGE_BUCKET");
+                ?? Environment.GetEnvironmentVariable("FIREBASE_STORAGE_BUCKET")
+                ?? $"{projectId}.firebasestorage.app";
 
             if (!string.IsNullOrWhiteSpace(bucketName))
             {
