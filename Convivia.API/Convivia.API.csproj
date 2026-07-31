@@ -30,8 +30,7 @@
 
   <!-- ESTE ES EL CAMBIO -->
   <ItemGroup>
-    <Content Include="Firebase\serviceAccount.json"
-             Condition="Exists('Firebase\serviceAccount.json')">
+    <Content Include="Firebase\serviceAccount.json" Condition="Exists('Firebase\serviceAccount.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
@@ -41,6 +40,10 @@
     <Content Include="wwwroot\**\*" Exclude="bin\**;obj\**" />
     <Compile Include="**\*.cs" Exclude="bin\**;obj\**" />
     <None Include="**\*.json" Exclude="bin\**;obj\**;Firebase\serviceAccount.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\perfiles\" />
   </ItemGroup>
 
 </Project>
