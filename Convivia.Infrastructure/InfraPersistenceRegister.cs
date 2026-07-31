@@ -1,4 +1,4 @@
-﻿using Mapster;
+using Mapster;
 using Convivia.Infrastructure.Models;
 using Convivia.Domain.Entities;
 using Convivia.Shared.Contracts;
@@ -13,8 +13,10 @@ namespace Convivia.Infrastructure.Mappers
         public void Register(TypeAdapterConfig config)
         {
             // Usuario
-            config.NewConfig<FireStoreUsuario, Usuario>();
-            config.NewConfig<Usuario, FireStoreUsuario>();
+            config.NewConfig<FireStoreUsuario, Usuario>()
+                .Map(dest => dest.FotoUrl, src => src.FotoUrl);
+            config.NewConfig<Usuario, FireStoreUsuario>()
+                .Map(dest => dest.FotoUrl, src => src.FotoUrl);
 
             // Espacio
             config.NewConfig<FireStoreEspacio, Espacio>();

@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Identity;
 using System.Text.Json.Serialization;
 
@@ -22,6 +22,8 @@ namespace Convivia.Domain.Entities
 
         
         public bool Premium { get; set; }
+
+        public string? FotoUrl { get; set; }
 
         
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;

@@ -1,4 +1,4 @@
-﻿using Convivia.Application.Mappers;
+using Convivia.Application.Mappers;
 using Convivia.Shared.DTOs;
 using Convivia.Shared.Helpers;
 using Mapster;
@@ -23,13 +23,20 @@ namespace Convivia.Application.Services
         private readonly IMapper _mapper;
         private readonly IUsuarioEspacioRepository _usuarioEspacioRepo;
         private readonly ILogger<UsuarioService> _logger;
+        private readonly IStorageService? _storageService;
 
-        public UsuarioService(IUsuarioRepository usuarioRepository,IMapper mapper, ILogger<UsuarioService> logger, IUsuarioEspacioRepository usuarioEspacioRepo)
+        public UsuarioService(
+            IUsuarioRepository usuarioRepository,
+            IMapper mapper,
+            ILogger<UsuarioService> logger,
+            IUsuarioEspacioRepository usuarioEspacioRepo,
+            IStorageService? storageService = null)
         {
             _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _usuarioEspacioRepo = usuarioEspacioRepo ?? throw new ArgumentNullException(nameof(usuarioEspacioRepo));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _storageService = storageService;
         }
 
         public async Task<UsuarioDto> CrearUsuarioAsync(CreateUsuarioDto dto, CancellationToken ct = default)
@@ -179,6 +186,45 @@ namespace Convivia.Application.Services
             await _usuarioRepository.DeleteAsync(id, ct);
             return true;
         }
+
+        /// <summary>
+        /// Sube y actualiza la foto de perfil del usuario.
+        /// </summary>
+        public async Task<UsuarioDto?> ActualizarFotoPerfilAsync(
+            string usuarioId,
+            System.IO.Stream fileStream,
+            string fileName,
+            string contentType,
+            CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioId)) throw new ArgumentNullException(nameof(usuarioId));
+            if (fileStream == null || fileStream.Length == 0) throw new ArgumentException("El archivo no contiene datos.", nameof(fileStream));
+            if (_storageService == null) throw new InvalidOperationException("El servicio de almacenamiento no está registrado.");
+
+            var usuario = await _usuarioRepository.GetByIdAsync(usuarioId, ct);
+            if (usuario == null) return null;
+
+            var fotoUrl = await _storageService.UploadFileAsync(fileStream, fileName, contentType, folder: "perfiles", ct);
+
+            // Si tenía una foto previa distinta, intentar borrarla
+            if (!string.IsNullOrWhiteSpace(usuario.FotoUrl) && usuario.FotoUrl != fotoUrl)
+            {
+                await _storageService.DeleteFileAsync(usuario.FotoUrl, ct);
+            }
+
+            usuario.FotoUrl = fotoUrl;
+
+            // Actualizar directamente el campo "FotoUrl" en el documento Firestore del usuario usando SetAsync(MergeAll)
+            var updates = new Dictionary<string, object>
+            {
+                { "FotoUrl", fotoUrl }
+            };
+            await _usuarioRepository.UpdateAsync(usuarioId, updates, useSetMerge: true, ct);
+
+            var updated = await _usuarioRepository.GetByIdAsync(usuarioId, ct);
+            return updated == null ? null : _mapper.Map<UsuarioDto>(updated);
+        }
+
         private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateUsuarioDto dto)
         {
             var updates = new Dictionary<string, object>();
@@ -188,6 +234,7 @@ namespace Convivia.Application.Services
             if (dto.Email != null) updates["Email"] = dto.Email;
             if (dto.Password != null) updates["Password"] = dto.Password;
             if (dto.Premium != null) updates["Premium"] = dto.Premium;
+            if (dto.FotoUrl != null) updates["FotoUrl"] = dto.FotoUrl;
 
             return updates;
         }

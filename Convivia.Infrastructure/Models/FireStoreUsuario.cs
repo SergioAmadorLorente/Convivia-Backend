@@ -27,6 +27,9 @@ namespace Convivia.Infrastructure.Models
         [FirestoreProperty("Premium")]
         public bool Premium { get; set; }
 
+        [FirestoreProperty("FotoUrl")]
+        public string? FotoUrl { get; set; }
+
         [FirestoreProperty("FechaRegistro")]
         public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 

@@ -24,13 +24,10 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    // esta la comento o me peta INVESTIGAR .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj} CorrelationId={CorrelationId} RequestId={RequestId}{NewLine}{Exception}")
+    
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Registrar Serilog en el host
-//builder.Host.UseSerilog();   esta la comento o me peta INVESTIGAR
 
 // Servicios y configuración
 builder.Logging.ClearProviders().AddConsole().AddDebug();
@@ -113,6 +110,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors("AllowAll");
+app.UseStaticFiles();
 
 // Middlewares y mapeo de endpoints
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
