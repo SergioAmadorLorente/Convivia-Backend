@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -297,5 +297,47 @@ public class UsuarioServiceTests
         _usuarioEspacioRepoMock.Verify(r => r.DeleteAsync("UE1", It.IsAny<CancellationToken>()), Times.Once);
         _usuarioEspacioRepoMock.Verify(r => r.DeleteAsync("UE2", It.IsAny<CancellationToken>()), Times.Once);
         _repoMock.Verify(r => r.DeleteAsync("1", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // -------------------------------------------------------------
+    // ACTUALIZAR FOTO PERFIL
+    // -------------------------------------------------------------
+    [Fact]
+    public async Task ActualizarFotoPerfilAsync_SubeFotoYActualizaUsuario()
+    {
+        var storageMock = new Mock<IStorageService>();
+        var serviceWithStorage = new UsuarioService(
+            _repoMock.Object,
+            _mapperMock.Object,
+            _loggerMock.Object,
+            _usuarioEspacioRepoMock.Object,
+            storageMock.Object
+        );
+
+        var usuario = new Usuario { Id = "usr1", Nombre = "Test" };
+        var updatedUsuario = new Usuario { Id = "usr1", Nombre = "Test", FotoUrl = "https://firebasestorage.googleapis.com/v0/b/bucket/o/perfiles/abc.jpg?alt=media" };
+        var expectedDto = new UsuarioDto { Id = "usr1", Nombre = "Test", FotoUrl = "https://firebasestorage.googleapis.com/v0/b/bucket/o/perfiles/abc.jpg?alt=media" };
+
+        _repoMock.Setup(r => r.GetByIdAsync("usr1", It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(usuario);
+
+        storageMock.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "avatar.png", "image/png", "perfiles", It.IsAny<CancellationToken>()))
+                   .ReturnsAsync("https://firebasestorage.googleapis.com/v0/b/bucket/o/perfiles/abc.jpg?alt=media");
+
+        _repoMock.Setup(r => r.UpdateAsync("usr1", It.IsAny<Usuario>(), true, It.IsAny<CancellationToken>()))
+                 .Returns(Task.CompletedTask);
+
+        _repoMock.Setup(r => r.GetByIdAsync("usr1", It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(updatedUsuario);
+
+        _mapperMock.Setup(m => m.Map<UsuarioDto>(updatedUsuario))
+                   .Returns(expectedDto);
+
+        using var ms = new System.IO.MemoryStream(new byte[] { 1, 2, 3 });
+        var result = await serviceWithStorage.ActualizarFotoPerfilAsync("usr1", ms, "avatar.png", "image/png");
+
+        Assert.NotNull(result);
+        Assert.Equal("https://firebasestorage.googleapis.com/v0/b/bucket/o/perfiles/abc.jpg?alt=media", result.FotoUrl);
+        storageMock.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "avatar.png", "image/png", "perfiles", It.IsAny<CancellationToken>()), Times.Once);
     }
 }

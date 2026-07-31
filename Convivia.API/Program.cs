@@ -15,18 +15,19 @@ using Serilog;
 using Serilog.Context;
 using Serilog.Events;
 using System.Text.Json.Serialization;
+using Google.Api.Gax.Grpc;
+using Google.Cloud.Firestore.V1;
+using Google.Apis.Auth.OAuth2;
+
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    // esta la comento o me peta INVESTIGAR .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj} CorrelationId={CorrelationId} RequestId={RequestId}{NewLine}{Exception}")
+    
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Registrar Serilog en el host
-//builder.Host.UseSerilog();   esta la comento o me peta INVESTIGAR
 
 // Servicios y configuración
 builder.Logging.ClearProviders().AddConsole().AddDebug();
@@ -35,9 +36,32 @@ FirebaseConfig.InitializeFirebase();
 builder.Services.AddSingleton(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
-    var projectId = config["Firebase:ProjectId"] ?? Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID");
-    if (string.IsNullOrWhiteSpace(projectId)) throw new InvalidOperationException("Falta Firebase ProjectId.");
-    return FirestoreDb.Create(projectId);
+
+    var projectId = config["Firebase:ProjectId"]
+        ?? Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID");
+
+    if (string.IsNullOrWhiteSpace(projectId))
+        throw new InvalidOperationException("Falta Firebase ProjectId.");
+
+    GoogleCredential credential;
+
+    var json = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
+
+    if (!string.IsNullOrWhiteSpace(json))
+    {
+        credential = GoogleCredential.FromJson(json);
+    }
+    else
+    {
+        credential = GoogleCredential.GetApplicationDefault();
+    }
+
+    var client = new FirestoreClientBuilder
+    {
+        Credential = credential
+    }.Build();
+
+    return FirestoreDb.Create(projectId, client);
 });
 
 // Registrar MemoryCache
@@ -86,9 +110,10 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors("AllowAll");
+app.UseStaticFiles();
 
 // Middlewares y mapeo de endpoints
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();

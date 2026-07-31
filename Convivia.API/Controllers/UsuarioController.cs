@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Convivia.Shared.DTOs;
@@ -138,6 +141,33 @@ namespace Convivia.API.Controllers
 
             var resultat = await _service.EliminarUsuarioAsync(id, ct);
             return resultat ? NoContent() : NotFound();
+        }
+
+        /// <summary>
+        /// Sube o actualiza la foto de perfil de un usuario.
+        /// </summary>
+        /// <param name="id">ID del usuario</param>
+        /// <param name="file">Archivo de imagen (form-data)</param>
+        /// <param name="ct">Token de cancelación</param>
+        [HttpPost("{id}/foto")]
+        public async Task<IActionResult> UploadFoto(string id, IFormFile file, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest("El ID del usuario es requerido.");
+            if (file == null || file.Length == 0) return BadRequest("No se ha enviado ningún archivo de imagen.");
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(ext))
+            {
+                return BadRequest($"Formato no soportado. Permitidos: {string.Join(", ", allowedExtensions)}");
+            }
+
+            using var stream = file.OpenReadStream();
+            var updated = await _service.ActualizarFotoPerfilAsync(id, stream, file.FileName, file.ContentType, ct);
+
+            if (updated == null) return NotFound($"No se encontró el usuario con ID: {id}");
+
+            return Ok(updated);
         }
 
     }

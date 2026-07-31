@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Convivia.Infrastructure.HostedServices;
@@ -7,6 +7,7 @@ using Convivia.Infrastructure.Repositories;
 using Convivia.Infrastructure.Services;
 using Convivia.Shared.Services;
 using Convivia.Application.Repositories; // si hace falta ajustar namespaces
+using Convivia.Application.Services;
 using System;
 
 namespace Convivia.Infrastructure.Extensions
@@ -17,6 +18,7 @@ namespace Convivia.Infrastructure.Extensions
         {
             // Servicios de infraestructura
             services.AddScoped<IFirebaseService, FirebaseService>();
+            services.AddScoped<IStorageService, FirebaseStorageService>();
 
             // Cola en memoria (singleton) - compartida entre middleware y hosted service
             services.AddSingleton<IErrorQueue>(sp => new InMemoryErrorQueue(capacity: 1000));

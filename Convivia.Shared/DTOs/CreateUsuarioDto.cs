@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,5 +35,10 @@ namespace Convivia.Shared.DTOs
         /// Número de teléfono del usuario (opcional).
         /// </summary>
         public string? Telefono { get; set; }
+
+        /// <summary>
+        /// URL pública de la foto de perfil del usuario (opcional).
+        /// </summary>
+        public string? FotoUrl { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +37,11 @@ namespace Convivia.Shared.DTOs
         /// Indica si el usuario tiene una cuenta Premium con funcionalidades adicionales.
         /// </summary>
         public bool Premium { get; set; }
+
+        /// <summary>
+        /// URL pública de la foto de perfil del usuario (opcional).
+        /// </summary>
+        public string? FotoUrl { get; set; }
 
         /// <summary>
         /// Fecha y hora de registro del usuario en formato UTC.
