@@ -31,28 +31,6 @@ Disponible en plataformas móviles como **Play Store** y **App Store**. Solo tie
 - _"Marta crea la residencia, asigna tareas semanales y consulta el calendario para ver quién está al día."_  
 - _"Luis revisa su Karma y ve que necesita colaborar más para subir de nivel."_
 
-Copyright © 2026 Sergio Amador Lorente e inetum
-
-All Rights Reserved.
-
-Convivia is proprietary software.
-
-This project is published exclusively for educational, research, demonstration, and portfolio purposes.
-
-Permission is granted to view, study, fork, and modify the source code solely for personal, educational, or non-commercial purposes.
-
-Without the prior written permission of the copyright holder, you may NOT:
-
-- Use this software or any substantial portion of it for commercial purposes.
-- Sell, sublicense, distribute, or monetize this software.
-- Offer this software as a hosted service (SaaS) or commercial product.
-- Create or distribute commercial derivative works based on this project.
-- Remove or alter this copyright notice.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-
-Copyright © 2026 Sergio Amador Lorente e inetum. All rights reserved.
-
 # Flujo del programa desacoplado
 
 > El diagrama describe la arquitectura desacoplada de la aplicación tal y como se representa en el diagrama Mermaid incluido más abajo. La aplicación está organizada en dominios técnicos claramente separados: Infrastructure, Domain, Application y API, con Firebase como la fuente de persistencia.
