@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Convivia.Shared.DTOs
@@ -67,5 +67,12 @@ namespace Convivia.Shared.DTOs
         /// Indica si la tarea es puntual (true) o repetitiva (false).
         /// </summary>
         public bool EsPuntual { get; set; }
+
+        /// <summary>
+        /// Fecha real de ejecución de la instancia en la semana actual.
+        /// Para tareas repetidas: lunes ISO de la semana actual + DiaSemana días.
+        /// Para tareas puntuales: null (la fecha límite viene en la plantilla).
+        /// </summary>
+        public DateOnly? FechaEjecutada { get; set; }
     }
 }
