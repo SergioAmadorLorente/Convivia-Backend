@@ -597,6 +597,20 @@ namespace Convivia.Application.Services
             dto.Overdue = IsOverdue(tarea, domPlantilla);
             dto.EsPuntual = tarea.DiaSemana == -1;
             dto.UsuarioEspacioId = tarea.UsuarioEspacioId;
+
+            // Calcular la fecha real de la instancia en la semana actual.
+            // Para tareas repetidas (DiaSemana 0-6): lunes ISO de esta semana + N días.
+            // Para tareas puntuales (DiaSemana == -1): null.
+            if (tarea.DiaSemana >= 0 && tarea.DiaSemana <= 6)
+            {
+                var now = DateTime.UtcNow;
+                var lunes = System.Globalization.ISOWeek.ToDateTime(
+                    System.Globalization.ISOWeek.GetYear(now),
+                    System.Globalization.ISOWeek.GetWeekOfYear(now),
+                    DayOfWeek.Monday);
+                dto.FechaEjecutada = DateOnly.FromDateTime(lunes.AddDays(tarea.DiaSemana));
+            }
+
             return dto;
         }
 
