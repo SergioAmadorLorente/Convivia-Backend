@@ -1,39 +1,88 @@
+**_### ESPAÑOL_**
+
 # Convivia
+![Logo](https://drive.google.com/uc?export=view&id=1so15OHqQq5aajitB4dvVLvT_QWf53RhJ)
 
 **Facilitar el reparto justo y organizado de tareas domésticas.**
 
 Convivia es una app móvil diseñada para mejorar la convivencia en pisos compartidos o residencias, ayudando a distribuir equitativamente las tareas del hogar. A través de una interfaz intuitiva y un sistema de niveles llamado **Karma**, los usuarios pueden organizar quién hace qué y cuándo, fomentando un entorno más justo y colaborativo.
 
 ##  Tecnologías utilizadas
-- Frontend: **React**
-- Backend: **.NET**
+- Frontend: **React (TypeScript)**
+- Backend: **C#.NET**
 - Diseño de interfaz: **Figma**
-- Base de datos: **CosmosDB**
+- Base de datos: **Firebase**
+
+## DEMO Youtube
+
+[Ver DEMO](https://youtu.be/hWP5XzAgejk)
 
 ##  Funcionalidades principales
-- Crear y gestionar **residencias compartidas**
-- Añadir y asignar **tareas domésticas**
-- Visualizar actividades en un **calendario integrado**
-- Recibir **recordatorios** automáticos
-- Sistema de **niveles “Karma”** que recompensa a quienes más contribuyen
+- Crear y gestionar **Residencias Compartidas**
+- Añadir y asignar **Tareas Domésticas y facturas**
+- Sistema de **Niveles “Karma”** que recompensa a quienes más contribuyen
+- Disponible idioma **Español, Íngles, Francés, Italiano , Alemán y Portugués**
 
 ## Usuarios objetivo
 - Personas que comparten piso
 - Residencias colectivas con organización doméstica
 
-##  Registro
+## Registro
 Para usar Convivia, los usuarios deben crear una cuenta. El registro permite acceder a funcionalidades personalizadas, sincronización de datos y seguimiento del Karma.
 
-## Instalación
-Disponible en plataformas móviles como **Play Store** y **App Store**. Solo tienes que buscar “Convivia” e instalarla.
+##  Instalación GRATIS
+Solo tienes que descargarla e instalarla(Es APK Dynamic, solo se instala 1 vez y se actualiza sola al abrir la app si existe alguna update)
+
+[Descargar](https://drive.google.com/file/d/18DU81odgJFJyJUcyGd-qrx3Zk9GBTwXD/view)
 
 ##  Ejemplos de uso
 - _"Marta crea la residencia, asigna tareas semanales y consulta el calendario para ver quién está al día."_  
 - _"Luis revisa su Karma y ve que necesita colaborar más para subir de nivel."_
 
-# Flujo del programa desacoplado
 
-> El diagrama describe la arquitectura desacoplada de la aplicación tal y como se representa en el diagrama Mermaid incluido más abajo. La aplicación está organizada en dominios técnicos claramente separados: Infrastructure, Domain, Application y API, con Firebase como la fuente de persistencia.
+**### _ENGLISH_**
+
+# Convivia
+![Logo](https://drive.google.com/uc?export=view&id=1so15OHqQq5aajitB4dvVLvT_QWf53RhJ)
+
+**Facilitating the fair and organized distribution of household chores.**
+
+Convivia is a mobile app designed to improve cohabitation in shared apartments or residences by helping to distribute household tasks equitably. Through an intuitive interface and a leveling system called **Karma**, users can organize who does what and when, fostering a fairer and more collaborative environment.
+
+
+**Convivia**
+**Facilitating the fair and organized distribution of household chores.**
+**Convivia**
+****** ## Technologies Used
+- Frontend: **React (TypeScript)**
+- Backend: **C#.NET**
+- Interface Design: **Figma**
+- Database: **Firebase**
+
+## DEMO Youtube
+[Watch DEMO](https://youtu.be/hWP5XzAgejk)
+
+## Main Features
+- Create and manage **Shared Living Spaces**
+- Add and assign **Household Chores and Invoices**
+- **Karma Leveling** system that rewards top contributors
+-  Available **English, Spanish, French, Italian, German and Portuguese** Language
+
+## Target Users
+- People who share apartments
+- Shared living spaces with household management
+
+## Registration
+To use Convivia, users must create an account. Registration allows access to customized features, data synchronization, and Karma tracking.
+
+## Installation FREE
+Just download and install it (It's a Dynamic APK, it only needs to be installed once and it updates automatically when you open the app if there's an update).
+
+[Download](https://drive.google.com/file/d/18DU81odgJFJyJUcyGd-qrx3Zk9GBTwXD/view)
+
+## Usage Examples
+- "Marta creates the residence, assigns weekly tasks, and checks the calendar to see who's on track."
+- "Luis checks his Karma and sees that he needs to collaborate more to level up."
 
 ```mermaid
 flowchart TB
