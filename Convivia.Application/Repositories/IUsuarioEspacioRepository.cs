@@ -10,6 +10,7 @@ namespace Convivia.Application.Repositories
         Task<IEnumerable<UsuarioEspacio>> GetByEspacioIdAsync(string espacioId, CancellationToken ct = default);
         Task<IEnumerable<UsuarioEspacio>> GetByUsuarioIdAsync(string usuarioId, CancellationToken ct = default);
         Task<int> UpdateKarmaAsync(string usuarioEspacioId, int karmaAmount, CancellationToken ct = default);
+        Task<int> SubtractKarmaAsync(string usuarioEspacioId, int karmaAmount, CancellationToken ct = default);
         Task<bool> ExistsByEspacioIdAsync(string espacioId, CancellationToken ct = default);
     }
 }

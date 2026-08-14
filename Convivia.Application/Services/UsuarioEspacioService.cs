@@ -1,4 +1,4 @@
-using Convivia.Application.Repositories;
+ï»¿using Convivia.Application.Repositories;
 using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
 using Mapster;
@@ -18,18 +18,25 @@ namespace Convivia.Application.Services
         private readonly ILogger<UsuarioEspacioService> _logger;
         private readonly IFacturaRepository _facturaRepo;
         private readonly ITareaRepository _tareaRepo;
+        private readonly IKarmaEstadisticasRepository _karmaRepo;
 
-        public UsuarioEspacioService(IUsuarioEspacioRepository repo,IMapper mapper, ILogger<UsuarioEspacioService> logger, IFacturaRepository facturaRepo, ITareaRepository tareaRepo)
+        public UsuarioEspacioService(
+            IUsuarioEspacioRepository repo,
+            IMapper mapper,
+            ILogger<UsuarioEspacioService> logger,
+            IFacturaRepository facturaRepo,
+            ITareaRepository tareaRepo,
+            IKarmaEstadisticasRepository karmaRepo)
         {
             _usuarioEspacioRepository = repo ?? throw new ArgumentNullException(nameof(repo));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _facturaRepo = facturaRepo ?? throw new ArgumentNullException(nameof(facturaRepo)); 
             _tareaRepo = tareaRepo ?? throw new ArgumentNullException(nameof(tareaRepo));
+            _karmaRepo = karmaRepo ?? throw new ArgumentNullException(nameof(karmaRepo));
         }
 
         // Crear UsuarioEspacio
-        
         public async Task<UsuarioEspacioDto?> CrearUsuarioEspacioAsync(CreateUsuarioEspacioDto dto, CancellationToken ct = default)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
@@ -37,12 +44,11 @@ namespace Convivia.Application.Services
             if (dto.Ausente == null) throw new ArgumentException("Ausente no puede ser nulo", nameof(dto.Ausente));
 
             if (dto.Karma < 0) throw new ArgumentException("Karma no puede ser negativo", nameof(dto.Karma));
-            if (string.IsNullOrWhiteSpace(dto.Rol)) throw new ArgumentException("Rol no puede estar vacío", nameof(dto.Rol));
-            if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId no puede estar vacío", nameof(dto.EspacioId));
-            if (string.IsNullOrWhiteSpace(dto.UsuarioId)) throw new ArgumentException("UsuarioId no puede estar vacío", nameof(dto.UsuarioId));
+            if (string.IsNullOrWhiteSpace(dto.Rol)) throw new ArgumentException("Rol no puede estar vacio", nameof(dto.Rol));
+            if (string.IsNullOrWhiteSpace(dto.EspacioId)) throw new ArgumentException("EspacioId no puede estar vacio", nameof(dto.EspacioId));
+            if (string.IsNullOrWhiteSpace(dto.UsuarioId)) throw new ArgumentException("UsuarioId no puede estar vacio", nameof(dto.UsuarioId));
             if (dto.TareasId == null) throw new ArgumentException("TareasId no puede ser nulo", nameof(dto.TareasId));
-            if (string.IsNullOrWhiteSpace(dto.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacío", nameof(dto.PermisoId));
-
+            if (string.IsNullOrWhiteSpace(dto.PermisoId)) throw new ArgumentException("PermisoId no puede estar vacio", nameof(dto.PermisoId));
 
             // DTO -> Domain
             var UsuarioEspacioDomain = _mapper.Map<UsuarioEspacio>(dto);
@@ -54,7 +60,7 @@ namespace Convivia.Application.Services
             var createdDomain = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
             if (createdDomain == null)
             {
-                // devolver DTO mínimo con id para evitar fallos en rutas
+                // devolver DTO minimo con id para evitar fallos en rutas
                 return new UsuarioEspacioDto { Id = id };
             }
 
@@ -62,6 +68,7 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(createdDto.Id))
                 createdDto.Id = id;
 
+            await EnrichKarmaAsync(createdDto, createdDomain.EspacioId, ct);
             return createdDto;
         }
 
@@ -70,7 +77,10 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
             var domain = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
-            return domain == null ? null : _mapper.Map<UsuarioEspacioDto>(domain);
+            if (domain == null) return null;
+            var dto = _mapper.Map<UsuarioEspacioDto>(domain);
+            await EnrichKarmaAsync(dto, domain.EspacioId, ct);
+            return dto;
         }
 
         // Obtener UsuariosEspacios por EspacioId (lista)
@@ -78,26 +88,65 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(espacioId)) return Enumerable.Empty<UsuarioEspacioDto>();
             var list = await _usuarioEspacioRepository.GetByEspacioIdAsync(espacioId, ct);
-            return list?.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList() ?? new List<UsuarioEspacioDto>();
+            if (list == null || !list.Any()) return new List<UsuarioEspacioDto>();
+
+            var dtos = list.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList();
+            try
+            {
+                var karmaStats = await _karmaRepo.GetAllByEspacioIdAsync(espacioId, ct);
+                if (karmaStats != null)
+                {
+                    var karmaDict = karmaStats
+                        .Where(k => !string.IsNullOrWhiteSpace(k.UsuarioEspacioId))
+                        .ToDictionary(k => k.UsuarioEspacioId, k => k.KarmaTotal);
+
+                    foreach (var dto in dtos)
+                    {
+                        if (karmaDict.TryGetValue(dto.Id, out var karmaTotal))
+                        {
+                            dto.Karma = karmaTotal;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudieron obtener estadisticas de karma para el espacio {EspacioId}", espacioId);
+            }
+            return dtos;
         }
 
-        // Obtener UsuarioEspacio por UsuarioId (único)
+        // Obtener UsuarioEspacio por UsuarioId (unico)
         public async Task<IEnumerable<UsuarioEspacioDto>> ObtenerPorUsuarioAsync(string usuarioId, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(usuarioId)) return Enumerable.Empty<UsuarioEspacioDto>();
             var list = await _usuarioEspacioRepository.GetByUsuarioIdAsync(usuarioId, ct);
-            return list?.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList() ?? new List<UsuarioEspacioDto>();
+            if (list == null || !list.Any()) return new List<UsuarioEspacioDto>();
+
+            var dtos = list.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList();
+            foreach (var dto in dtos)
+            {
+                await EnrichKarmaAsync(dto, dto.EspacioId, ct);
+            }
+            return dtos;
         }
 
         // Obtener todos
         public async Task<IEnumerable<UsuarioEspacioDto>> ListarTodasAsync(CancellationToken ct = default)
         {
             var list = await _usuarioEspacioRepository.GetAllAsync(ct);
-            return list?.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList() ?? new List<UsuarioEspacioDto>();
+            if (list == null || !list.Any()) return new List<UsuarioEspacioDto>();
+
+            var dtos = list.Select(f => _mapper.Map<UsuarioEspacioDto>(f)).ToList();
+            foreach (var dto in dtos)
+            {
+                await EnrichKarmaAsync(dto, dto.EspacioId, ct);
+            }
+            return dtos;
         }
 
         // Actualizar UsuarioEspacio
-        public async Task<UsuarioEspacioDto> ActualizarUsuarioEspacioCompletoAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
+        public async Task<UsuarioEspacioDto?> ActualizarUsuarioEspacioCompletoAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
@@ -114,7 +163,11 @@ namespace Convivia.Application.Services
             await _usuarioEspacioRepository.UpdateAsync(id, domain, merge: false, ct);
 
             var updated = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
+            if (updated == null) return null;
+
+            var updatedDto = _mapper.Map<UsuarioEspacioDto>(updated);
+            await EnrichKarmaAsync(updatedDto, updated.EspacioId, ct);
+            return updatedDto;
         }
 
         /// <summary>
@@ -135,10 +188,14 @@ namespace Convivia.Application.Services
             await _usuarioEspacioRepository.UpdateAsync(id, existing, merge: true, ct);
 
             var updated = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
+            if (updated == null) return null;
+
+            var updatedDto = _mapper.Map<UsuarioEspacioDto>(updated);
+            await EnrichKarmaAsync(updatedDto, updated.EspacioId, ct);
+            return updatedDto;
         }
 
-        // Actualización parcial
+        // Actualizacion parcial
         public async Task<UsuarioEspacioDto?> ActualizarUsuarioEspacioParcialAsync(string id, UpdateUsuarioEspacioDto dto, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
@@ -151,14 +208,21 @@ namespace Convivia.Application.Services
             {
                 // Nada que actualizar: devolver la entidad actual
                 var current = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
-                return current == null ? null : _mapper.Map<UsuarioEspacioDto>(current);
+                if (current == null) return null;
+                var currentDto = _mapper.Map<UsuarioEspacioDto>(current);
+                await EnrichKarmaAsync(currentDto, current.EspacioId, ct);
+                return currentDto;
             }
 
-            // useSetMerge: false -> UpdateAsync estricto (fallará si no existe)
+            // useSetMerge: false -> UpdateAsync estricto (fallara si no existe)
             await _usuarioEspacioRepository.UpdateAsync(id, updates, useSetMerge: false, ct);
 
             var updated = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
-            return updated == null ? null : _mapper.Map<UsuarioEspacioDto>(updated);
+            if (updated == null) return null;
+
+            var updatedDto = _mapper.Map<UsuarioEspacioDto>(updated);
+            await EnrichKarmaAsync(updatedDto, updated.EspacioId, ct);
+            return updatedDto;
         }
 
         // Eliminar UsuarioEspacio
@@ -176,7 +240,6 @@ namespace Convivia.Application.Services
                 tarea!.UsuarioEspacioId = null;
                 await _tareaRepo.UpdateAsync(tarea.Id, tarea, ct);
             }
-            
 
             var existing = await _usuarioEspacioRepository.GetByIdAsync(id, ct);
             if (existing == null) return false;
@@ -184,6 +247,26 @@ namespace Convivia.Application.Services
             await _usuarioEspacioRepository.DeleteAsync(id, ct);
             return true;
         }
+
+        private async Task EnrichKarmaAsync(UsuarioEspacioDto? dto, string espacioId, CancellationToken ct = default)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Id) || string.IsNullOrWhiteSpace(espacioId))
+                return;
+
+            try
+            {
+                var stats = await _karmaRepo.GetByUsuarioEspacioIdAsync(espacioId, dto.Id, ct);
+                if (stats != null)
+                {
+                    dto.Karma = stats.KarmaTotal;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudieron obtener estadisticas de karma para UsuarioEspacio {Id} en espacio {EspacioId}", dto.Id, espacioId);
+            }
+        }
+
         private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateUsuarioEspacioDto dto)
         {
             var updates = new Dictionary<string, object>();
