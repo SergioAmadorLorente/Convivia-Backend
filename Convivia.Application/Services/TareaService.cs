@@ -348,28 +348,50 @@ namespace Convivia.Application.Services
                 tarea.UltimaSemanaModificacion = GetWeekIdentifier(DateTime.UtcNow);
             }
 
-            // SOLO sumar karma si NO está overdue
-            if (completar &&
-                !overdue &&
-                !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
+            // Actualizar karma según si está fuera de plazo o a tiempo
+            if (!string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                await AwardKarmaToUserAsync(
-                    espacioid,
-                    tarea.UsuarioEspacioId,
-                    plantilla.karma,
-                    ct);
-            }
-
-            // SOLO restar karma si previamente pudo haberse ganado
-            if (!completar &&
-                !overdue &&
-                !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
-            {
-                await RemoveKarmaFromUserAsync(
-                    espacioid,
-                    tarea.UsuarioEspacioId,
-                    plantilla.karma,
-                    ct);
+                if (completar)
+                {
+                    if (!overdue)
+                    {
+                        // Sumar karma si se completó a tiempo
+                        await AwardKarmaToUserAsync(
+                            espacioid,
+                            tarea.UsuarioEspacioId,
+                            plantilla.karma,
+                            ct);
+                    }
+                    else
+                    {
+                        // Restar karma si se completó fuera de plazo
+                        await RemoveKarmaFromUserAsync(
+                            espacioid,
+                            tarea.UsuarioEspacioId,
+                            plantilla.karma,
+                            ct);
+                    }
+                }
+                else
+                {
+                    // Al descompletar, revertir la acción previa
+                    if (!overdue)
+                    {
+                        await RemoveKarmaFromUserAsync(
+                            espacioid,
+                            tarea.UsuarioEspacioId,
+                            plantilla.karma,
+                            ct);
+                    }
+                    else
+                    {
+                        await AwardKarmaToUserAsync(
+                            espacioid,
+                            tarea.UsuarioEspacioId,
+                            plantilla.karma,
+                            ct);
+                    }
+                }
             }
 
             
@@ -704,7 +726,15 @@ namespace Convivia.Application.Services
             
             if (esCompletar && tarea.Estado != TareaEstado.Completada && !string.IsNullOrWhiteSpace(tarea.UsuarioEspacioId))
             {
-                await AwardKarmaToUserAsync(plantilla.EspacioId, tarea.UsuarioEspacioId, plantilla.karma, ct);
+                bool overdue = IsOverdue(tarea, plantilla, ignoreCompletion: true);
+                if (!overdue)
+                {
+                    await AwardKarmaToUserAsync(plantilla.EspacioId, tarea.UsuarioEspacioId, plantilla.karma, ct);
+                }
+                else
+                {
+                    await RemoveKarmaFromUserAsync(plantilla.EspacioId, tarea.UsuarioEspacioId, plantilla.karma, ct);
+                }
             }
         }
 
@@ -738,6 +768,9 @@ namespace Convivia.Application.Services
 
             try
             {
+                // Restar karma en UsuarioEspacio (mantener compatibilidad)
+                await _usuarioEspacioRepository.SubtractKarmaAsync(usuarioEspacioId, karma, ct);
+
                 // Restar karma en las estadísticas de karma
                 var result = await _karmaService.SubtractKarmaAsync(espacioId, usuarioEspacioId, karma, ct);
                 

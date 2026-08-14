@@ -137,7 +137,7 @@ namespace Convivia.Infrastructure.Repositories
             {
                 var updates = new Dictionary<string, object>
                 {
-                    { "karma", FieldValue.Increment(karmaAmount) }
+                    { "Karma", FieldValue.Increment(karmaAmount) }
                 };
 
                 await _firebase.UpdateAsync(Collection, usuarioEspacioId, updates, useSetMerge: true, ct);
@@ -150,6 +150,37 @@ namespace Convivia.Infrastructure.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error incrementando Karma para UsuarioEspacio {Id}", usuarioEspacioId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Decrementa el karma de un UsuarioEspacio usando Firestore FieldValue.Increment con valor negativo
+        /// </summary>
+        public async Task<int> SubtractKarmaAsync(string usuarioEspacioId, int karmaAmount, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(usuarioEspacioId))
+                throw new ArgumentNullException(nameof(usuarioEspacioId));
+
+            if (karmaAmount <= 0)
+                throw new ArgumentException("karmaAmount debe ser mayor a 0", nameof(karmaAmount));
+
+            try
+            {
+                var updates = new Dictionary<string, object>
+                {
+                    { "Karma", FieldValue.Increment(-karmaAmount) }
+                };
+
+                await _firebase.UpdateAsync(Collection, usuarioEspacioId, updates, useSetMerge: true, ct);
+                
+                _logger.LogDebug("Karma {Amount} restado al UsuarioEspacio {Id}", karmaAmount, usuarioEspacioId);
+                
+                return karmaAmount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restando Karma para UsuarioEspacio {Id}", usuarioEspacioId);
                 throw;
             }
         }
