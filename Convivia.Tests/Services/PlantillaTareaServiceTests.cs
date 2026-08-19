@@ -1,4 +1,4 @@
-﻿using Convivia.Application.Repositories;
+using Convivia.Application.Repositories;
 using Convivia.Application.Services;
 using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
@@ -90,15 +90,14 @@ namespace Convivia.Application.Tests.Services
         [Fact]
         public async Task GetAllByEspacioAsync_ShouldReturnFilteredPlantillas()
         {
-            var all = new List<PlantillaTarea>
+            var plantillas = new List<PlantillaTarea>
             {
-                new PlantillaTarea { Id = "p1", EspacioId = "esp1" },
-                new PlantillaTarea { Id = "p2", EspacioId = "esp2" }
+                new PlantillaTarea { Id = "p1", EspacioId = "esp1", Nombre = "P1" }
             };
 
             _repoMock
-                .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(all);
+                .Setup(r => r.GetAllByEspacioAsync("esp1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(plantillas);
 
             _mapperMock
                 .Setup(m => m.Map<IEnumerable<PlantillaTareaDto>>(It.IsAny<IEnumerable<PlantillaTarea>>()))
@@ -190,7 +189,7 @@ namespace Convivia.Application.Tests.Services
                 .ReturnsAsync(entity);
 
             _repoMock
-                .Setup(r => r.DeleteAsync("p1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.DeleteAsync("esp1", "p1", It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             var result = await _sut.DeleteAsync("esp1", "p1");
@@ -209,14 +208,15 @@ namespace Convivia.Application.Tests.Services
         }
 
         [Fact]
-        public async Task UpdateAsync_ShouldThrow_WhenPlantillaNotFound()
+        public async Task UpdateAsync_ShouldReturnNull_WhenPlantillaNotFound()
         {
             _repoMock
                 .Setup(r => r.GetByEspacioAndIdAsync("esp1", "p1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync((PlantillaTarea?)null);
 
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.UpdateAsync("esp1", "p1", new UpdatePlantillaTareaDto()));
+            var result = await _sut.UpdateAsync("esp1", "p1", new UpdatePlantillaTareaDto());
+
+            Assert.Null(result);
         }
 
         [Fact]
@@ -233,7 +233,7 @@ namespace Convivia.Application.Tests.Services
                 .Setup(m => m.Map(dto, entity))
                 .Returns(entity);
 
-            // ✔ ESTA ES LA FIRMA REAL Y ACEPTA CUALQUIER INSTANCIA
+            // ✔ La firma real del servicio es UpdateAsync(id, entity) del IRepository base
             _repoMock
                 .Setup(r => r.UpdateAsync("p1", It.IsAny<PlantillaTarea>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
