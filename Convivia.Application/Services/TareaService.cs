@@ -60,6 +60,13 @@ namespace Convivia.Application.Services
             createPlantilla.DiasRepeticion = dto.DiasRepeticion ?? new List<int>();
             createPlantilla.UsuariosAsignacion = dto.UsuariosAsignacion ?? new List<string>();
 
+            // Para tareas recurrentes: si FechaLimite es <= hoy (o la fecha de creación enviada por defecto en el formulario),
+            // se trata como repetición continua (sin fecha límite de expiración) para no desactivar la plantilla tras la primera semana.
+            if (!esPuntual && dto.FechaLimite.HasValue && dto.FechaLimite.Value <= DateOnly.FromDateTime(DateTime.UtcNow))
+            {
+                createPlantilla.FechaLimite = null;
+            }
+
             var tareas = esPuntual 
                 ? CrearTareasPuntuales(dto) 
                 : CrearTareasRepetidas(dto, createPlantilla.DiasRepeticion);
@@ -177,6 +184,13 @@ namespace Convivia.Application.Services
 
                 var domPlantilla = plantilla.Adapt<PlantillaTarea>();
                 plantilla.InstanciaActiva = MapTareaToDto(instanciaActiva, plantilla, domPlantilla);
+
+                // Si es plantilla repetitiva, sincronizar plantilla.FechaLimite con la fecha de la instancia activa
+                // para que el frontend reciba la fecha de la semana en curso tanto si lee plantilla.FechaLimite como instanciaActiva.FechaLimite/FechaEjecutada.
+                if (!plantilla.EsPuntual && plantilla.InstanciaActiva?.FechaEjecutada.HasValue == true)
+                {
+                    plantilla.FechaLimite = plantilla.InstanciaActiva.FechaEjecutada;
+                }
             }
 
             return plantillas;
@@ -586,10 +600,6 @@ namespace Convivia.Application.Services
 
                 var instancias = tareasPorPlantilla.GetValueOrDefault(plantilla.Id) ?? new List<Tarea>();
 
-                // Resetear tareas repetidas completadas en memoria (async writes en paralelo)
-                if (plantillaActiva)
-                    await ResetCompletedRepeatedTasksInMemoryAsync(espacioid, plantilla, instancias);
-
                 var pt = plantilla.Adapt<PlantillaTarea>();
 
                 foreach (var tarea in instancias)
@@ -622,7 +632,7 @@ namespace Convivia.Application.Services
 
             // Calcular la fecha real de la instancia en la semana actual.
             // Para tareas repetidas (DiaSemana 0-6): lunes ISO de esta semana + N días.
-            // Para tareas puntuales (DiaSemana == -1): null.
+            // Para tareas puntuales (DiaSemana == -1): fecha límite de la plantilla.
             if (tarea.DiaSemana >= 0 && tarea.DiaSemana <= 6)
             {
                 var now = DateTime.UtcNow;
@@ -630,7 +640,14 @@ namespace Convivia.Application.Services
                     System.Globalization.ISOWeek.GetYear(now),
                     System.Globalization.ISOWeek.GetWeekOfYear(now),
                     DayOfWeek.Monday);
-                dto.FechaEjecutada = DateOnly.FromDateTime(lunes.AddDays(tarea.DiaSemana));
+                var fechaSemanaActual = DateOnly.FromDateTime(lunes.AddDays(tarea.DiaSemana));
+                dto.FechaEjecutada = fechaSemanaActual;
+                dto.FechaLimite = fechaSemanaActual;
+            }
+            else
+            {
+                dto.FechaEjecutada = plantilla.FechaLimite;
+                dto.FechaLimite = plantilla.FechaLimite;
             }
 
             return dto;
@@ -641,66 +658,14 @@ namespace Convivia.Application.Services
             return tarea.Estado == estado;
         }
 
-        /// <summary>
-        /// Versión in-memory de ResetCompletedRepeatedTasksAsync: trabaja sobre las tareas ya
-        /// cargadas, emitiendo solo los writes de actualización necesarios en paralelo.
-        /// </summary>
-        private async Task ResetCompletedRepeatedTasksInMemoryAsync(
-            string espacioId,
-            PlantillaTareaDto plantilla,
-            IList<Tarea> tareas)
-        {
-            if (plantilla.DiasRepeticion == null || plantilla.DiasRepeticion.Count == 0) return;
-            if (!IsPlantillaActive(plantilla)) return;
-
-            try
-            {
-                var resetTasks = tareas
-                    .Where(t => t.DiaSemana >= 0 && t.Estado == TareaEstado.Completada)
-                    .Select(async tarea =>
-                    {
-                        tarea.Estado = TareaEstado.Pendiente;
-                        tarea.FechaRealizacion = null;
-                        await _tareaRepository.UpdateAsync(espacioId, tarea.Id, tarea, merge: true);
-                        _logger.LogDebug("Tarea repetida {TareaId} reseteada a Pendiente.", tarea.Id);
-                    });
-
-                await Task.WhenAll(resetTasks);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error reseteando tareas completadas para plantilla {PlantillaId}", plantilla.Id);
-            }
-        }
-
-        private async Task ResetCompletedRepeatedTasksAsync(PlantillaTareaDto plantilla)
-        {
-            if (plantilla.DiasRepeticion == null || plantilla.DiasRepeticion.Count == 0) return;
-            if (!IsPlantillaActive(plantilla)) return;
-
-            try
-            {
-                foreach (var tareaId in plantilla.TareasId ?? new List<string>())
-                {
-                    var tarea = await _tareaRepository.GetInstanciaAsync(plantilla.EspacioId, plantilla.Id, tareaId);
-                    if (tarea == null || tarea.DiaSemana < 0 || tarea.Estado != TareaEstado.Completada) continue;
-
-                    tarea.Estado = TareaEstado.Pendiente;
-                    tarea.FechaRealizacion = null;
-                    await _tareaRepository.UpdateAsync(plantilla.EspacioId, tareaId, tarea, merge: true);
-                    _logger.LogDebug("Tarea repetida {TareaId} reseteada a Pendiente.", tareaId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error reseteando tareas completadas para plantilla {PlantillaId}", plantilla.Id);
-            }
-        }
-
         private static bool IsPlantillaActive(PlantillaTareaDto plantilla)
         {
             if (plantilla.DiasRepeticion == null || plantilla.DiasRepeticion.Count == 0) return true;
             if (!plantilla.FechaLimite.HasValue) return true;
+
+            // Si la fecha límite registrada es menor o igual a la fecha de creación, se ignora como límite de expiración
+            var fechaCreacionDate = DateOnly.FromDateTime(plantilla.FechaCreacion);
+            if (plantilla.FechaLimite.Value <= fechaCreacionDate) return true;
 
             var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
             return hoy <= plantilla.FechaLimite.Value;
@@ -814,7 +779,18 @@ namespace Convivia.Application.Services
             if (!ignoreCompletion && tarea.FechaRealizacion.HasValue)
                 return false;
 
-            var tz = TimeZoneInfo.FindSystemTimeZoneById(plantilla.TimeZoneId);
+            TimeZoneInfo tz;
+            try
+            {
+                tz = !string.IsNullOrWhiteSpace(plantilla.TimeZoneId)
+                    ? TimeZoneInfo.FindSystemTimeZoneById(plantilla.TimeZoneId)
+                    : TimeZoneInfo.Utc;
+            }
+            catch
+            {
+                tz = TimeZoneInfo.Utc;
+            }
+
             var nowUtc = DateTime.UtcNow;
             var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
             var todayLocal = DateOnly.FromDateTime(nowLocal);
@@ -836,7 +812,10 @@ namespace Convivia.Application.Services
 
             if (!tarea.HoraLimite.HasValue) return false;
 
-            if (plantilla.FechaLimite.HasValue && todayLocal > plantilla.FechaLimite.Value) return true;
+            // Para tareas repetitivas, solo verificar expiración si la plantilla tiene una fecha límite futura que ya expiró
+            var fechaCreacionDate = DateOnly.FromDateTime(plantilla.FechaCreacion);
+            if (plantilla.FechaLimite.HasValue && plantilla.FechaLimite.Value > fechaCreacionDate && todayLocal > plantilla.FechaLimite.Value)
+                return true;
 
             int currentDay = ((int)nowLocal.DayOfWeek - 1 + 7) % 7;
             int daysDiff = tarea.DiaSemana - currentDay;

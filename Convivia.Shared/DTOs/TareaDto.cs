@@ -71,8 +71,15 @@ namespace Convivia.Shared.DTOs
         /// <summary>
         /// Fecha real de ejecución de la instancia en la semana actual.
         /// Para tareas repetidas: lunes ISO de la semana actual + DiaSemana días.
-        /// Para tareas puntuales: null (la fecha límite viene en la plantilla).
+        /// Para tareas puntuales: coincide con la fecha límite de la plantilla.
         /// </summary>
         public DateOnly? FechaEjecutada { get; set; }
+
+        /// <summary>
+        /// Fecha límite de la instancia.
+        /// Para tareas repetidas: coincide con FechaEjecutada (lunes ISO de la semana actual + DiaSemana días).
+        /// Para tareas puntuales: coincide con la fecha límite fijada en la plantilla.
+        /// </summary>
+        public DateOnly? FechaLimite { get; set; }
     }
 }

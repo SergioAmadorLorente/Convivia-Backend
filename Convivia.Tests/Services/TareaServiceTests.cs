@@ -102,11 +102,13 @@ namespace Convivia.Application.Tests.Services
             string tzId = null,
             int? graceMinutes = null,
             List<string>? tareasId = null,
-            List<int>? diasRep = null)
+            List<int>? diasRep = null,
+            string espacioId = "esp")
         {
             return new PlantillaTarea
             {
                 Id = id,
+                EspacioId = espacioId,
                 Nombre = "Plantilla",
                 Descripcion = "Desc",
                 karma = 10,
@@ -303,11 +305,12 @@ namespace Convivia.Application.Tests.Services
 
             _plantillaTareaRepositoryMock
                 .Setup(r => r.UpdateAsync(
+                    "espacio1",
                     "plantilla-123",
                     It.IsAny<IDictionary<string, object>>(),
                     true,
                     It.IsAny<CancellationToken>()))
-                .Callback<string, IDictionary<string, object>, bool, CancellationToken>((id, u, merge, ct) =>
+                .Callback<string, string, IDictionary<string, object>, bool, CancellationToken>((esp, id, u, merge, ct) =>
                 {
                     updates = u;
                 })
@@ -379,6 +382,7 @@ namespace Convivia.Application.Tests.Services
 
             _plantillaTareaRepositoryMock
                 .Setup(r => r.UpdateAsync(
+                    "espacio1",
                     "plantilla-123",
                     It.IsAny<IDictionary<string, object>>(),
                     true,
@@ -443,6 +447,7 @@ namespace Convivia.Application.Tests.Services
             // OBLIGATORIO: el servicio SIEMPRE llama a UpdateAsync
             _plantillaTareaRepositoryMock
                 .Setup(r => r.UpdateAsync(
+                    "espacio1",
                     "plantilla-123",
                     It.IsAny<IDictionary<string, object>>(),
                     true,
@@ -506,6 +511,7 @@ namespace Convivia.Application.Tests.Services
 
             _plantillaTareaRepositoryMock
                 .Setup(r => r.UpdateAsync(
+                    "espacio1",
                     "plantilla-123",
                     It.IsAny<IDictionary<string, object>>(),
                     true,
@@ -634,7 +640,7 @@ namespace Convivia.Application.Tests.Services
                 .ReturnsAsync(plantilla);
 
             _plantillaTareaRepositoryMock
-                .Setup(r => r.DeleteAsync("p1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.DeleteAsync("esp", "p1", It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             var result = await _sut.DeleteAsync("esp", "p1");
@@ -672,7 +678,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(Task.CompletedTask);
 
             _plantillaTareaRepositoryMock
-                .Setup(r => r.DeleteAsync("p1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.DeleteAsync("esp", "p1", It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             var result = await _sut.DeleteAsync("esp", "p1");
@@ -785,7 +791,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(new PlantillaTareaDto { Id = "p1" });
 
             _tareaRepositoryMock
-                .Setup(r => r.GetInstanciaAsync("p1", "t1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetInstanciaAsync("esp", "p1", "t1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Tarea?)null);
 
             var result = await _sut.UpdateCompleteAsync("esp", "p1", "t1", dto);
@@ -822,7 +828,7 @@ namespace Convivia.Application.Tests.Services
                 });
 
             _tareaRepositoryMock
-                .Setup(r => r.GetInstanciaAsync("p1", "t1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetInstanciaAsync("esp", "p1", "t1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarea);
 
             _mapperMock
@@ -830,7 +836,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(new Tarea { Id = "t1", PlantillaId = "p1" });
 
             _tareaRepositoryMock
-                .Setup(r => r.UpdateAsync("t1", It.IsAny<Tarea>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.UpdateAsync("esp", "t1", It.IsAny<Tarea>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             _mapperMock
@@ -868,26 +874,28 @@ namespace Convivia.Application.Tests.Services
 
             _mapperMock
                 .Setup(m => m.Map<PlantillaTareaDto>(It.IsAny<PlantillaTarea>()))
-                .Returns(new PlantillaTareaDto { Id = "p1" });
+                .Returns(new PlantillaTareaDto
+                {
+                    Id = "p1",
+                    EspacioId = "esp",
+                    karma = 15
+                });
+
+            var updated = existing.Adapt<Tarea>();
+            updated.Estado = TareaEstado.Completada;
 
             _tareaRepositoryMock
-                .Setup(r => r.GetInstanciaAsync("p1", "t1", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(existing);
+                .SetupSequence(r => r.GetInstanciaAsync("esp", "p1", "t1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(existing)
+                .ReturnsAsync(updated);
 
             _mapperMock
                 .Setup(m => m.Map<Tarea>(dto))
                 .Returns(new Tarea { Id = "t1", PlantillaId = "p1", Estado = TareaEstado.Completada });
 
             _tareaRepositoryMock
-                .Setup(r => r.UpdateAsync("t1", It.IsAny<Tarea>(), false, It.IsAny<CancellationToken>()))
+                .Setup(r => r.UpdateAsync("esp", "t1", It.IsAny<Tarea>(), false, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-
-            var updated = existing.Adapt<Tarea>();
-            updated.Estado = TareaEstado.Completada;
-
-            _tareaRepositoryMock
-                .Setup(r => r.GetInstanciaAsync("p1", "t1", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(updated);
 
             _mapperMock
                 .Setup(m => m.Map<TareaDto>(updated))
@@ -949,7 +957,7 @@ namespace Convivia.Application.Tests.Services
                 .Returns(new PlantillaTareaDto { Id = "p1" });
 
             _tareaRepositoryMock
-                .Setup(r => r.GetInstanciaAsync("p1", "t1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetInstanciaAsync("esp", "p1", "t1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarea);
 
             _mapperMock
@@ -968,7 +976,7 @@ namespace Convivia.Application.Tests.Services
             updated.Estado = TareaEstado.Completada;
 
             _tareaRepositoryMock
-                .Setup(r => r.GetInstanciaAsync("p1", "t1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetInstanciaAsync("esp", "p1", "t1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(updated);
 
             _mapperMock
@@ -999,7 +1007,7 @@ namespace Convivia.Application.Tests.Services
                 .ReturnsAsync(plantilla);
 
             _tareaRepositoryMock
-                .Setup(r => r.GetInstanciaAsync("p1", "t1", It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetInstanciaAsync("esp", "p1", "t1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(existing);
 
             _mapperMock
@@ -1144,6 +1152,188 @@ namespace Convivia.Application.Tests.Services
             _tareaRepositoryMock.Verify(r => 
                 r.GetInstanciaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
                 Times.Never);
+        }
+
+        #endregion
+
+        #region Pruebas de Fechas Recurrentes y Reseteo Semanal
+
+        [Fact]
+        public async Task GetByEspacioAndPlantillaAndTareaAsync_Recurrente_CalculaFechaSemanaActualCorrectamente()
+        {
+            // Arrange: Tarea recurrente para martes (DiaSemana = 1)
+            var espacioId = "espacio1";
+            var plantillaId = "p1";
+            var tareaId = "t1";
+
+            var plantilla = CreatePlantilla(id: plantillaId, tzId: "UTC");
+            plantilla.DiasRepeticion = new List<int> { 1 };
+            plantilla.EsPuntual = false;
+
+            var plantillaDto = new PlantillaTareaDto
+            {
+                Id = plantillaId,
+                Nombre = "Limpieza Martes",
+                DiasRepeticion = new List<int> { 1 },
+                EsPuntual = false
+            };
+
+            var tarea = CreateTarea(id: tareaId, plantillaId: plantillaId, diaSemana: 1, estado: TareaEstado.Pendiente);
+
+            _plantillaTareaRepositoryMock
+                .Setup(r => r.GetByEspacioAndIdAsync(espacioId, plantillaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(plantilla);
+
+            _mapperMock
+                .Setup(m => m.Map<PlantillaTareaDto>(plantilla))
+                .Returns(plantillaDto);
+
+            _tareaRepositoryMock
+                .Setup(r => r.GetInstanciaAsync(espacioId, plantillaId, tareaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tarea);
+
+            _mapperMock
+                .Setup(m => m.Map<TareaDto>(tarea))
+                .Returns(new TareaDto());
+
+            // Act
+            var result = await _sut.GetByEspacioAndPlantillaAndTareaAsync(espacioId, plantillaId, tareaId);
+
+            // Assert: Verificar que la fecha calculada corresponda al martes de la semana ISO actual
+            Assert.NotNull(result);
+            var now = DateTime.UtcNow;
+            var lunes = System.Globalization.ISOWeek.ToDateTime(
+                System.Globalization.ISOWeek.GetYear(now),
+                System.Globalization.ISOWeek.GetWeekOfYear(now),
+                DayOfWeek.Monday);
+            var esperadoMartes = DateOnly.FromDateTime(lunes.AddDays(1));
+
+            Assert.Equal(esperadoMartes, result.FechaEjecutada);
+            Assert.Equal(esperadoMartes, result.FechaLimite);
+            Assert.False(result.EsPuntual);
+        }
+
+        [Fact]
+        public async Task GetAllByEspacioConInstanciaActivaAsync_Recurrente_ActualizaFechaLimiteEnPlantilla()
+        {
+            // Arrange
+            var espacioId = "espacio1";
+            var plantillaId = "p1";
+            var tareaId = "t1";
+
+            var plantilla = CreatePlantilla(id: plantillaId, tzId: "UTC");
+            plantilla.DiasRepeticion = new List<int> { 1 };
+            plantilla.EsPuntual = false;
+
+            var plantillaDto = new PlantillaTareaDto
+            {
+                Id = plantillaId,
+                Nombre = "Limpieza Martes",
+                DiasRepeticion = new List<int> { 1 },
+                EsPuntual = false,
+                FechaLimite = new DateOnly(2026, 8, 11) // Fecha antigua de creación
+            };
+
+            var tarea = CreateTarea(id: tareaId, plantillaId: plantillaId, diaSemana: 1, estado: TareaEstado.Pendiente);
+
+            _plantillaTareaRepositoryMock
+                .Setup(r => r.GetAllByEspacioAsync(espacioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<PlantillaTarea> { plantilla });
+
+            _mapperMock
+                .Setup(m => m.Map<IEnumerable<PlantillaTareaDto>>(It.IsAny<IEnumerable<PlantillaTarea>>()))
+                .Returns(new List<PlantillaTareaDto> { plantillaDto });
+
+            _tareaRepositoryMock
+                .Setup(r => r.GetAllByEspacioGroupedByPlantillaAsync(espacioId, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, List<Tarea>>
+                {
+                    { plantillaId, new List<Tarea> { tarea } }
+                });
+
+            _mapperMock
+                .Setup(m => m.Map<TareaDto>(tarea))
+                .Returns(new TareaDto());
+
+            // Act
+            var result = (await _sut.GetAllByEspacioConInstanciaActivaAsync(espacioId)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            var now = DateTime.UtcNow;
+            var lunes = System.Globalization.ISOWeek.ToDateTime(
+                System.Globalization.ISOWeek.GetYear(now),
+                System.Globalization.ISOWeek.GetWeekOfYear(now),
+                DayOfWeek.Monday);
+            var esperadoMartes = DateOnly.FromDateTime(lunes.AddDays(1));
+
+            // Tanto la plantilla como la instancia activa deben tener la fecha de la semana en curso
+            Assert.Equal(esperadoMartes, result[0].FechaLimite);
+            Assert.NotNull(result[0].InstanciaActiva);
+            Assert.Equal(esperadoMartes, result[0].InstanciaActiva!.FechaEjecutada);
+            Assert.Equal(esperadoMartes, result[0].InstanciaActiva!.FechaLimite);
+        }
+
+        [Fact]
+        public async Task ResetTareaIfNewWeekAsync_SemanaAnterior_ReseteaAPendiente()
+        {
+            // Arrange: Tarea completada con UltimaSemanaModificacion de una semana pasada (ej: 202601)
+            var espacioId = "espacio1";
+            var plantillaId = "p1";
+            var tareaId = "t1";
+
+            var plantilla = CreatePlantilla(id: plantillaId, tzId: "UTC");
+            plantilla.DiasRepeticion = new List<int> { 1 };
+            plantilla.EsPuntual = false;
+
+            var plantillaDto = new PlantillaTareaDto
+            {
+                Id = plantillaId,
+                Nombre = "Limpieza Martes",
+                DiasRepeticion = new List<int> { 1 },
+                EsPuntual = false
+            };
+
+            var tarea = CreateTarea(
+                id: tareaId,
+                plantillaId: plantillaId,
+                diaSemana: 1,
+                estado: TareaEstado.Completada,
+                fechaRealizacion: DateTime.UtcNow.AddDays(-10));
+            tarea.UltimaSemanaModificacion = 202601; // Semana pasada
+
+            _plantillaTareaRepositoryMock
+                .Setup(r => r.GetByEspacioAndIdAsync(espacioId, plantillaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(plantilla);
+
+            _mapperMock
+                .Setup(m => m.Map<PlantillaTareaDto>(plantilla))
+                .Returns(plantillaDto);
+
+            _tareaRepositoryMock
+                .Setup(r => r.GetInstanciaAsync(espacioId, plantillaId, tareaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tarea);
+
+            _tareaRepositoryMock
+                .Setup(r => r.UpdateAsync(espacioId, tareaId, tarea, true, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mapperMock
+                .Setup(m => m.Map<TareaDto>(tarea))
+                .Returns(new TareaDto());
+
+            // Act
+            var result = await _sut.GetByEspacioAndPlantillaAndTareaAsync(espacioId, plantillaId, tareaId);
+
+            // Assert: Debe haberse reseteado a Pendiente y guardado
+            Assert.NotNull(result);
+            Assert.Equal(TareaEstado.Pendiente, tarea.Estado);
+            Assert.Null(tarea.FechaRealizacion);
+            Assert.Equal(System.Globalization.ISOWeek.GetYear(DateTime.UtcNow) * 100 + System.Globalization.ISOWeek.GetWeekOfYear(DateTime.UtcNow), tarea.UltimaSemanaModificacion);
+
+            _tareaRepositoryMock.Verify(r =>
+                r.UpdateAsync(espacioId, tareaId, tarea, true, It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         #endregion
