@@ -54,14 +54,13 @@ namespace Convivia.Application.Services
             createdDto.TieneImagen = createdDomain.DocumentoImagen != null && createdDomain.DocumentoImagen.Length > 0;
             return createdDto;
         }
-        // MODO PRUEBAS: 30 segundos (luego se cambiará a 15 días)
-        private static readonly TimeSpan TiempoExpiracionFacturaPagada = TimeSpan.FromSeconds(30);
+        private const int DiasExpiracionFacturaPagada = 15;
 
         private bool EstaFacturaExpirada(Factura f)
         {
             if (!f.Pagado) return false;
             var fechaRef = f.FechaPago ?? f.FechaCreacion;
-            return fechaRef <= DateTime.UtcNow.Subtract(TiempoExpiracionFacturaPagada);
+            return fechaRef <= DateTime.UtcNow.AddDays(-DiasExpiracionFacturaPagada);
         }
 
         /// <summary>

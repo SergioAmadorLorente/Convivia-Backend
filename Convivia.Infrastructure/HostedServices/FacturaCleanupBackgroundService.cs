@@ -9,18 +9,19 @@ using Microsoft.Extensions.Logging;
 namespace Convivia.Infrastructure.HostedServices
 {
     /// <summary>
-    /// Servicio en segundo plano que elimina automáticamente las facturas completamente pagadas.
-    /// MODO PRUEBAS: 30 segundos (luego se cambiará a 15 días).
+    /// Servicio en segundo plano que elimina automáticamente las facturas completamente pagadas
+    /// una vez transcurridos 15 días desde su fecha de pago (FechaPago).
+    /// Se ejecuta periódicamente cada 24 horas.
     /// </summary>
     public class FacturaCleanupBackgroundService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<FacturaCleanupBackgroundService> _logger;
         
-        // MODO PRUEBAS: 30 segundos
-        private static readonly TimeSpan UmbralBorrado = TimeSpan.FromSeconds(30);
-        // Intervalo de comprobación: cada 15 segundos
-        private static readonly TimeSpan Intervalo = TimeSpan.FromSeconds(15);
+        // 15 días pasados desde la fecha de pago
+        private const int DiasHastaBorrado = 15;
+        // Intervalo de comprobación: cada 24 horas
+        private static readonly TimeSpan Intervalo = TimeSpan.FromHours(24);
 
         public FacturaCleanupBackgroundService(
             IServiceScopeFactory scopeFactory,
@@ -29,17 +30,21 @@ namespace Convivia.Infrastructure.HostedServices
             _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            Console.WriteLine($"[FacturaCleanup] MODO PRUEBA ACTIVO. Umbral: {UmbralBorrado.TotalSeconds}s, Intervalo: {Intervalo.TotalSeconds}s");
+            Console.WriteLine($"[FacturaCleanup] Servicio configurado: borrar facturas pagadas hace más de {DiasHastaBorrado} días. Intervalo: {Intervalo.TotalHours} horas.");
+            _logger.LogInformation(
+                "[FacturaCleanup] Configurado: borrar facturas pagadas hace mas de {Dias} dias. Intervalo: {Intervalo}.",
+                DiasHastaBorrado, Intervalo);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Console.WriteLine("[FacturaCleanup] BackgroundService INICIADO.");
+            _logger.LogInformation("[FacturaCleanup] BackgroundService INICIADO.");
 
-            // Esperar 5 segundos al arranque
+            // Esperar 15 segundos al arranque para permitir que Firebase y la app se inicialicen
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -73,17 +78,20 @@ namespace Convivia.Infrastructure.HostedServices
             }
 
             Console.WriteLine("[FacturaCleanup] BackgroundService DETENIDO.");
+            _logger.LogInformation("[FacturaCleanup] BackgroundService DETENIDO.");
         }
 
         private async Task EjecutarLimpiezaAsync(CancellationToken ct)
         {
-            var umbral = DateTime.UtcNow.Subtract(UmbralBorrado);
+            var umbral = DateTime.UtcNow.AddDays(-DiasHastaBorrado);
 
             Console.WriteLine($"[FacturaCleanup] Iniciando ciclo. Umbral: facturas pagadas <= {umbral:yyyy-MM-dd HH:mm:ss} UTC");
+            _logger.LogInformation("[FacturaCleanup] Iniciando ciclo. Umbral: facturas pagadas <= {Umbral:yyyy-MM-dd HH:mm:ss} UTC", umbral);
 
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<FirestoreDb>();
 
+            // Obtener todas las facturas de todas las subcolecciones directamente
             var snapshot = await db.CollectionGroup("facturas").GetSnapshotAsync(ct);
             Console.WriteLine($"[FacturaCleanup] Total facturas encontradas en Firestore: {snapshot.Count}");
 
