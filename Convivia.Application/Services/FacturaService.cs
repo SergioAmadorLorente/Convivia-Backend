@@ -54,6 +54,15 @@ namespace Convivia.Application.Services
             createdDto.TieneImagen = createdDomain.DocumentoImagen != null && createdDomain.DocumentoImagen.Length > 0;
             return createdDto;
         }
+        // MODO PRUEBAS: 30 segundos (luego se cambiará a 15 días)
+        private static readonly TimeSpan TiempoExpiracionFacturaPagada = TimeSpan.FromSeconds(30);
+
+        private bool EstaFacturaExpirada(Factura f)
+        {
+            if (!f.Pagado) return false;
+            var fechaRef = f.FechaPago ?? f.FechaCreacion;
+            return fechaRef <= DateTime.UtcNow.Subtract(TiempoExpiracionFacturaPagada);
+        }
 
         /// <summary>
         /// Obtiene una factura por id.
@@ -65,6 +74,12 @@ namespace Convivia.Application.Services
             
             var domain = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
             if (domain == null) return null;
+
+            if (EstaFacturaExpirada(domain))
+            {
+                _ = _facturaRepository.DeleteAsync(espacioId, id, ct);
+                return null;
+            }
             
             var dto = _mapper.Map<FacturaDto>(domain);
             dto.TieneImagen = domain.DocumentoImagen != null && domain.DocumentoImagen.Length > 0;
@@ -79,18 +94,27 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             
             var list = await _facturaRepository.GetAllAsync(espacioId, ct);
-            var dtos = list?.Select(f =>
+            if (list == null) return new List<FacturaDto>();
+
+            var validas = new List<FacturaDto>();
+            foreach (var f in list)
             {
+                if (EstaFacturaExpirada(f))
+                {
+                    _ = _facturaRepository.DeleteAsync(espacioId, f.Id, ct);
+                    continue;
+                }
+
                 var dto = _mapper.Map<FacturaDto>(f);
                 dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
-                return dto;
-            }).ToList() ?? new List<FacturaDto>();
+                validas.Add(dto);
+            }
             
-            return dtos;
+            return validas;
         }
 
         /// <summary>
-        /// Lista todas las facturas de un espacio creadas por un usuario espec�fico.
+        /// Lista todas las facturas de un espacio creadas por un usuario específico.
         /// </summary>
         public async Task<List<FacturaDto>> ListarPorCreadorAsync(string espacioId, string creadorId, CancellationToken ct = default)
         {
@@ -98,14 +122,23 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(creadorId)) throw new ArgumentNullException(nameof(creadorId));
 
             var list = await _facturaRepository.GetByCreadorAsync(espacioId, creadorId, ct);
-            var dtos = list?.Select(f =>
+            if (list == null) return new List<FacturaDto>();
+
+            var validas = new List<FacturaDto>();
+            foreach (var f in list)
             {
+                if (EstaFacturaExpirada(f))
+                {
+                    _ = _facturaRepository.DeleteAsync(espacioId, f.Id, ct);
+                    continue;
+                }
+
                 var dto = _mapper.Map<FacturaDto>(f);
                 dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
-                return dto;
-            }).ToList() ?? new List<FacturaDto>();
+                validas.Add(dto);
+            }
 
-            return dtos;
+            return validas;
         }
 
         /// <summary>
@@ -117,14 +150,23 @@ namespace Convivia.Application.Services
             if (string.IsNullOrWhiteSpace(deudorId)) throw new ArgumentNullException(nameof(deudorId));
 
             var facturasDeudor = await _facturaRepository.GetByDeudorAsync(espacioId, deudorId, ct);
-            var dtos = facturasDeudor?.Select(f =>
+            if (facturasDeudor == null) return new List<FacturaDto>();
+
+            var validas = new List<FacturaDto>();
+            foreach (var f in facturasDeudor)
             {
+                if (EstaFacturaExpirada(f))
+                {
+                    _ = _facturaRepository.DeleteAsync(espacioId, f.Id, ct);
+                    continue;
+                }
+
                 var dto = _mapper.Map<FacturaDto>(f);
                 dto.TieneImagen = f.DocumentoImagen != null && f.DocumentoImagen.Length > 0;
-                return dto;
-            }).ToList() ?? new List<FacturaDto>();
+                validas.Add(dto);
+            }
 
-            return dtos;
+            return validas;
         }
 
         /// <summary>
