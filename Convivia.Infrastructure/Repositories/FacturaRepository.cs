@@ -194,7 +194,7 @@ namespace Convivia.Infrastructure.Repositories
             if (all == null) return Array.Empty<Factura>();
 
             var elegibles = all
-                .Where(f => f.Pagado && f.FechaPago.HasValue && f.FechaPago.Value < umbral)
+                .Where(f => f.Pagado && ((f.FechaPago.HasValue && f.FechaPago.Value <= umbral) || (!f.FechaPago.HasValue && f.FechaCreacion <= umbral)))
                 .ToList();
 
             return elegibles.Adapt<List<Factura>>();

@@ -35,6 +35,10 @@ namespace Convivia.Application.Services
                 throw new ArgumentException("Debe haber al menos un deudor en la factura", nameof(dto.Deudores));
             if (dto.PagoMediano == null) dto.PagoMediano = (float) dto.Precio / dto.Deudores.Count;
             var facturaDomain = _mapper.Map<Factura>(dto);
+            if (facturaDomain.Pagado && facturaDomain.FechaPago == null)
+            {
+                facturaDomain.FechaPago = DateTime.UtcNow;
+            }
             var id = await _facturaRepository.AddAsync(espacioId, facturaDomain, ct);
 
             var createdDomain = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
@@ -136,6 +140,10 @@ namespace Convivia.Application.Services
 
             var domain = _mapper.Map<Factura>(dto);
             domain.Id = id;
+            if (domain.Pagado && domain.FechaPago == null)
+            {
+                domain.FechaPago = DateTime.UtcNow;
+            }
 
             await _facturaRepository.UpdateAsync(espacioId, id, domain, merge: false, ct);
 
@@ -160,6 +168,10 @@ namespace Convivia.Application.Services
             if (existing == null) return null;
 
             _mapper.Map(dto, existing);
+            if (existing.Pagado && existing.FechaPago == null)
+            {
+                existing.FechaPago = DateTime.UtcNow;
+            }
 
             await _facturaRepository.UpdateAsync(espacioId, id, existing, merge: true, ct);
 
