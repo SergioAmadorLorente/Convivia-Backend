@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Convivia.Application.Repositories;
+using Google.Cloud.Firestore;
+using Convivia.Infrastructure.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,17 +13,6 @@ namespace Convivia.Infrastructure.HostedServices
     /// <summary>
     /// Servicio en segundo plano que elimina automaticamente las facturas completamente pagadas
     /// una vez transcurridos los dias configurados desde su fecha de pago (FechaPago).
-    ///
-    /// Configuracion en appsettings.json:
-    ///   "FacturaCleanup": {
-    ///     "DiasHastaBorrado": 15,    // dias desde FechaPago hasta borrar. Default: 15
-    ///     "IntervaloHoras": 24       // cada cuantas horas se ejecuta el job. Default: 24
-    ///   }
-    ///
-    /// Para testear manualmente sin esperar 15 dias reales, usa en appsettings.Development.json:
-    ///   "FacturaCleanup": { "DiasHastaBorrado": 0, "IntervaloHoras": 0.01 }
-    /// Con IntervaloHoras=0.01 (~36 segundos) el job corre casi al arrancar.
-    /// Con DiasHastaBorrado=0 borrara todas las facturas pagadas inmediatamente.
     /// </summary>
     public class FacturaCleanupBackgroundService : BackgroundService
     {
@@ -45,13 +34,13 @@ namespace Convivia.Infrastructure.HostedServices
             _intervalo = TimeSpan.FromHours(intervaloHoras);
 
             _logger.LogInformation(
-                "[FacturaCleanup] Configurado: borrar facturas pagadas hace mas de {Dias} dias. Intervalo: {Intervalo}.",
+                "[FacturaCleanup] Configurado: borrar facturas pagadas hace mas de {Dias} dias. Intervalo de comprobacion: {Intervalo}.",
                 _diasHastaBorrado, _intervalo);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("[FacturaCleanup] Servicio iniciado.");
+            _logger.LogInformation("[FacturaCleanup] Servicio de limpieza iniciado.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -86,64 +75,46 @@ namespace Convivia.Infrastructure.HostedServices
             var umbral = DateTime.UtcNow.AddDays(-_diasHastaBorrado);
 
             _logger.LogInformation(
-                "[FacturaCleanup] Iniciando ciclo de limpieza. Umbral: facturas pagadas antes de {Umbral} UTC.",
+                "[FacturaCleanup] Iniciando ciclo de limpieza. Umbral: facturas pagadas antes de {Umbral:yyyy-MM-dd HH:mm:ss} UTC.",
                 umbral);
 
-            // Usamos un scope porque IFacturaRepository e IEspacioRepository son Scoped
             using var scope = _scopeFactory.CreateScope();
-            var facturaRepo = scope.ServiceProvider.GetRequiredService<IFacturaRepository>();
-            var espacioRepo = scope.ServiceProvider.GetRequiredService<IEspacioRepository>();
+            var db = scope.ServiceProvider.GetRequiredService<FirestoreDb>();
 
-            // Obtenemos todos los espacios para iterar sus subcolecciones de facturas
-            var espacios = await espacioRepo.GetAllAsync(ct);
-            if (espacios == null)
-            {
-                _logger.LogInformation("[FacturaCleanup] No se encontraron espacios. Nada que limpiar.");
-                return;
-            }
+            // Query CollectionGroup("facturas") busca todas las facturas en todas las subcolecciones directamente
+            var snapshot = await db.CollectionGroup("facturas").GetSnapshotAsync(ct);
+            _logger.LogInformation("[FacturaCleanup] Total facturas encontradas en BD: {Count}", snapshot.Count);
 
-            var espaciosList = espacios.ToList();
             int totalEliminadas = 0;
 
-            foreach (var espacio in espaciosList)
+            foreach (var doc in snapshot.Documents)
             {
-                if (string.IsNullOrWhiteSpace(espacio.Id)) continue;
-
                 try
                 {
-                    var facturasAntiguas = await facturaRepo.GetPagadasAntiguas(espacio.Id, umbral, ct);
-                    var facturasLista = facturasAntiguas.ToList();
+                    var factura = doc.ConvertTo<FireStoreFactura>();
+                    if (factura == null) continue;
 
-                    foreach (var factura in facturasLista)
+                    var fechaReferencia = factura.FechaPago ?? factura.FechaCreacion;
+
+                    if (factura.Pagado && fechaReferencia <= umbral)
                     {
-                        try
-                        {
-                            await facturaRepo.DeleteAsync(espacio.Id, factura.Id, ct);
-                            _logger.LogInformation(
-                                "[FacturaCleanup] Eliminada factura '{FacturaId}' ('{Nombre}') del espacio '{EspacioId}'. FechaPago: {FechaPago} UTC.",
-                                factura.Id, factura.Nombre, espacio.Id, factura.FechaPago);
-                            totalEliminadas++;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex,
-                                "[FacturaCleanup] Error al eliminar factura '{FacturaId}' del espacio '{EspacioId}'.",
-                                factura.Id, espacio.Id);
-                        }
+                        var espacioId = doc.Reference.Parent?.Parent?.Id ?? "desconocido";
+                        await doc.Reference.DeleteAsync(cancellationToken: ct);
+                        _logger.LogInformation(
+                            "[FacturaCleanup] Eliminada factura '{FacturaId}' ('{Nombre}') del espacio '{EspacioId}'. FechaPago: {FechaPago}, FechaCreacion: {FechaCreacion}.",
+                            doc.Id, factura.Nombre, espacioId, factura.FechaPago, factura.FechaCreacion);
+                        totalEliminadas++;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex,
-                        "[FacturaCleanup] Error al procesar espacio '{EspacioId}'. Se continua con el siguiente.",
-                        espacio.Id);
+                    _logger.LogError(ex, "[FacturaCleanup] Error procesando factura doc '{DocId}'.", doc.Id);
                 }
             }
 
             _logger.LogInformation(
-                "[FacturaCleanup] Ciclo completado. Espacios procesados: {Espacios}. Facturas eliminadas: {Eliminadas}.",
-                espaciosList.Count, totalEliminadas);
+                "[FacturaCleanup] Ciclo completado. Total revisadas: {Revisadas}. Total eliminadas: {Eliminadas}.",
+                snapshot.Count, totalEliminadas);
         }
     }
 }
-
