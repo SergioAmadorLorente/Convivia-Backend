@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +35,9 @@ namespace Convivia.Infrastructure.Models
 
         [FirestoreProperty("FechaCreacion")]
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+        [FirestoreProperty("FechaPago")]
+        public DateTime? FechaPago { get; set; }
 
         public FireStoreFactura()
         {

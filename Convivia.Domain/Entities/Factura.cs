@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Convivia.Domain.Entities
@@ -52,8 +52,14 @@ namespace Convivia.Domain.Entities
         /// <summary>
         /// Fecha creacion de la factura
         /// </summary>
-
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Fecha en la que la factura fue marcada como completamente pagada por todos los deudores.
+        /// Se establece automáticamente cuando Pagado pasa a true.
+        /// Usada por el job de limpieza automática (borrado a los 15 días).
+        /// </summary>
+        public DateTime? FechaPago { get; set; }
 
         /// <summary>
         /// Constructor por defecto para deserialización o pruebas.

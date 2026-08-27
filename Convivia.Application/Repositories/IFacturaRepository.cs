@@ -1,4 +1,4 @@
-﻿using Convivia.Domain.Entities;
+using Convivia.Domain.Entities;
 using Convivia.Shared.DTOs;
 using System.Collections.Generic;
 using System.Threading;
@@ -24,5 +24,11 @@ namespace Convivia.Application.Repositories
         
         Task<IEnumerable<Factura>> GetByCreadorAsync(string espacioId, string creadorId, CancellationToken ct = default);
         Task<IEnumerable<Factura>> GetByDeudorAsync(string espacioId, string deudorId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Devuelve todas las facturas completamente pagadas cuya FechaPago es anterior al umbral indicado.
+        /// Usado por el BackgroundService de limpieza automática.
+        /// </summary>
+        Task<IEnumerable<Factura>> GetPagadasAntiguas(string espacioId, DateTime umbral, CancellationToken ct = default);
     }
 }

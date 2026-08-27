@@ -29,7 +29,7 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre no puede estar vacío", nameof(dto.Nombre));
+            if (string.IsNullOrWhiteSpace(dto.Nombre)) throw new ArgumentException("Nombre no puede estar vacï¿½o", nameof(dto.Nombre));
             if (dto.Precio < 0) throw new ArgumentException("Precio no puede ser negativo", nameof(dto.Precio));
             if (dto.Deudores == null || dto.Deudores.Count == 0)
                 throw new ArgumentException("Debe haber al menos un deudor en la factura", nameof(dto.Deudores));
@@ -86,7 +86,7 @@ namespace Convivia.Application.Services
         }
 
         /// <summary>
-        /// Lista todas las facturas de un espacio creadas por un usuario específico.
+        /// Lista todas las facturas de un espacio creadas por un usuario especï¿½fico.
         /// </summary>
         public async Task<List<FacturaDto>> ListarPorCreadorAsync(string espacioId, string creadorId, CancellationToken ct = default)
         {
@@ -184,6 +184,12 @@ namespace Convivia.Application.Services
             if (existent == null) return null;
 
             var updates = ObtenerActualizacionesDesdeDto(dto);
+
+            // Si se estÃ¡ marcando como pagada y aÃºn no tiene FechaPago, establecerla automÃ¡ticamente.
+            // Es el campo que usa el job de limpieza para saber cuÃ¡ndo borrar la factura (15 dÃ­as despuÃ©s).
+            if (dto.Pagado == true && existent.FechaPago == null && !updates.ContainsKey("FechaPago"))
+                updates["FechaPago"] = DateTime.UtcNow;
+
             if (updates.Count == 0)
             {
                 var current = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
@@ -216,7 +222,7 @@ namespace Convivia.Application.Services
             return true;
         }
 
-        // Métodos para gestión de imágenes
+        // Mï¿½todos para gestiï¿½n de imï¿½genes
         public async Task<byte[]?> ObtenerImagenAsync(string espacioId, string id, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
@@ -229,7 +235,7 @@ namespace Convivia.Application.Services
         {
             if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
-            if (imagen == null || imagen.Length == 0) throw new ArgumentException("Imagen no puede estar vacía", nameof(imagen));
+            if (imagen == null || imagen.Length == 0) throw new ArgumentException("Imagen no puede estar vacï¿½a", nameof(imagen));
 
             var existing = await _facturaRepository.GetByIdAsync(espacioId, id, ct);
             if (existing == null) return false;
@@ -257,22 +263,22 @@ namespace Convivia.Application.Services
         /// Mapeo manual para PATCH y actualizaciones parciales.
         /// 
         /// Razonamiento(para que MARC SASTRE no me mate xD):
-        /// - PATCH debe enviar únicamente los campos que cambian; Mapster por sí solo puede generar objetos
-        ///   con valores por defecto o nulls que provocarían sobrescrituras no deseadas en Firestore.
-        /// - Aquí construimos explícitamente un IDictionary<string, object> con las claves exactas de Firestore
-        ///   y solo añadimos propiedades no nulas/validadas, evitando borrar datos accidentalmente.
+        /// - PATCH debe enviar ï¿½nicamente los campos que cambian; Mapster por sï¿½ solo puede generar objetos
+        ///   con valores por defecto o nulls que provocarï¿½an sobrescrituras no deseadas en Firestore.
+        /// - Aquï¿½ construimos explï¿½citamente un IDictionary<string, object> con las claves exactas de Firestore
+        ///   y solo aï¿½adimos propiedades no nulas/validadas, evitando borrar datos accidentalmente.
         /// - Usamos Mapster para operaciones FULL o MERGE (cuando mapeamos DTO sobre la entidad existente
-        ///   con IgnoreNullValues), pero para PATCH preferimos este enfoque explícito por seguridad, control
+        ///   con IgnoreNullValues), pero para PATCH preferimos este enfoque explï¿½cito por seguridad, control
         ///   de nombres de campo, y eficiencia (no requiere leer/escribir todo el documento).
         /// 
-        /// Instrucciones para compañeros:
-        /// - Si necesitáis añadir un campo nuevo, actualizar también la clave usada en este diccionario.
-        /// - Validar y filtrar aquí cualquier campo sensible (p. ej. FechaCreacion, campos de auditoría).
-        /// - Si preferís automatizar, podéis adaptar el patrón semi-automático (Adapt + filtrar nulos),
+        /// Instrucciones para compaï¿½eros:
+        /// - Si necesitï¿½is aï¿½adir un campo nuevo, actualizar tambiï¿½n la clave usada en este diccionario.
+        /// - Validar y filtrar aquï¿½ cualquier campo sensible (p. ej. FechaCreacion, campos de auditorï¿½a).
+        /// - Si preferï¿½s automatizar, podï¿½is adaptar el patrï¿½n semi-automï¿½tico (Adapt + filtrar nulos),
         ///   pero revisad cuidadosamente nombres y conversiones antes de enviar a Firestore.
         ///   
-        /// Desarrollaré asi todos los services con un helper manual, me parece mucho más seguro, se que puede parecer ineficiente, 
-        /// pero al tenner controlados las entidadaes que existen y al tener acceso a la bd nosotros, de esta manera es mejor y más seguro
+        /// Desarrollarï¿½ asi todos los services con un helper manual, me parece mucho mï¿½s seguro, se que puede parecer ineficiente, 
+        /// pero al tenner controlados las entidadaes que existen y al tener acceso a la bd nosotros, de esta manera es mejor y mï¿½s seguro
         /// </summary>
         private IDictionary<string, object> ObtenerActualizacionesDesdeDto(UpdateFacturaDto dto)
         {
@@ -284,8 +290,10 @@ namespace Convivia.Application.Services
             if (dto.Deudores != null && dto.Deudores.Count > 0) updates["Deudores"] = dto.Deudores;
             if (dto.Pagado.HasValue) updates["Pagado"] = dto.Pagado.Value;
             if (dto.CreadorFactura != null) updates["CreadorFactura"] = dto.CreadorFactura;
+            if (dto.FechaPago.HasValue) updates["FechaPago"] = DateTime.SpecifyKind(dto.FechaPago.Value, DateTimeKind.Utc);
 
             return updates;
         }
     }
 }
+

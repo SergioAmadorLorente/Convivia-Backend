@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -177,6 +177,27 @@ namespace Convivia.Infrastructure.Repositories
                 .ToList();
 
             return facturasDeudor.Adapt<List<Factura>>();
+        }
+
+        /// <summary>
+        /// Devuelve facturas completamente pagadas (Pagado=true) cuya FechaPago es anterior al umbral dado.
+        /// Firestore no soporta filtros sobre campos nullable en subcollections de forma directa,
+        /// por lo que se obtienen todas y se filtra en memoria.
+        /// </summary>
+        public async Task<IEnumerable<Factura>> GetPagadasAntiguas(string espacioId, DateTime umbral, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(espacioId)) throw new ArgumentNullException(nameof(espacioId));
+
+            var collectionPath = GetCollectionPath(espacioId);
+            var all = await _firebase.GetAllAsync<FireStoreFactura>(collectionPath, ct);
+
+            if (all == null) return Array.Empty<Factura>();
+
+            var elegibles = all
+                .Where(f => f.Pagado && f.FechaPago.HasValue && f.FechaPago.Value < umbral)
+                .ToList();
+
+            return elegibles.Adapt<List<Factura>>();
         }
     }
 }

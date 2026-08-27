@@ -29,6 +29,9 @@ namespace Convivia.Infrastructure.Extensions
             // Hosted service que consume la cola
             services.AddHostedService<ErrorWriterBackgroundService>();
 
+            // Job de limpieza automatica de facturas pagadas (15 dias por defecto, configurable)
+            services.AddHostedService<FacturaCleanupBackgroundService>();
+
             // Repositorios concretos de la aplicación
             services.AddScoped<IInvitacionRepository, InvitacionRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
