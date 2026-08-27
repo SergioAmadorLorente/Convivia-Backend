@@ -1,4 +1,4 @@
-﻿using Convivia.Shared.DTOs;
+using Convivia.Shared.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,5 +41,11 @@ namespace Convivia.Shared.DTOs
         /// Nuevo creador de la factura (opcional). ID del usuario (UsuarioId).
         /// </summary>
         public string? CreadorFactura { get; set; }
+
+        /// <summary>
+        /// Fecha en que la factura fue completamente pagada (opcional).
+        /// Normalmente se gestiona de forma automática por el servicio al marcar Pagado = true.
+        /// </summary>
+        public DateTime? FechaPago { get; set; }
     }
 }

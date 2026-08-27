@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,5 +59,10 @@ namespace Convivia.Shared.DTOs
         /// Fecha y hora de creación de la factura en formato UTC.
         /// </summary>
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Fecha y hora en la que la factura fue pagada completamente en formato UTC.
+        /// </summary>
+        public DateTime? FechaPago { get; set; }
     }
 }
